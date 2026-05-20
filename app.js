@@ -102,6 +102,8 @@ function triggerHaptic(type) {
       navigator.vibrate(80);
     } else if (type === "error") {
       navigator.vibrate([100, 50, 100]);
+    } else if (type === "warning") {
+      navigator.vibrate([60, 40, 60]);
     } else {
       navigator.vibrate(20);
     }
@@ -853,7 +855,7 @@ function submitTelemetry() {
   if (studyTimer) clearInterval(studyTimer);
   
   // Evaluate answers
-  let isCorrect = false;
+  let accuracy = 0;
   let addedPoints = 0;
   let breakdownRows = [];
   let discrepancyLogItem = null;
@@ -876,8 +878,11 @@ function submitTelemetry() {
       });
     });
     
-    isCorrect = checklistErrors === 0 && inputs.length === expected.length;
-    discrepancyLogItem = checklistErrors > 0 ? `Checklist mismatch in ${currentRndExpected.title}` : null;
+    const extraInputs = Math.max(0, inputs.length - expected.length);
+    const totalChecklistItems = expected.length + extraInputs;
+    const correctSteps = expected.length - checklistErrors;
+    accuracy = Math.round((correctSteps / totalChecklistItems) * 100);
+    discrepancyLogItem = checklistErrors > 0 || extraInputs > 0 ? `Checklist mismatch in ${currentRndExpected.title}` : null;
   } 
   else if (activeModule === "instruments") {
     const expected = currentRndExpected.expected;
@@ -897,7 +902,8 @@ function submitTelemetry() {
       });
     });
     
-    isCorrect = gaugeErrors === 0;
+    const correctDials = expected.length - gaugeErrors;
+    accuracy = Math.round((correctDials / expected.length) * 100);
     discrepancyLogItem = gaugeErrors > 0 ? `Precision scanning recall mismatch` : null;
   } 
   else if (activeModule === "atc") {
@@ -921,7 +927,8 @@ function submitTelemetry() {
       });
     });
     
-    isCorrect = atcErrors === 0;
+    const correctFields = 4 - atcErrors;
+    accuracy = Math.round((correctFields / 4) * 100);
     discrepancyLogItem = atcErrors > 0 ? `ATC retention discrepancy` : null;
   } 
   else if (activeModule === "fault") {
@@ -948,12 +955,15 @@ function submitTelemetry() {
       correct: actionMatch
     });
     
-    isCorrect = systemMatch && actionMatch;
-    discrepancyLogItem = !isCorrect ? `Diagnostic chain protocol failure` : null;
+    const correctMatches = (systemMatch ? 1 : 0) + (actionMatch ? 1 : 0);
+    accuracy = Math.round((correctMatches / 2) * 100);
+    discrepancyLogItem = accuracy < 100 ? `Diagnostic chain protocol failure` : null;
   }
   
-  // Calculate scoring
-  if (isCorrect) {
+  // Calculate scoring & tier
+  let grade = "fail";
+  if (accuracy === 100) {
+    grade = "perfect";
     streak++;
     addedPoints = 1000 + (level * 200);
     
@@ -967,7 +977,21 @@ function submitTelemetry() {
     
     // Edge glow effect
     document.getElementById("main-viewport").className = "viewport-content screen-glow-success";
+  } else if (accuracy >= 50) {
+    grade = "partial";
+    // Streak persists intact (streak remains unchanged)
+    const basePoints = 1000 + (level * 200);
+    const studyBonus = Math.round(studyDurationRemaining * 50);
+    addedPoints = Math.round((basePoints + studyBonus) * (accuracy / 100));
+    
+    sessionScore += addedPoints;
+    playSound("success"); // Muted by default, but wired logically
+    triggerHaptic("warning");
+    
+    // Edge glow effect
+    document.getElementById("main-viewport").className = "viewport-content screen-glow-warning";
   } else {
+    grade = "fail";
     streak = 0;
     playSound("error");
     triggerHaptic("error");
@@ -981,7 +1005,9 @@ function submitTelemetry() {
     round: sessionRound,
     module: activeModule,
     score: addedPoints,
-    correct: isCorrect,
+    correct: accuracy === 100, // exact 100% correct
+    accuracy: accuracy,
+    grade: grade,
     breakdown: breakdownRows,
     blindspot: discrepancyLogItem
   };
@@ -1001,14 +1027,20 @@ function setupFeedbackScreen(res) {
   const verdictCard = document.getElementById("feedback-verdict-card");
   const scoreAdded = document.getElementById("feedback-score-added");
   
-  if (res.correct) {
-    ratingEl.textContent = "CORRECT";
+  if (res.grade === "perfect") {
+    ratingEl.textContent = "PERFECT SUCCESS";
     ratingEl.className = "debrief-rating proficient";
     verdictCard.style.borderColor = "var(--success-border)";
     verdictCard.style.backgroundColor = "var(--success-bg)";
-    scoreAdded.textContent = `+${res.score.toLocaleString()} PTS`;
+    scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK INCREMENTED)`;
+  } else if (res.grade === "partial") {
+    ratingEl.textContent = `PARTIAL SUCCESS (${res.accuracy}%)`;
+    ratingEl.className = "debrief-rating warning";
+    verdictCard.style.borderColor = "var(--warning-border)";
+    verdictCard.style.backgroundColor = "var(--warning-bg)";
+    scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK SAVED!)`;
   } else {
-    ratingEl.textContent = "INCORRECT RESPONSE";
+    ratingEl.textContent = `FAILED (${res.accuracy}%)`;
     ratingEl.className = "debrief-rating unacceptable";
     verdictCard.style.borderColor = "var(--error-border)";
     verdictCard.style.backgroundColor = "var(--error-bg)";
@@ -1055,7 +1087,7 @@ document.getElementById("btn-submit-test").addEventListener("click", submitTelem
 // ==========================================
 
 function finishSession() {
-  const percentage = Math.round((roundByRoundHistory.filter(r => r.correct).length / 8) * 100);
+  const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / 8);
   
   // Tier designations mapping
   let tier = "UNACCEPTABLE";
@@ -1085,11 +1117,26 @@ function finishSession() {
   
   roundByRoundHistory.forEach(r => {
     const tr = document.createElement("tr");
-    if (!r.correct) tr.className = "incorrect-row";
+    let resultText = "FAIL";
+    let resultColor = "var(--error-rose)";
+    
+    if (r.grade === "perfect") {
+      resultText = "PERFECT";
+      resultColor = "var(--success-emerald)";
+    } else if (r.grade === "partial") {
+      tr.className = "warning-row";
+      resultText = `PARTIAL (${r.accuracy}%)`;
+      resultColor = "var(--accent-amber)";
+    } else {
+      tr.className = "incorrect-row";
+      resultText = `FAIL (${r.accuracy}%)`;
+      resultColor = "var(--error-rose)";
+    }
+    
     tr.innerHTML = `
       <td>${String(r.round).padStart(2, "0")}</td>
       <td>${r.module.toUpperCase()}</td>
-      <td style="font-weight:bold; color:${r.correct ? 'var(--success-emerald)' : 'var(--error-rose)'}">${r.correct ? 'PASS' : 'FAIL'}</td>
+      <td style="font-weight:bold; color:${resultColor}">${resultText}</td>
       <td>${r.score.toLocaleString()}</td>
     `;
     tbody.appendChild(tr);

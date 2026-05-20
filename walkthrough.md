@@ -77,3 +77,30 @@ We have implemented an elegant, high-fidelity **Abort Session** flow, an intelli
 * **Apple Multi-Theme Matrix:** Successfully deployed OLED Dark, Apple Light, Monochrome contrast, Nordic Sage, and Warm Sand modes. Active themes persist perfectly across sessions via `localStorage` with zero flash of unstyled theme on launch.
 * **Tactile PC Controls:** Users on physical keyboards can use standard numeric keys and backspaces to interact with instruments and ATC specs. Global game screens transition effortlessly with the Spacebar and Enter keys.
 * **WCAG Legibility Contrast:** Passed. Contrast sweep guarantees robust AAA accessibility scores across all themes, and solid light keypads pop beautifully for a premium visual aesthetic.
+
+---
+
+## 🛡️ Encouraging Graded Criteria (Partial Success Implementation)
+
+To prevent users from feeling discouraged by minor recall errors, we transitioned from a binary PASS/FAIL scoring model to a three-tier, accuracy-based evaluation system:
+
+1. **Perfect Success (100% Accuracy):**
+   * Streak increments (`streak++`).
+   * Awards full base points + speed bonus.
+   * Triggers a stunning emerald green alert glow (`screen-glow-success`) and success haptic vibrations.
+2. **Partial Success (50% to 99% Accuracy):**
+   * **Streak persists intact (saved from reset to 0!)**, allowing users to maintain their level and progression.
+   * Awards partial points calculated proportional to the round accuracy: `Math.round((basePoints + speedBonus) * (accuracy / 100))`.
+   * Triggers a smooth amber alert glow (`screen-glow-warning`) and warning haptic double pulse (`[60, 40, 60]`).
+3. **Failed (< 50% Accuracy):**
+   * Streak resets to `0`.
+   * Awards `0` points.
+   * Triggers a crimson red alert glow (`screen-glow-error`) and error haptic pulse.
+
+### 📊 UI & Debrief Screen Enhancements:
+* **Immediate Feedback Screen:** Added clear accuracy percentage badges (e.g. `PARTIAL SUCCESS (83%)`) and encouraging state indicators such as `STREAK SAVED!` or `STREAK INCREMENTED` to keep users engaged and positive.
+* **Average Session Accuracy:** The final debrief card now reflects average recall accuracy across all 8 rounds:
+  `const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / 8);`
+  This is a vastly fairer representation of overall user performance.
+* **Visual Breakdown Logs:** Replaced generic `PASS`/`FAIL` labels in the round history table with `PERFECT`, `PARTIAL (83%)`, or `FAIL (25%)` colored in emerald, amber, and crimson respectively. Partial rounds are styled with a modern `warning-row` background glow.
+
