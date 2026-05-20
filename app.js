@@ -1213,10 +1213,14 @@ function initSession() {
 
 function renderHistoryChart() {
   const chartWrapper = document.getElementById("history-chart");
+  const sideWrapper = document.getElementById("sidebar-chart");
   chartWrapper.innerHTML = "";
+  if (sideWrapper) sideWrapper.innerHTML = "";
   
   if (globalHistory.length === 0) {
-    chartWrapper.innerHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO SESSION HISTORY RECORDED</div>`;
+    const emptyHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO SESSION HISTORY RECORDED</div>`;
+    chartWrapper.innerHTML = emptyHTML;
+    if (sideWrapper) sideWrapper.innerHTML = emptyHTML;
     return;
   }
   
@@ -1300,6 +1304,9 @@ function renderHistoryChart() {
   });
   
   chartWrapper.appendChild(svg);
+  if (sideWrapper) {
+    sideWrapper.appendChild(svg.cloneNode(true));
+  }
 }
 
 // Initial Home Screen Stats Render
@@ -1318,9 +1325,155 @@ function loadHomeStats() {
     document.getElementById("stat-avg-score").textContent = `${averageGrade}%`;
     document.getElementById("stat-sessions").textContent = totalRuns;
     document.getElementById("stat-max-streak").textContent = `LVL ${maxLv}`;
+    
+    // Update side panel stats
+    const sideHighScore = document.getElementById("side-stat-high-score");
+    const sideAvgScore = document.getElementById("side-stat-avg-score");
+    if (sideHighScore) sideHighScore.textContent = maxScore.toLocaleString();
+    if (sideAvgScore) sideAvgScore.textContent = `${averageGrade}%`;
   }
   
   renderHistoryChart();
 }
 
-window.addEventListener("DOMContentLoaded", loadHomeStats);
+// ==========================================
+// 13. MULTI-THEME SYSTEM (Apple Aesthetics)
+// ==========================================
+function initThemeSystem() {
+  const savedTheme = localStorage.getItem("flightcore_theme") || "dark";
+  setTheme(savedTheme);
+  
+  // Bind toggle button to show selector
+  const btnToggle = document.getElementById("btn-theme-toggle");
+  if (btnToggle) {
+    btnToggle.addEventListener("click", () => {
+      playSound("click");
+      document.getElementById("theme-selector-overlay").style.display = "flex";
+    });
+  }
+  
+  // Bind close button to hide selector
+  const btnClose = document.getElementById("btn-theme-close");
+  if (btnClose) {
+    btnClose.addEventListener("click", () => {
+      playSound("click");
+      document.getElementById("theme-selector-overlay").style.display = "none";
+    });
+  }
+  
+  // Close overlay on click outside card
+  const overlay = document.getElementById("theme-selector-overlay");
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        playSound("click");
+        overlay.style.display = "none";
+      }
+    });
+  }
+  
+  // Bind option buttons
+  const optButtons = document.querySelectorAll(".theme-opt-btn");
+  optButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const themeVal = btn.getAttribute("data-theme-val");
+      playSound("click");
+      setTheme(themeVal);
+      overlay.style.display = "none";
+    });
+  });
+}
+
+function setTheme(themeVal) {
+  document.body.setAttribute("data-theme", themeVal);
+  localStorage.setItem("flightcore_theme", themeVal);
+  
+  // Update active class in options
+  const optButtons = document.querySelectorAll(".theme-opt-btn");
+  optButtons.forEach(btn => {
+    if (btn.getAttribute("data-theme-val") === themeVal) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
+
+// ==========================================
+// 14. PHYSICAL KEYBOARD SUPPORT (PC Users)
+// ==========================================
+window.addEventListener("keydown", (e) => {
+  // Ignore events when user is typing in standard unblocked text inputs
+  if (e.target.tagName === "INPUT" && !e.target.readOnly) return;
+  
+  const key = e.key;
+  
+  // Case 1: Active keypad input session
+  if (focusedInputId !== null) {
+    // Check if numeric field is currently focused
+    const isNumericField = activeModule === "instruments" || 
+      (activeModule === "atc" && (focusedInputId === "freq" || focusedInputId === "squawk"));
+      
+    if (isNumericField) {
+      if (/^[0-9.]$/.test(key)) {
+        e.preventDefault();
+        
+        // Context-aware decimal point restriction
+        const isFloat = focusedInputId === "VIB" || focusedInputId === "BAT" || focusedInputId === "freq";
+        if (key === "." && !isFloat) return;
+        if (key === "." && activeKeypadBuffer.includes(".")) return;
+        
+        if (activeKeypadBuffer.length < 6) {
+          playSound("click");
+          activeKeypadBuffer += key;
+          updateFocusedInputWithValue(activeKeypadBuffer);
+        }
+      } else if (key === "Backspace") {
+        e.preventDefault();
+        playSound("click");
+        activeKeypadBuffer = activeKeypadBuffer.slice(0, -1);
+        updateFocusedInputWithValue(activeKeypadBuffer);
+      } else if (key === "Escape") {
+        e.preventDefault();
+        playSound("click");
+        activeKeypadBuffer = "";
+        updateFocusedInputWithValue("");
+      } else if (key === "Enter") {
+        e.preventDefault();
+        playSound("click");
+        // Close keypad & clear selection indicators
+        document.getElementById("custom-keypad").style.display = "none";
+        document.querySelectorAll(".gauge-card").forEach(c => c.classList.remove("active-step"));
+        document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
+        focusedInputId = null;
+      }
+    }
+    return;
+  }
+  
+  // Case 2: Global application flow hotkeys (Space / Enter)
+  const activeScreen = document.querySelector(".screen-container.active");
+  if (!activeScreen) return;
+  
+  if (key === "Enter" || key === " ") {
+    e.preventDefault();
+    const screenId = activeScreen.id;
+    if (screenId === "screen-home") {
+      document.getElementById("btn-engage-session").click();
+    } else if (screenId === "screen-study") {
+      document.getElementById("btn-skip-timer").click();
+    } else if (screenId === "screen-test") {
+      document.getElementById("btn-submit-test").click();
+    } else if (screenId === "screen-feedback") {
+      document.getElementById("btn-next-round").click();
+    } else if (screenId === "screen-debrief") {
+      document.getElementById("btn-restart").click();
+    }
+  }
+});
+
+// Bootstrap application on DOM ready
+window.addEventListener("DOMContentLoaded", () => {
+  initThemeSystem();
+  loadHomeStats();
+});

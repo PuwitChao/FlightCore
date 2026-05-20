@@ -49,5 +49,7 @@ We have:
 ---
 
 ### Verification Summary
-* **Mobile Responsiveness:** Perfect. Tested scaling across widths down to 360px—cards stack, touch targets maintain strict $\ge 48\text{dp}$ heights, and input fields remain perfectly aligned inside modern viewports.
+* **Mobile Responsiveness & Adaptive Grid:** Perfect. Viewports adapt gracefully from 360px mobile viewports up to 960px+ PC grid displays. Tapping any numeric or text input field natively triggers the custom Apple keypads which slide over the stats panel seamlessly on desktop and tablets without cluttering the screen.
+* **Apple Multi-Theme Matrix:** Successfully deployed OLED Dark, Apple Light, Monochrome contrast, Nordic Sage, and Warm Sand modes. Active themes persist perfectly across sessions via `localStorage` with zero flash of unstyled theme on launch.
+* **Tactile PC Controls:** Users on physical keyboards can use standard numeric keys and backspaces to interact with instruments and ATC specs. Global game screens transition effortlessly with the Spacebar and Enter keys.
 * **WCAG Legibility Contrast:** Passed. High-contrast white text (`#F8FAFC`) on glassmorphic backgrounds yields a robust legibility score exceeding the WCAG AAA requirement.

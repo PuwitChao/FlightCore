@@ -14,7 +14,15 @@
     <header class="dashboard-header">
       <div class="dashboard-row">
         <div class="system-title" id="system-status">FLIGHT CORE</div>
-        <div class="telemetry-value accent" id="hud-level">LVL: 01</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="theme-toggle-btn" id="btn-theme-toggle" title="Select Theme">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2v20a10 10 0 0 0 0-20" fill="currentColor" />
+            </svg>
+          </button>
+          <div class="telemetry-value accent" id="hud-level">LVL: 01</div>
+        </div>
       </div>
       
       <div class="telemetry-grid grid-4">
@@ -286,6 +294,35 @@
 
     </main>
 
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="desktop-sidebar">
+      <div class="terminal-card">
+        <div class="terminal-card-header">
+          <span>Telemetry Stats</span>
+          <span class="type-tag">Live</span>
+        </div>
+        <div class="home-stats-summary" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 0;">
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="side-stat-high-score">0000</span>
+            <span class="home-stat-label">High Score</span>
+          </div>
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="side-stat-avg-score">0.0%</span>
+            <span class="home-stat-label">Avg Grade</span>
+          </div>
+        </div>
+      </div>
+      <div class="terminal-card" style="margin-bottom: 0; flex-grow: 1; display: flex; flex-direction: column;">
+        <div class="terminal-card-header">
+          <span>Session History</span>
+          <span class="type-tag">Trend</span>
+        </div>
+        <div class="history-chart-wrapper" id="sidebar-chart" style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+          <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+        </div>
+      </div>
+    </aside>
+
     <!-- 3. CUSTOM INTEGRATED TERMINAL KEYPAD (BOTTOM) -->
     <footer class="custom-keypad-panel" id="custom-keypad" style="display: none;">
       <!-- Keypad active target banner -->
@@ -332,6 +369,38 @@
         </div>
       </div>
     </footer>
+
+    <!-- Theme Selector Modal Overlay -->
+    <div class="theme-selector-overlay" id="theme-selector-overlay" style="display: none;">
+      <div class="theme-selector-card">
+        <div class="theme-selector-header">
+          <span>Select Theme</span>
+          <button class="theme-close-btn" id="btn-theme-close">&times;</button>
+        </div>
+        <div class="theme-options-grid">
+          <button class="theme-opt-btn" data-theme-val="dark">
+            <span class="theme-opt-indicator" style="background-color: #000000; border: 1px solid rgba(255,255,255,0.2);"></span>
+            <span class="theme-opt-label">OLED Dark</span>
+          </button>
+          <button class="theme-opt-btn" data-theme-val="light">
+            <span class="theme-opt-indicator" style="background-color: #FCFCFC; border: 1px solid rgba(0,0,0,0.15);"></span>
+            <span class="theme-opt-label">Apple Light</span>
+          </button>
+          <button class="theme-opt-btn" data-theme-val="mono">
+            <span class="theme-opt-indicator" style="background: linear-gradient(135deg, #121212 50%, #F3F4F6 50%); border: 1px solid rgba(255,255,255,0.15);"></span>
+            <span class="theme-opt-label">Monochrome</span>
+          </button>
+          <button class="theme-opt-btn" data-theme-val="sage">
+            <span class="theme-opt-indicator" style="background-color: #121815; border: 1px solid #30D158;"></span>
+            <span class="theme-opt-label">Nordic Sage</span>
+          </button>
+          <button class="theme-opt-btn" data-theme-val="warm">
+            <span class="theme-opt-indicator" style="background-color: #FAF5EE; border: 1px solid #D97706;"></span>
+            <span class="theme-opt-label">Warm Sand</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 

@@ -1,8 +1,8 @@
-# Flight Core UI Redesign - Task List
+# Flight Core Responsive & Multi-Theme Checklist (Apple UI Focus)
 
-- `[x]` 1. Rewrite `styles.css` for a premium glassmorphic, iOS-like modern minimalist aesthetic (Inter sans-serif, True Black `#000000` base, soft glass cards, capsule inputs).
-- `[x]` 2. Refactor `index.html` to scrub monospace styles, CRT terminal artifacts, and refine terminology.
-- `[x]` 3. Scrub retro jargon in `app.js` and adapt dynamic elements (e.g. gauge text, feedback labels, charts, debriefing metrics) to the clean Inter font and minimalist look.
-- `[x]` 4. Create an elegant, high-quality `README.md` file with modern formatting and badges, suitable for GitHub and GitHub Pages.
-- `[x]` 5. Commit all changes to Git and push to GitHub `main` branch.
-- `[x]` 6. Verify and document the completed work in `walkthrough.md`.
+- `[x]` 1. Define the 5 CSS Apple-style themes in `styles.css` using custom properties (OLED Dark, Apple Light, Monochrome, Nordic Sage, Warm Sand) adhering strictly to Apple's design system principles.
+- `[x]` 2. Implement the adaptive Tablet/PC dual-column grid layout in `styles.css` using `@media (min-width: 680px)` for side-by-side cockpit displays and inline keypads.
+- `[x]` 3. Refactor `index.html` to add the theme toggle button in the dashboard, the sleek slide-up theme selection overlay, and appropriate layout wrappers.
+- `[x]` 4. Bind physical keyboard event listeners in `app.js` to enable seamless typing, backspacing, and confirmations for gauge/frequency inputs on PC.
+- `[x]` 5. Write the theme toggle, persistence (`localStorage`), and layout-adaptation scripts in `app.js`.
+- `[ ]` 6. Verify across responsive views, commit all changes, and push to GitHub origin.
