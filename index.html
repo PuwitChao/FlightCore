@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flight Core - Operational Memory Trainer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="terminal-frame">
+    
+    <!-- 1. FIXED STATUS DASHBOARD (TOP) -->
+    <header class="dashboard-header">
+      <div class="dashboard-row">
+        <div class="system-title" id="system-status">FLIGHT CORE // OPERATIONAL CONSOLE</div>
+        <div class="telemetry-value accent" id="hud-level">LVL: 01</div>
+      </div>
+      
+      <div class="telemetry-grid grid-4">
+        <!-- Metric 1: Round -->
+        <div class="telemetry-item">
+          <span class="telemetry-label">Round</span>
+          <span class="telemetry-value" id="hud-round">00/08</span>
+        </div>
+        <!-- Metric 2: Score -->
+        <div class="telemetry-item">
+          <span class="telemetry-label">Score</span>
+          <span class="telemetry-value" id="hud-score">00000</span>
+        </div>
+        <!-- Metric 3: Streak -->
+        <div class="telemetry-item">
+          <span class="telemetry-label">Streak</span>
+          <div class="streak-chevrons" id="hud-streak-container">
+            <div class="chevron"></div>
+            <div class="chevron"></div>
+            <div class="chevron"></div>
+            <div class="chevron"></div>
+            <div class="chevron"></div>
+          </div>
+        </div>
+        <!-- Metric 4: Module Name -->
+        <div class="telemetry-item">
+          <span class="telemetry-label">Module</span>
+          <span class="telemetry-value" id="hud-module">STANDBY</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. DYNAMIC VIEWPORT (60% Height) -->
+    <main class="viewport-content" id="main-viewport">
+      
+      <!-- SCREEN 1: HOME/START SCREEN -->
+      <section class="screen-container active" id="screen-home">
+        <div class="terminal-card">
+          <div class="terminal-card-header">
+            <span>Operational Directive</span>
+            <span class="type-tag">System Info</span>
+          </div>
+          <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-white); margin-bottom: 12px;">
+            Welcome to the <strong style="color: var(--accent-amber);">Flight Core Memory Console</strong>. This high-pressure terminal simulates the high-fidelity cognitive environment of a commercial flight deck.
+          </p>
+          <p style="font-size: 0.75rem; line-height: 1.4; color: var(--text-muted);">
+            Engage checklists, gauges, ATC instructions, and reactive fault diagnoses across 8-round cycles. Difficulty scales dynamically with your streak.
+          </p>
+        </div>
+
+        <div class="home-stats-summary">
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="stat-high-score">0000</span>
+            <span class="home-stat-label">High Score</span>
+          </div>
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="stat-avg-score">0.0%</span>
+            <span class="home-stat-label">Avg Grade</span>
+          </div>
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="stat-sessions">0</span>
+            <span class="home-stat-label">Runs Done</span>
+          </div>
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="stat-max-streak">0</span>
+            <span class="home-stat-label">Max Streak</span>
+          </div>
+        </div>
+
+        <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card-header">
+            <span>Telemetry Progress Chart</span>
+            <span class="type-tag">Trend</span>
+          </div>
+          <div class="history-chart-wrapper" id="history-chart">
+            <!-- SVG sparked dynamically from JS -->
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; line-height: 70px; font-family: var(--font-mono);">NO RECENT TELEMETRY HISTORY</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-engage-session">
+          <span class="btn-icon">▲</span> SYSTEM ENGAGE (COLD START)
+        </button>
+      </section>
+
+      <!-- SCREEN 2: STUDY/BRIEFING SCREEN -->
+      <section class="screen-container" id="screen-study">
+        <div class="timer-container">
+          <div class="timer-bar" id="study-timer-bar"></div>
+        </div>
+        
+        <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
+          <span id="study-type-title">TECHNICAL BRIEFING: MASTER DATA</span>
+          <span class="type-tag" id="study-timer-display" style="font-family: var(--font-mono);">05.00s</span>
+        </div>
+
+        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 180px;">
+          <!-- Checklist briefing slot -->
+          <div id="briefing-checklist" style="display: none; width: 100%;">
+            <h3 style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-amber); margin-bottom: 12px; text-transform: uppercase;" id="checklist-title-brief">APU INITIALIZATION SEQUENCE</h3>
+            <ol style="font-family: var(--font-mono); font-size: 0.75rem; padding-left: 20px; line-height: 1.6;" id="checklist-list-brief">
+              <!-- JS Injected -->
+            </ol>
+          </div>
+
+          <!-- Instruments briefing slot -->
+          <div id="briefing-instruments" style="display: none; width: 100%;">
+            <div class="gauges-grid" id="instruments-grid-brief">
+              <!-- JS Injected -->
+            </div>
+          </div>
+
+          <!-- ATC briefing slot -->
+          <div id="briefing-atc" style="display: none; width: 100%;">
+            <p style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-mono); margin-bottom: 6px;">RADIO COMM TRANSMISSION:</p>
+            <div class="atc-telemetry-display" id="atc-string-brief">
+              <!-- JS Injected -->
+            </div>
+          </div>
+
+          <!-- Fault briefing slot -->
+          <div id="briefing-fault" style="display: none; width: 100%;">
+            <h3 style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-amber); margin-bottom: 12px; text-transform: uppercase;" id="fault-symptom-brief">SYMPTOM: HYDRAULIC LEAK</h3>
+            <div class="fault-chain-flow" id="fault-flow-brief">
+              <!-- JS Injected -->
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-skip-timer" style="margin-top: 12px;">
+          PROCEED TO RECALL
+        </button>
+      </section>
+
+      <!-- SCREEN 3: TEST/INPUT SCREEN -->
+      <section class="screen-container" id="screen-test">
+        <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
+          <span>RECONSTRUCT TELEMETRY DATA</span>
+          <span class="type-tag" style="color: var(--accent-cyan);" id="test-type-label">RECALL STAGE</span>
+        </div>
+
+        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; min-height: 200px; padding: 12px; overflow-y: auto;">
+          <!-- Checklist test slot -->
+          <div id="test-checklist" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 8px;">TAP STEPS IN MASTER PROCEDURAL ORDER:</p>
+            <div class="checklist-slots-container" id="checklist-slots">
+              <!-- JS Injected Slots -->
+            </div>
+            
+            <div class="pool-container">
+              <div class="pool-title">AVAILABLE PROCEDURAL BLOCKS (WITH DISTRACTORS)</div>
+              <div class="pool-items" id="checklist-pool">
+                <!-- JS Injected pool options -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Instruments test slot -->
+          <div id="test-instruments" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 8px;">SELECT GAUGE AND ENTER ACCURATE VALUES:</p>
+            <div class="gauges-grid" id="instruments-grid-test">
+              <!-- JS Injected Blanked Gauges -->
+            </div>
+          </div>
+
+          <!-- ATC test slot -->
+          <div id="test-atc" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 8px;">ENTER TRANSMISSION SPECS:</p>
+            <div class="atc-inputs-grid">
+              <div class="atc-input-wrapper">
+                <span class="atc-input-label">Callsign</span>
+                <input type="text" class="input-terminal" id="atc-input-callsign" readonly placeholder="TAP TO FOCUS">
+              </div>
+              <div class="atc-input-wrapper">
+                <span class="atc-input-label">Facility</span>
+                <input type="text" class="input-terminal" id="atc-input-facility" readonly placeholder="TAP TO FOCUS">
+              </div>
+              <div class="atc-input-wrapper">
+                <span class="atc-input-label">Frequency</span>
+                <input type="text" class="input-terminal" id="atc-input-freq" readonly placeholder="TAP TO FOCUS">
+              </div>
+              <div class="atc-input-wrapper">
+                <span class="atc-input-label">Squawk</span>
+                <input type="text" class="input-terminal" id="atc-input-squawk" readonly placeholder="TAP TO FOCUS">
+              </div>
+            </div>
+          </div>
+
+          <!-- Fault test slot -->
+          <div id="test-fault" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 8px;" id="fault-symptom-test-label">SYMPTOM: HYDRAULIC LEAK</p>
+            <div class="fault-chain-flow" id="fault-slots">
+              <!-- JS Injected Slots -->
+            </div>
+            
+            <div class="pool-container">
+              <div class="pool-title">CHOOSE STEPS IN PROTOCOL SEQUENCE:</div>
+              <div class="pool-items" id="fault-pool">
+                <!-- JS Injected Options -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-success btn-block" id="btn-submit-test" style="margin-top: 12px;">
+          SUBMIT TELEMETRY
+        </button>
+      </section>
+
+      <!-- SCREEN 4: IMMEDIATE FEEDBACK SCREEN -->
+      <section class="screen-container" id="screen-feedback">
+        <div class="debrief-score-card" id="feedback-verdict-card" style="padding: 14px; margin-bottom: 12px;">
+          <span style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;">VERDICT DIRECTIVE</span>
+          <div class="debrief-rating" id="feedback-verdict-rating">NOMINAL</div>
+          <div style="font-family: var(--font-mono); font-size: 0.7rem; margin-top: 4px; color: var(--text-muted);" id="feedback-score-added">+150 PTS</div>
+        </div>
+
+        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; max-height: 220px;">
+          <div class="terminal-card-header">
+            <span>Telemetry Discrepancy Breakdown</span>
+            <span class="type-tag">Auditing</span>
+          </div>
+          <div class="feedback-details" id="feedback-details-list">
+            <!-- JS Injected Breakdown Rows -->
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-next-round" style="margin-top: 12px;">
+          RESUME WORKCYCLE
+        </button>
+      </section>
+
+      <!-- SCREEN 5: FINAL DEBRIEFING SCREEN -->
+      <section class="screen-container" id="screen-debrief">
+        <div class="debrief-score-card">
+          <span style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;">WORKCYCLE COMPLETE</span>
+          <div style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: var(--accent-cyan); margin: 6px 0;" id="debrief-score">09,450</div>
+          <div style="font-family: var(--font-sans); font-size: 0.8rem; color: var(--text-muted); font-weight: 500;" id="debrief-percentage">92% ACCURACY</div>
+          <div class="debrief-rating proficient" id="debrief-rating-label">PROFICIENT</div>
+        </div>
+
+        <div class="debrief-table-container" style="max-height: 120px; overflow-y: auto;">
+          <table class="debrief-table">
+            <thead>
+              <tr>
+                <th>Rnd</th>
+                <th>Module</th>
+                <th>Result</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody id="debrief-table-rows">
+              <!-- JS Injected debrief lines -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="blindspot-log" id="debrief-blindspots" style="display: none;">
+          <div class="blindspot-title">🚩 COGNITIVE BLINDSPOTS FLAGGED</div>
+          <ul class="blindspot-list" id="debrief-blindspot-list">
+            <!-- JS Injected errors -->
+          </ul>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-restart" style="margin-top: auto;">
+          RE-ENGAGE SYSTEM
+        </button>
+      </section>
+
+    </main>
+
+    <!-- 3. CUSTOM INTEGRATED TERMINAL KEYPAD (BOTTOM) -->
+    <footer class="custom-keypad-panel" id="custom-keypad" style="display: none;">
+      <!-- Keypad active target banner -->
+      <div style="display: flex; justify-content: space-between; align-items: center; background-color: rgba(12, 14, 18, 0.9); padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 4px;">
+        <span style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted);" id="keypad-input-label">ACTIVE INPUT: IAS</span>
+        <span style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: bold; color: var(--accent-amber);" id="keypad-preview-value">---</span>
+      </div>
+
+      <div class="keypad-grid">
+        <button class="keypad-btn">1</button>
+        <button class="keypad-btn">2</button>
+        <button class="keypad-btn">3</button>
+        
+        <button class="keypad-btn">4</button>
+        <button class="keypad-btn">5</button>
+        <button class="keypad-btn">6</button>
+        
+        <button class="keypad-btn">7</button>
+        <button class="keypad-btn">8</button>
+        <button class="keypad-btn">9</button>
+        
+        <button class="keypad-btn" id="keypad-dot">.</button>
+        <button class="keypad-btn">0</button>
+        <button class="keypad-btn action" id="keypad-back">⌫</button>
+      </div>
+
+      <div class="keypad-grid" style="grid-template-columns: 1fr 1fr; margin-top: 4px;">
+        <button class="keypad-btn action" id="keypad-clear" style="height: 40px; font-size: 0.75rem;">CLEAR</button>
+        <button class="keypad-btn action enter" id="keypad-enter" style="height: 40px; font-size: 0.75rem;">CONFIRM</button>
+      </div>
+    </footer>
+
+    <!-- Text keyboard options (letters panel for Callsign/Facility) -->
+    <footer class="custom-keypad-panel" id="custom-text-keypad" style="display: none; padding: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; background-color: rgba(12, 14, 18, 0.9); padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 6px;">
+        <span style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted);" id="text-keypad-input-label">ACTIVE FIELD: CALLSIGN</span>
+        <span style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: bold; color: var(--accent-amber);" id="text-keypad-preview-value">---</span>
+      </div>
+
+      <!-- Quick select options for Facility/Callsign to avoid full keyboard input but still test recall! -->
+      <div class="pool-container" style="border: none; padding: 0; margin: 0;">
+        <div class="pool-items" id="text-keypad-options" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+          <!-- JS Injected quick select buttons (minimum touch target 44px) -->
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
