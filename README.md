@@ -39,8 +39,8 @@ $$\text{Level} = 1 + \lfloor \frac{\text{Streak}}{2} \rfloor$$
 ### 2. Diverse Module Distribution ("No 3x Repeat" Rule)
 To prevent fatigue and guarantee robust training across all modules, the system implements an internal tracking filter. If a module is chosen twice consecutively, the game engine guarantees it will be filtered out on the third draw, ensuring a highly diverse training session.
 
-### 3. Client-Side Web Audio Synthesizer
-Uses the modern native **Web Audio API** to compile and synthesize operational cockpit chime registers and alert indicators directly in-browser. Zero audio asset downloads are required, keeping the application entirely offline-ready.
+### 3. High-Fidelity Cockpit Alarm Glows
+Employs an aesthetic visual-haptic alert layer using dynamic, translucent border glows (emerald green for correct answers, high-contrast ruby red for errors) with an extended 1200ms cockpit fade animation. Completely silent by design for low-distraction cognitive training in public/mobile environments.
 
 ---
 
@@ -78,9 +78,9 @@ Because Flight Core is built entirely on standard Web specs (Vanilla HTML5, mode
 ---
 
 ## 📂 Project File Structure
-* [`index.html`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) - Structural framework, markup screens, dynamic dials, and integrated keypad containers.
-* [`styles.css`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css) - Premium minimalist design tokens, responsive typography rules, glassmorphism overlays, and iOS tactile button styles.
-* [`app.js`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js) - RNG data engines, difficulty loop controllers, Web Audio synth triggers, and interactive SVG run metrics charts.
+* [`index.html`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) - Structural framework, markup screens, tactile keypads, and Cupertino-style module selection interfaces.
+* [`styles.css`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css) - Premium minimalist design tokens, responsive typography rules, glassmorphism overlays, custom animations (e.g., passcode-style shake), and iOS tactile button styles.
+* [`app.js`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js) - RNG data engines, difficulty loop controllers, visual haptic glows, module randomization filters, and pure text session history lists.
 
 ---
 

@@ -72,6 +72,7 @@ let streak = 0;
 let level = 1;
 let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
+let selectedModules = ["checklist", "instruments", "atc", "fault"];
 
 let currentRndExpected = null;
 let currentRndInput = null;
@@ -86,58 +87,11 @@ let roundByRoundHistory = []; // Session history
 let globalHistory = JSON.parse(localStorage.getItem("flightcore_history") || "[]");
 
 // ==========================================
-// 3. AUDIO SYNTH (Web Audio API)
+// 3. AUDIO SYNTH (Muted for Silent Visual Alerts)
 // ==========================================
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
 function playSound(type) {
-  try {
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    if (type === "success") {
-      // High-pitched double beep
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.08);
-      
-      setTimeout(() => {
-        const osc2 = audioCtx.createOscillator();
-        const gainNode2 = audioCtx.createGain();
-        osc2.connect(gainNode2);
-        gainNode2.connect(audioCtx.destination);
-        osc2.type = "sine";
-        osc2.frequency.setValueAtTime(1320, audioCtx.currentTime); // E6
-        gainNode2.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.12);
-      }, 90);
-    } else if (type === "error") {
-      // Low rasping alert buzz
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(140, audioCtx.currentTime); // F3
-      gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.25);
-    } else if (type === "click") {
-      // Quick tech-terminal key click
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.02);
-    }
-  } catch (e) {
-    console.error("Audio error", e);
-  }
+  // Sounds muted in favor of sleek, silent premium visual cockpit alert flashes
 }
 
 // Simulates tactile feedback
@@ -177,15 +131,15 @@ function updateLevelAndHUD() {
 }
 
 function selectNextModule() {
-  const modules = ["checklist", "instruments", "atc", "fault"];
+  // Pull from active user selection
+  let allowed = [...selectedModules];
   
-  // Apply "No 3x Repeat" filtering logic
-  let allowed = [...modules];
-  if (recentlyPlayedModules.length >= 2 && recentlyPlayedModules[0] === recentlyPlayedModules[1]) {
-    // If the last 2 modules were the same, exclude it!
+  // Apply "No 3x Repeat" filtering logic ONLY if there are multiple modules active
+  if (allowed.length >= 2 && recentlyPlayedModules.length >= 2 && recentlyPlayedModules[0] === recentlyPlayedModules[1]) {
     allowed = allowed.filter(m => m !== recentlyPlayedModules[0]);
   }
   
+  // Pick one randomly
   const selected = allowed[Math.floor(Math.random() * allowed.length)];
   
   // Track recently played
@@ -465,7 +419,7 @@ function setupStudyScreen(module) {
   }, intervalTime);
 }
 
-// Create animated SVG gauge component
+// Clean text and numbers only for Instruments
 function createGaugeHTML(g, isBlanked = false) {
   const container = document.createElement("div");
   container.className = "gauge-card" + (isBlanked ? " blanked" : "");
@@ -473,30 +427,17 @@ function createGaugeHTML(g, isBlanked = false) {
     container.setAttribute("data-label", g.label);
   }
   
-  // Circular gauge drawing specs
-  const radius = 30;
-  const circ = 2 * Math.PI * radius;
-  // Sweep limit is 270 degrees (dashoffset represents percent full)
-  const percentVal = (g.val - g.min) / (g.max - g.min);
-  const strokeVal = percentVal * 0.75 * circ; // 75% sweep max
-  const offset = circ - strokeVal;
-  
-  // Calculate needle rotation angle (sweep starts at -225deg, ends at +45deg)
-  const needleRot = -225 + percentVal * 270;
-  
   container.innerHTML = `
-    <div class="gauge-svg-container">
-      <svg width="76" height="76" viewBox="0 0 76 76">
-        <!-- Scale Ring -->
-        <circle cx="38" cy="38" r="${radius}" fill="none" stroke="rgba(224,224,224,0.05)" stroke-width="4" />
-        <!-- Accent Value Ring -->
-        <circle class="gauge-svg-dial" cx="38" cy="38" r="${radius}" fill="none" stroke="${g.color}" stroke-dasharray="${circ}" stroke-dashoffset="${isBlanked ? circ : offset}" stroke-width="4" stroke-linecap="round" />
-        <!-- Digital Needle Indicator -->
-        <line class="gauge-needle" x1="38" y1="38" x2="38" y2="12" stroke="${isBlanked ? 'rgba(224,224,224,0.1)' : g.color}" stroke-width="2" stroke-linecap="round" style="transform: rotate(${isBlanked ? -225 : needleRot}deg)" />
-      </svg>
-      <div class="gauge-value-display">${isBlanked ? "???" : g.val}</div>
+    <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.65rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
+      <span style="color: ${g.color || 'var(--accent-blue)'};">${g.label}</span>
+      <span>${g.unit}</span>
     </div>
-    <div class="gauge-label">${g.label}</div>
+    <div class="gauge-value-display" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 6px 0; letter-spacing: -0.5px;">
+      ${isBlanked ? "???" : g.val}
+    </div>
+    <div class="gauge-name" style="font-size: 0.58rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; text-align: center;">
+      ${g.name}
+    </div>
   `;
   
   return container;
@@ -1047,7 +988,7 @@ function submitTelemetry() {
   
   setTimeout(() => {
     document.getElementById("main-viewport").className = "viewport-content";
-  }, 350);
+  }, 1200);
 }
 
 function setupFeedbackScreen(res) {
@@ -1208,7 +1149,7 @@ function initSession() {
 }
 
 // ==========================================
-// 12. RUNS HISTORY Sparkline Chart (SVG)
+// 12. RUNS HISTORY Sparkline Chart (Pure Text Session History)
 // ==========================================
 
 function renderHistoryChart() {
@@ -1224,88 +1165,26 @@ function renderHistoryChart() {
     return;
   }
   
-  const width = 416; // Outer layout width
-  const height = 75;
-  const padding = 10;
+  const createHistoryListHTML = (historyData) => {
+    let html = `<div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">`;
+    const recent = [...historyData].reverse().slice(0, 3);
+    recent.forEach((h) => {
+      const dateStr = new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: rgba(255,255,255,0.01);">
+          <span style="font-weight: 700; color: var(--accent-blue);">${dateStr}</span>
+          <span style="color: var(--text-primary); font-weight: 600;">${h.score.toLocaleString()} PTS</span>
+          <span style="font-weight: 700; font-size: 0.65rem; color: ${h.percentage >= 90 ? 'var(--success-emerald)' : 'var(--text-secondary)'};">${h.percentage}% ACC</span>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    return html;
+  };
   
-  // Render small inline micro SVG
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  
-  // Max score reference
-  const scores = globalHistory.map(h => h.score);
-  const maxScore = Math.max(...scores, 4000); // Baseline max to prevent huge spikes
-  const minScore = 0;
-  
-  const pointsCount = globalHistory.length;
-  const xDiff = pointsCount > 1 ? (width - padding * 2) / (pointsCount - 1) : width - padding * 2;
-  
-  // Map points
-  const points = globalHistory.map((h, idx) => {
-    const x = padding + idx * xDiff;
-    // Map score inverted (0 is top in SVG coordinates)
-    const y = height - padding - ((h.score - minScore) / (maxScore - minScore)) * (height - padding * 2);
-    return { x, y, score: h.score };
-  });
-  
-  // Draw grid helper lines
-  const gridLineY = height / 2;
-  const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  gridLine.setAttribute("x1", "0");
-  gridLine.setAttribute("y1", String(gridLineY));
-  gridLine.setAttribute("x2", String(width));
-  gridLine.setAttribute("y2", String(gridLineY));
-  gridLine.setAttribute("stroke", "rgba(255,255,255,0.04)");
-  gridLine.setAttribute("stroke-width", "1");
-  svg.appendChild(gridLine);
-  
-  // Draw glowing area
-  let areaD = `M ${points[0].x} ${height - padding} `;
-  points.forEach(p => {
-    areaD += `L ${p.x} ${p.y} `;
-  });
-  areaD += `L ${points[points.length - 1].x} ${height - padding} Z`;
-  
-  const area = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  area.setAttribute("d", areaD);
-  area.setAttribute("fill", "rgba(0, 122, 255, 0.04)");
-  svg.appendChild(area);
-  
-  // Draw stroke line
-  let lineD = `M ${points[0].x} ${points[0].y} `;
-  for (let i = 1; i < points.length; i++) {
-    lineD += `L ${points[i].x} ${points[i].y} `;
-  }
-  
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", lineD);
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "var(--accent-blue)");
-  path.setAttribute("stroke-width", "2");
-  path.setAttribute("stroke-linecap", "round");
-  svg.appendChild(path);
-  
-  // Draw anchor dots
-  points.forEach((p, idx) => {
-    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    dot.setAttribute("cx", String(p.x));
-    dot.setAttribute("cy", String(p.y));
-    dot.setAttribute("r", idx === points.length - 1 ? "4" : "2.5");
-    dot.setAttribute("fill", idx === points.length - 1 ? "var(--accent-amber)" : "var(--accent-blue)");
-    
-    // Tooltip helper
-    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-    title.textContent = `Score: ${p.score.toLocaleString()}`;
-    dot.appendChild(title);
-    
-    svg.appendChild(dot);
-  });
-  
-  chartWrapper.appendChild(svg);
+  chartWrapper.innerHTML = createHistoryListHTML(globalHistory);
   if (sideWrapper) {
-    sideWrapper.appendChild(svg.cloneNode(true));
+    sideWrapper.innerHTML = createHistoryListHTML(globalHistory);
   }
 }
 
@@ -1472,8 +1351,36 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+function initModuleSelection() {
+  const cards = document.querySelectorAll(".module-select-card");
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      const mod = card.getAttribute("data-module");
+      if (card.classList.contains("active")) {
+        // Trying to deactivate
+        if (selectedModules.length <= 1) {
+          // Play Apple-style shake animation for feedback!
+          card.classList.add("shake");
+          triggerHaptic("error");
+          setTimeout(() => card.classList.remove("shake"), 300);
+          return;
+        }
+        card.classList.remove("active");
+        selectedModules = selectedModules.filter(m => m !== mod);
+      } else {
+        card.classList.add("active");
+        selectedModules.push(mod);
+      }
+      
+      // Update label count
+      document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
+    });
+  });
+}
+
 // Bootstrap application on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
   initThemeSystem();
   loadHomeStats();
+  initModuleSelection();
 });

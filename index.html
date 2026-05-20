@@ -103,6 +103,32 @@
           </div>
         </div>
 
+        <!-- Game Selection Card -->
+        <div class="terminal-card" style="margin-bottom: 16px;" id="game-selection-card">
+          <div class="terminal-card-header">
+            <span>Choose Training Modules</span>
+            <span class="type-tag" id="modules-selected-count">4 Active</span>
+          </div>
+          <div class="module-selection-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div class="module-select-card active" data-module="checklist" id="select-checklist">
+              <span class="select-indicator"></span>
+              <span style="font-size: 0.78rem; font-weight: 600;">Checklist</span>
+            </div>
+            <div class="module-select-card active" data-module="instruments" id="select-instruments">
+              <span class="select-indicator"></span>
+              <span style="font-size: 0.78rem; font-weight: 600;">Instruments</span>
+            </div>
+            <div class="module-select-card active" data-module="atc" id="select-atc">
+              <span class="select-indicator"></span>
+              <span style="font-size: 0.78rem; font-weight: 600;">ATC</span>
+            </div>
+            <div class="module-select-card active" data-module="fault" id="select-fault">
+              <span class="select-indicator"></span>
+              <span style="font-size: 0.78rem; font-weight: 600;">Fault</span>
+            </div>
+          </div>
+        </div>
+
         <button class="btn btn-primary btn-block" id="btn-engage-session">
           START TRAINING SESSION
         </button>
@@ -240,7 +266,7 @@
           <div style="font-size: 0.72rem; margin-top: 4px; color: var(--text-muted); font-weight: 600;" id="feedback-score-added">+150 PTS</div>
         </div>
 
-        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; max-height: 220px;">
+        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column;">
           <div class="terminal-card-header">
             <span>Recall Analysis</span>
             <span class="type-tag">Auditing</span>

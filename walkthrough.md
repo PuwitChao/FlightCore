@@ -33,10 +33,11 @@ Scrubbed all retro computer/CRT jargon from `index.html` and `app.js` to align w
 
 ---
 
-## 📈 SVG Visual Polish
+## 📈 Pure Text & Typography Architecture (Zero-SVG Layouts)
 
-* **History Sparkline:** Replaced neon cyan glowing elements with a clean sapphire blue gradient path, modern neutral grid guides, and clean Inter sans-serif label containers.
-* **Dial Instruments:** Redesigned SVGs to render smooth dial progress arcs and modern center digital readouts without glowing CRT drop-shadows.
+We successfully purged all volatile, hard-to-scale SVG visual elements in favor of hyper-clean, responsive, semantic typography:
+* **Instruments & Dial Gauges:** Completely eliminated dynamic SVG gauge dials, paths, and needle rotations in `createGaugeHTML`. They are replaced by beautiful text-and-number grids showcasing Gauge labels, color-coded status, units, and clear, bold digital readouts.
+* **History Session Chart:** Replaced the SVG sparkline with a modern text-based capsule list. It showcases the last 3 training runs displaying the formatted date, high-accuracy scores, and percentage tier badges with a border layout that is ultra-readable across all viewports.
 
 ---
 

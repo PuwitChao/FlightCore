@@ -1,8 +1,11 @@
-# Flight Core Responsive & Multi-Theme Checklist (Apple UI Focus)
+# Execution Tasks - Sizing, Silence, Toggles, and Text layout
 
-- `[x]` 1. Define the 5 CSS Apple-style themes in `styles.css` using custom properties (OLED Dark, Apple Light, Monochrome, Nordic Sage, Warm Sand) adhering strictly to Apple's design system principles.
-- `[x]` 2. Implement the adaptive Tablet/PC dual-column grid layout in `styles.css` using `@media (min-width: 680px)` for side-by-side cockpit displays and inline keypads.
-- `[x]` 3. Refactor `index.html` to add the theme toggle button in the dashboard, the sleek slide-up theme selection overlay, and appropriate layout wrappers.
-- `[x]` 4. Bind physical keyboard event listeners in `app.js` to enable seamless typing, backspacing, and confirmations for gauge/frequency inputs on PC.
-- `[x]` 5. Write the theme toggle, persistence (`localStorage`), and layout-adaptation scripts in `app.js`.
-- `[x]` 6. Verify across responsive views, commit all changes, and push to GitHub origin.
+- `[x]` 1. Define snappy Apple-style `@keyframes shake` and `.shake` class inside `styles.css`.
+- `[x]` 2. Integrate the interactive Cupertino-style Game Selection Card in `index.html` `#screen-home` above the start session button.
+- `[x]` 3. Remove inline `max-height: 220px;` and `overflow-y: auto;` from Screen 4 recall card wrapper in `index.html`.
+- `[x]` 4. Silence Web Audio engine inside `app.js` (remove `AudioContext` and make `playSound` a no-op).
+- `[x]` 5. Extend screen visual glow alert duration in `app.js` to `1200ms` for smooth cockpit fades.
+- `[x]` 6. Refactor `createGaugeHTML` inside `app.js` to display pure text/numbers, removing all SVG layout elements.
+- `[x]` 7. Refactor `renderHistoryChart` inside `app.js` to render a modern text list showing details of the last 3 sessions.
+- `[x]` 8. Integrate interactive selection card state, click listeners, shake alerts, and next module random filter logic in `app.js`.
+- `[x]` 9. Manually verify all screen states, sizing, selector toggles, and layout changes.
