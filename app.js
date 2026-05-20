@@ -1056,17 +1056,17 @@ function setupFeedbackScreen(res) {
   const scoreAdded = document.getElementById("feedback-score-added");
   
   if (res.correct) {
-    ratingEl.textContent = "NOMINAL // STATUS OK";
+    ratingEl.textContent = "CORRECT";
     ratingEl.className = "debrief-rating proficient";
-    verdictCard.style.borderColor = "var(--success-emerald)";
-    verdictCard.style.backgroundColor = "rgba(74, 124, 89, 0.08)";
+    verdictCard.style.borderColor = "var(--success-border)";
+    verdictCard.style.backgroundColor = "var(--success-bg)";
     scoreAdded.textContent = `+${res.score.toLocaleString()} PTS`;
   } else {
-    ratingEl.textContent = "TELEMETRY ERROR DETECTED";
+    ratingEl.textContent = "INCORRECT RESPONSE";
     ratingEl.className = "debrief-rating unacceptable";
-    verdictCard.style.borderColor = "var(--error-crimson)";
-    verdictCard.style.backgroundColor = "rgba(165, 70, 87, 0.08)";
-    scoreAdded.textContent = "000 PTS (STREAK RESET)";
+    verdictCard.style.borderColor = "var(--error-border)";
+    verdictCard.style.backgroundColor = "var(--error-bg)";
+    scoreAdded.textContent = "+0 PTS (STREAK RESET)";
   }
   
   // Render expected vs input table items
@@ -1127,7 +1127,7 @@ function finishSession() {
   
   // Score display
   document.getElementById("debrief-score").textContent = sessionScore.toLocaleString();
-  document.getElementById("debrief-percentage").textContent = `${percentage}% SEQUENCE ACCURACY`;
+  document.getElementById("debrief-percentage").textContent = `${percentage}% ACCURACY`;
   
   const ratingLabel = document.getElementById("debrief-rating-label");
   ratingLabel.textContent = tier;
@@ -1143,7 +1143,7 @@ function finishSession() {
     tr.innerHTML = `
       <td>${String(r.round).padStart(2, "0")}</td>
       <td>${r.module.toUpperCase()}</td>
-      <td style="font-weight:bold; color:${r.correct ? 'var(--success-emerald)' : 'var(--error-crimson)'}">${r.correct ? 'PASS' : 'FAIL'}</td>
+      <td style="font-weight:bold; color:${r.correct ? 'var(--success-emerald)' : 'var(--error-rose)'}">${r.correct ? 'PASS' : 'FAIL'}</td>
       <td>${r.score.toLocaleString()}</td>
     `;
     tbody.appendChild(tr);
@@ -1216,7 +1216,7 @@ function renderHistoryChart() {
   chartWrapper.innerHTML = "";
   
   if (globalHistory.length === 0) {
-    chartWrapper.innerHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; line-height: 70px; font-family: var(--font-mono);">NO TELEMETRY RECORDED</div>`;
+    chartWrapper.innerHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO SESSION HISTORY RECORDED</div>`;
     return;
   }
   
@@ -1253,7 +1253,7 @@ function renderHistoryChart() {
   gridLine.setAttribute("y1", String(gridLineY));
   gridLine.setAttribute("x2", String(width));
   gridLine.setAttribute("y2", String(gridLineY));
-  gridLine.setAttribute("stroke", "rgba(224,224,224,0.03)");
+  gridLine.setAttribute("stroke", "rgba(255,255,255,0.04)");
   gridLine.setAttribute("stroke-width", "1");
   svg.appendChild(gridLine);
   
@@ -1266,7 +1266,7 @@ function renderHistoryChart() {
   
   const area = document.createElementNS("http://www.w3.org/2000/svg", "path");
   area.setAttribute("d", areaD);
-  area.setAttribute("fill", "rgba(72, 149, 239, 0.05)");
+  area.setAttribute("fill", "rgba(0, 122, 255, 0.04)");
   svg.appendChild(area);
   
   // Draw stroke line
@@ -1278,10 +1278,9 @@ function renderHistoryChart() {
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", lineD);
   path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "var(--accent-cyan)");
+  path.setAttribute("stroke", "var(--accent-blue)");
   path.setAttribute("stroke-width", "2");
   path.setAttribute("stroke-linecap", "round");
-  path.setAttribute("filter", "drop-shadow(0px 0px 4px rgba(72, 149, 239, 0.4))");
   svg.appendChild(path);
   
   // Draw anchor dots
@@ -1290,7 +1289,7 @@ function renderHistoryChart() {
     dot.setAttribute("cx", String(p.x));
     dot.setAttribute("cy", String(p.y));
     dot.setAttribute("r", idx === points.length - 1 ? "4" : "2.5");
-    dot.setAttribute("fill", idx === points.length - 1 ? "var(--accent-amber)" : "var(--accent-cyan)");
+    dot.setAttribute("fill", idx === points.length - 1 ? "var(--accent-amber)" : "var(--accent-blue)");
     
     // Tooltip helper
     const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
