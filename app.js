@@ -79,6 +79,7 @@ let currentRndInput = null;
 let studyTimer = null;
 let studyDurationRemaining = 0;
 let briefingStartTime = 0;
+let isTimerPaused = false;
 
 let focusedInputId = null;
 let activeKeypadBuffer = "";
@@ -295,6 +296,9 @@ function showScreen(screenId) {
   // Hide keypad and text inputs by default unless needed
   document.getElementById("custom-keypad").style.display = "none";
   document.getElementById("custom-text-keypad").style.display = "none";
+  
+  // Automatically toggle abort header based on screen
+  updateHeaderControls(screenId);
 }
 
 // Start Round
@@ -407,6 +411,7 @@ function setupStudyScreen(module) {
   let tick = 0;
   
   studyTimer = setInterval(() => {
+    if (isTimerPaused) return;
     tick++;
     studyDurationRemaining = Math.max(studySecs - (tick * intervalTime) / 1000, 0);
     timerBar.style.width = `${(studyDurationRemaining / studySecs) * 1000 / 10}%`;
@@ -1216,6 +1221,92 @@ function loadHomeStats() {
 }
 
 // ==========================================
+// SESSION ABORT SYSTEM & UTILS
+// ==========================================
+function updateHeaderControls(screenId) {
+  const abortBtn = document.getElementById("btn-session-abort");
+  const systemStatus = document.getElementById("system-status");
+  
+  if (screenId === "screen-study" || screenId === "screen-test" || screenId === "screen-feedback") {
+    abortBtn.style.display = "inline-flex";
+    systemStatus.style.display = "none";
+  } else {
+    abortBtn.style.display = "none";
+    systemStatus.style.display = "block";
+  }
+}
+
+function showAbortConfirm() {
+  playSound("click");
+  isTimerPaused = true;
+  document.getElementById("abort-confirm-overlay").style.display = "flex";
+}
+
+function hideAbortConfirm() {
+  playSound("click");
+  isTimerPaused = false;
+  document.getElementById("abort-confirm-overlay").style.display = "none";
+}
+
+function abortSession() {
+  playSound("click");
+  if (studyTimer) clearInterval(studyTimer);
+  isTimerPaused = false;
+  
+  document.getElementById("abort-confirm-overlay").style.display = "none";
+  
+  sessionRound = 0;
+  sessionScore = 0;
+  streak = 0;
+  level = 1;
+  recentlyPlayedModules = [];
+  
+  showScreen("screen-home");
+}
+
+function returnToHomeFromDebrief() {
+  playSound("click");
+  sessionRound = 0;
+  sessionScore = 0;
+  streak = 0;
+  level = 1;
+  recentlyPlayedModules = [];
+  loadHomeStats();
+  showScreen("screen-home");
+}
+
+function initAbortSystem() {
+  const btnAbort = document.getElementById("btn-session-abort");
+  if (btnAbort) {
+    btnAbort.addEventListener("click", showAbortConfirm);
+  }
+  
+  const btnConfirm = document.getElementById("btn-abort-confirm");
+  if (btnConfirm) {
+    btnConfirm.addEventListener("click", abortSession);
+  }
+  
+  const btnCancel = document.getElementById("btn-abort-cancel");
+  if (btnCancel) {
+    btnCancel.addEventListener("click", hideAbortConfirm);
+  }
+  
+  const btnDebriefHome = document.getElementById("btn-debrief-home");
+  if (btnDebriefHome) {
+    btnDebriefHome.addEventListener("click", returnToHomeFromDebrief);
+  }
+  
+  const overlay = document.getElementById("abort-confirm-overlay");
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        hideAbortConfirm();
+      }
+    });
+  }
+}
+
+// ==========================================
 // 13. MULTI-THEME SYSTEM (Apple Aesthetics)
 // ==========================================
 function initThemeSystem() {
@@ -1287,6 +1378,16 @@ window.addEventListener("keydown", (e) => {
   
   const key = e.key;
   
+  // Global Escape handler for Abort overlay
+  if (key === "Escape") {
+    const confirmOverlay = document.getElementById("abort-confirm-overlay");
+    if (confirmOverlay && confirmOverlay.style.display === "flex") {
+      e.preventDefault();
+      hideAbortConfirm();
+      return;
+    }
+  }
+  
   // Case 1: Active keypad input session
   if (focusedInputId !== null) {
     // Check if numeric field is currently focused
@@ -1317,6 +1418,11 @@ window.addEventListener("keydown", (e) => {
         playSound("click");
         activeKeypadBuffer = "";
         updateFocusedInputWithValue("");
+        // Close keypad & clear selection indicators
+        document.getElementById("custom-keypad").style.display = "none";
+        document.querySelectorAll(".gauge-card").forEach(c => c.classList.remove("active-step"));
+        document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
+        focusedInputId = null;
       } else if (key === "Enter") {
         e.preventDefault();
         playSound("click");
@@ -1330,9 +1436,17 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   
-  // Case 2: Global application flow hotkeys (Space / Enter)
+  // Case 2: Global application flow hotkeys (Space / Enter / Escape abort)
   const activeScreen = document.querySelector(".screen-container.active");
   if (!activeScreen) return;
+  
+  if (key === "Escape") {
+    if (activeScreen.id === "screen-study" || activeScreen.id === "screen-test" || activeScreen.id === "screen-feedback") {
+      e.preventDefault();
+      showAbortConfirm();
+      return;
+    }
+  }
   
   if (key === "Enter" || key === " ") {
     e.preventDefault();
@@ -1383,4 +1497,5 @@ window.addEventListener("DOMContentLoaded", () => {
   initThemeSystem();
   loadHomeStats();
   initModuleSelection();
+  initAbortSystem();
 });

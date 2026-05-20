@@ -1,11 +1,9 @@
-# Execution Tasks - Sizing, Silence, Toggles, and Text layout
+# Execution Tasks - Session Aborts, Smart Timer, & Theme Contrast Audit
 
-- `[x]` 1. Define snappy Apple-style `@keyframes shake` and `.shake` class inside `styles.css`.
-- `[x]` 2. Integrate the interactive Cupertino-style Game Selection Card in `index.html` `#screen-home` above the start session button.
-- `[x]` 3. Remove inline `max-height: 220px;` and `overflow-y: auto;` from Screen 4 recall card wrapper in `index.html`.
-- `[x]` 4. Silence Web Audio engine inside `app.js` (remove `AudioContext` and make `playSound` a no-op).
-- `[x]` 5. Extend screen visual glow alert duration in `app.js` to `1200ms` for smooth cockpit fades.
-- `[x]` 6. Refactor `createGaugeHTML` inside `app.js` to display pure text/numbers, removing all SVG layout elements.
-- `[x]` 7. Refactor `renderHistoryChart` inside `app.js` to render a modern text list showing details of the last 3 sessions.
-- `[x]` 8. Integrate interactive selection card state, click listeners, shake alerts, and next module random filter logic in `app.js`.
-- `[x]` 9. Manually verify all screen states, sizing, selector toggles, and layout changes.
+- `[x]` 1. Define theme and contrast accessibility variables inside `styles.css` (Deepen labels for light/sand modes, solid keypads).
+- `[x]` 2. Wire theme-specific button and keypad variable controls into `.btn`, `.keypad-btn`, and active classes in `styles.css`.
+- `[x]` 3. Integrate new header `← ABORT` button and confirmation modal markup inside `index.html`.
+- `[x]` 4. Refactor the `screen-debrief` footer inside `index.html` to stack side-by-side **HOME** and **RESTART** buttons.
+- `[x]` 5. Implement state additions, `isTimerPaused` gates, and modal controllers inside `app.js`.
+- `[x]` 6. Refactor `showScreen` inside `app.js` to automatically toggle header visibility via `updateHeaderControls`.
+- `[x]` 7. Manually verify all theme contrasts, Abort overlays, pausing actions, and debrief redirects.

@@ -13,7 +13,10 @@
     <!-- 1. FIXED STATUS DASHBOARD (TOP) -->
     <header class="dashboard-header">
       <div class="dashboard-row">
-        <div class="system-title" id="system-status">FLIGHT CORE</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="system-title" id="system-status">FLIGHT CORE</div>
+          <button class="abort-btn" id="btn-session-abort" style="display: none;">← ABORT</button>
+        </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <button class="theme-toggle-btn" id="btn-theme-toggle" title="Select Theme">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -313,9 +316,14 @@
           </ul>
         </div>
 
-        <button class="btn btn-primary btn-block" id="btn-restart" style="margin-top: auto;">
-          RESTART TRAINING
-        </button>
+        <div style="display: flex; gap: 10px; margin-top: auto; width: 100%;">
+          <button class="btn btn-block" id="btn-debrief-home" style="flex: 1; min-height: 52px; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
+            HOME
+          </button>
+          <button class="btn btn-primary btn-block" id="btn-restart" style="flex: 1; min-height: 52px; margin-top: 0;">
+            RESTART
+          </button>
+        </div>
       </section>
 
     </main>
@@ -423,6 +431,26 @@
           <button class="theme-opt-btn" data-theme-val="warm">
             <span class="theme-opt-indicator" style="background-color: #FAF5EE; border: 1px solid #D97706;"></span>
             <span class="theme-opt-label">Warm Sand</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abort Session Confirmation Modal Overlay -->
+    <div class="theme-selector-overlay" id="abort-confirm-overlay" style="display: none; z-index: 1100;">
+      <div class="theme-selector-card" style="max-width: 320px;">
+        <div class="theme-selector-header" style="border-bottom: none; margin-bottom: 4px;">
+          <span style="color: var(--error-rose); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">ABORT TRAINING?</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 20px;">
+          Are you sure you want to end this training session? Your current progress will be lost and won't be saved to history.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn btn-danger btn-block" id="btn-abort-confirm" style="min-height: 44px; padding: 10px 16px;">
+            YES, ABORT SESSION
+          </button>
+          <button class="btn btn-block" id="btn-abort-cancel" style="min-height: 44px; padding: 10px 16px; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
+            RESUME TRAINING
           </button>
         </div>
       </div>
