@@ -5,4 +5,4 @@
 - `[x]` 3. Refactor `index.html` to add the theme toggle button in the dashboard, the sleek slide-up theme selection overlay, and appropriate layout wrappers.
 - `[x]` 4. Bind physical keyboard event listeners in `app.js` to enable seamless typing, backspacing, and confirmations for gauge/frequency inputs on PC.
 - `[x]` 5. Write the theme toggle, persistence (`localStorage`), and layout-adaptation scripts in `app.js`.
-- `[ ]` 6. Verify across responsive views, commit all changes, and push to GitHub origin.
+- `[x]` 6. Verify across responsive views, commit all changes, and push to GitHub origin.
