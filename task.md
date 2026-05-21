@@ -23,9 +23,9 @@
 - `[x]` Perform Theme Contrast Audit & Visual Polish
   - `[x]` Double-check legibility and AAA compliance across all 5 themes
   - `[x]` Test mobile aspect ratio resizing and key borders
-- `[/]` Execute UI/UX Professional Enhancements
-  - `[ ]` Add Onboarding/Keyboard Help Modal and `[?] Help` toggle button
-  - `[ ]` Implement Briefing Pause/Play Timer Gate with glassmorphic backdrop
-  - `[ ]` Upgrade Abort Session Overlay to three-option list
-  - `[ ]` Build Clear Stats & Telemetry History Reset option
-  - `[ ]` Craft Celebratory CSS Confetti Victory Glow for PROFICIENT rating
+- `[x]` Execute UI/UX Professional Enhancements
+  - `[x]` Add Onboarding/Keyboard Help Modal and `[?] Help` toggle button
+  - `[x]` Implement Briefing Pause/Play Timer Gate with glassmorphic backdrop
+  - `[x]` Upgrade Abort Session Overlay to three-option list
+  - `[x]` Build Clear Stats & Telemetry History Reset option
+  - `[x]` Craft Celebratory CSS Confetti Victory Glow for PROFICIENT rating
