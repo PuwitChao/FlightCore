@@ -133,3 +133,28 @@ Polished the physical keyboard playability index indicators (`[1]` - `[9]`, etc.
 * **Keycap Styling (`styles.css`):** Extracted badges into elegant `.shortcut-badge` and `.gauge-shortcut-badge` selectors. They are styled with micro drop shadows and contrast-separated backgrounds resembling high-end physical/glassmorphic keyboard keys.
 * **Micro-Animations (`styles.css`):** Hovering over interactive tiles (such as checklist sortable blocks or blanked instruments) smoothly highlights both the element border and the shortcut index badge, providing a responsive, state-of-the-art interactive feedback look.
 
+---
+
+## 🕹️ Active Interface & UX Interactive Audit (Complete Hooking)
+
+We have fully hooked the new structural UI/UX elements in `app.js` and successfully completed the interactive sweep:
+
+1. **Onboarding Help Modal (`#help-modal-overlay`):**
+   * Bound the header help button (`#btn-help-toggle`) and card close icon (`#btn-help-close`) to slide/display the Help & Keymap modal.
+   * Clicking outside the card or pressing the physical `Escape` key automatically closes the modal with a high-fidelity click sound.
+2. **Briefing Pause-Gate (`#btn-study-pause`):**
+   * Configured full play/pause toggling on the briefing study timer using the dedicated play/pause button.
+   * Pressing the keyboard `Space` key also seamlessly toggles the pause/resume state.
+   * On pause, the timer ticks freeze, a clean glassmorphic blur overlay (`#paused-overlay`) covers and protects the variables from cheating, and the button path toggles dynamically between Apple-style standard play (`polygon`) and pause (`rect`) SVGs.
+   * When a new round or study screen initializes, the pause state and play/pause icon automatically reset to their clean active default states.
+3. **Session Reset & Restart Option (`#btn-abort-restart`):**
+   * Extended the Abort overlay to a three-option Cupertino list.
+   * Selecting `RESET & RESTART SESSION` (`#btn-abort-restart`) hides the overlay, resets the entire session metrics (Round, Streak, Score, Max Streak, recently played modules) and immediately initiates Round 1 from scratch instantly.
+4. **Wipe Stats & Telemetry History (`#btn-clear-history`):**
+   * Integrated a premium `PURGE TELEMETRY HISTORY` action inside the theme selection overlay.
+   * Tapping it triggers an irreversible confirmation prompt. Upon acceptance, the entire history is wiped (`globalHistory = []`), the `flightcore_history` key is completely purged from the browser's `localStorage`, a deep caution buzz (`playSound("error")`) is played, and the stats panel cards and high-score labels update to `0` in real-time.
+5. **Celebratory CSS Confetti Victory Glow (`launchConfetti()`):**
+   * Constructed an dynamic CSS confetti particle launcher in vanilla ES6.
+   * Achieving a `PROFICIENT` debrief tier ($\ge 90\%$ accuracy) spawns 70+ dynamic `.confetti-piece` elements across the debrief screen.
+   * Confetti pieces are randomized in colors, starting coordinates (`left`), size aspect ratios, animation delay offset, and 3D rotation vectors, drifting down the viewport smoothly before self-destructing after 5 seconds to prevent browser memory leaks.
+
