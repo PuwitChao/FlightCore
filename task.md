@@ -9,11 +9,6 @@
   - `[x]` Craft an elegant mockup SVG placeholder representing dashed grids and bar heights
   - `[x]` Center an absolute glassmorphic warning banner over the empty SVG structure
   - `[x]` Update both `history-chart` and `sidebar-chart` layout triggers
-- `[x]` Implement Dynamic Real-Time SVG sparkline Trend Chart
-  - `[x]` Slice the last 6 training runs in chronological order
-  - `[x]` Build coordinate scaling (X for spacing, Y mapping 0%-100% accuracy)
-  - `[x]` Render a sleek gradient area overlay path with neon stroke lines
-  - `[x]` Append checkpoint dots and accuracy percentages below each point
 - `[x]` Implement Pro-Terminal Keyboard Shortcuts (100% Playable via PC Keys)
   - `[x]` Render keyboard index badges `[1]`, `[2]` next to Checklist pool items
   - `[x]` Render corner index badges on Blanked Instruments dials during test
@@ -28,3 +23,9 @@
 - `[x]` Perform Theme Contrast Audit & Visual Polish
   - `[x]` Double-check legibility and AAA compliance across all 5 themes
   - `[x]` Test mobile aspect ratio resizing and key borders
+- `[/]` Execute UI/UX Professional Enhancements
+  - `[ ]` Add Onboarding/Keyboard Help Modal and `[?] Help` toggle button
+  - `[ ]` Implement Briefing Pause/Play Timer Gate with glassmorphic backdrop
+  - `[ ]` Upgrade Abort Session Overlay to three-option list
+  - `[ ]` Build Clear Stats & Telemetry History Reset option
+  - `[ ]` Craft Celebratory CSS Confetti Victory Glow for PROFICIENT rating
