@@ -1,74 +1,75 @@
-# Flight Core - UI & User Experience Enhancements Plan
+# Flight Core Full Audit & Micro-Interaction Enhancements Plan
 
-We will perform a full UI and User Experience (UX) audit and implement production-ready best practices to elevate **Flight Core** into a highly polished, professional cognitive trainer suitable for the general public.
+We have performed a full, comprehensive codebase, layout, security, and usability audit of the **Flight Core Memory Trainer**. 
+
+Based on this audit, we have identified several high-impact, professional enhancements that align with modern **Cupertino UI guidelines**, harden security against edge threats, optimize rendering performance, and establish premium micro-interactions.
 
 ---
 
 ## Proposed Changes
 
-### Component 1: Structural UI Framework (`index.html`)
+### Component 1: Production Security & Performance Hardening
 
-We will add new glassmorphic modal overlays, controls, and helpers to support modern UX paradigms.
+We will decouple font loading to optimize parallel resource discovery and harden the browser's sandbox against cross-site scripting (XSS) threats.
 
 #### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- **Header Enhancements**:
-  - Add a help toggle button `<button class="theme-toggle-btn" id="btn-help-toggle" title="Keyboard & Gesture Help">?</button>` in the top-right header next to the sound toggle.
-- **Study Briefing Panel**:
-  - Insert a glassmorphic pause button next to the study progress bar.
-  - Insert a `<div class="briefing-paused-overlay" id="paused-overlay" style="display: none;">` to cover the briefing cards when the timer is paused, showing a subtle scanline blur and a glowing `BRIEFING PAUSED` indicator.
-- **Upgrade Abort Overlay**:
-  - Replace the binary two-button confirmation in `#abort-confirm-overlay` with three clear, structured, glassmorphic option blocks:
-    - `[RESET & RESTART SESSION]` (Primary accent, starts current session over at Round 1)
-    - `[ABORT & EXIT TO HOME]` (Danger accent, returns to main home screen)
-    - `[RESUME TRAINING]` (Neutral secondary, closes the overlay)
-- **Theme and Settings Overlay**:
-  - Add a secondary option block inside the theme overlay card: `<button class="theme-opt-btn btn-danger-text" id="btn-clear-history">Purge Telemetry Stats & History</button>` to allow users to reset their local training history.
-- **Onboarding Modal**:
-  - Insert a `<div class="theme-selector-overlay" id="help-modal-overlay" style="display: none;">` that displays a clean, responsive terminal keymap cheatsheet explaining PC keyboard shortcuts and touch controls.
-
----
-
-### Component 2: Sleek Animations & Accessiblity (`styles.css`)
-
-We will expand our styling system to support modern glass overlays, accessibility contrasts, and celebratory particle animations.
+- Move font retrieval from CSS `@import` blocking to parallelized header `<link>` preconnects in the `<head>` of `index.html`.
+- This ensures the browser begins fetching the premium **Inter** font family simultaneously with `styles.css`, preventing Flash of Unstyled Text (FOUT).
+- Add a new visual step-tracker container `<div class="round-step-tracker" id="hud-round-dots"></div>` directly inside or below the dashboard header to visually track the 8-round session in real time.
 
 #### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-- **Glassmorphic Pause State**:
-  - Define `.briefing-paused-overlay` using a heavy `-webkit-backdrop-filter: blur(12px) saturate(140%)` and a frosted slate or stone background, coupled with a pulsing amber keyframe glow.
-- **Theme purger styling**:
-  - Add `.btn-danger-text` containing AAA contrast amber or red text layers that transition gracefully.
-- **Celebratory Confetti Particles**:
-  - Add pure CSS confetti particle systems (`.confetti-container` and `.confetti-piece`).
-  - Create a CSS animation keyframe `@keyframes confetti-fall` that uses dynamic horizontal swaying (using sine-wave translations) and rotating down-screen descents to wow the user on high scores.
-- **Help Modal Layout**:
-  - Define grid arrangements for keyboard shortcut representations (`.help-key-row` and `.kbd-key`).
+- Remove the blocking `@import url(...)` at line 1.
+- Style the new progress step-tracker `.round-step-tracker` as a flex layout containing 8 sleek horizontal micro-capsule pill indicators (`.round-dot`).
+- Implement AAA contrast transitions and specialized styles for:
+  - `.round-dot.completed-success` (emerald-green backing)
+  - `.round-dot.completed-warning` (amber-orange backing)
+  - `.round-dot.completed-error` (ruby-red backing)
+  - `.round-dot.active` (pulsing sapphire-blue state with keyframe animation)
+  - `.round-dot.upcoming` (semi-transparent border capsule)
+
+#### [MODIFY] [_headers](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/_headers)
+- Remove `'unsafe-inline'` from the `script-src` directive in the Content-Security-Policy (CSP) header.
+- Since all logic and event handlers are loaded programmatically in `app.js` with zero inline scripting inside `index.html`, this completes a major security hardening step to immunize the application against cross-site scripting (XSS).
 
 ---
 
-### Component 3: Game States, Timers & Telemetry (`app.js`)
+### Component 2: Cupertino-Style Intelligent UX Auto-Advance
 
-We will update the game loop controllers to support timer pausing, session restarts, local database purges, and victory visual queues.
+To minimize user taps and make gameplay feel extremely fluid on both mobile touch devices and physical keyboards, we will implement smart auto-advance chains.
 
 #### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-- **Help Modal Controls**:
-  - Bind click listeners for `#btn-help-toggle` to open and close the keyboard onboarding sheet.
-- **Briefing Timer Pause States**:
-  - Bind the `Space` bar and briefing pause clicks to toggle `isTimerPaused`.
-  - Pause the study countdown interval, blur the content behind `#paused-overlay`, and show a pulsing state.
-- **Expanded Abort Commands**:
-  - Hook `#btn-abort-restart` to immediately execute `initSession()` (resetting rounds to 1, score to 0, and streaks to 0) without returning to home.
-- **Purge Telemetry History**:
-  - Bind `#btn-clear-history` to prompt a confirmation dialogue. If approved, empty `globalHistory`, wipe `flightcore_history` from `localStorage`, immediately update home screen/sidebar sparkline metrics, and play a down-pitch warning sound.
-- **Victory Confetti Launcher**:
-  - Create a dynamic `launchConfetti()` generator in JS that injects 50+ CSS-animated confetti pieces of varying hues, dimensions, and delay profiles inside a transient container over the debriefing screen when scoring a `PROFICIENT` status.
+- **ATC Field Auto-Advance**:
+  - When the user selects an ATC **Callsign** quick-select button, automatically advance active focus to **Facility** (if vacant).
+  - When the user selects a **Facility** option, automatically advance focus to **Frequency** (which instantly slides the numeric keypad into view).
+  - When confirming **Frequency** via the keypad `CONFIRM` or physical `Enter`, automatically advance focus to **Squawk** (if vacant).
+  - If all ATC inputs are filled, cleanly close the keypad overlay.
+- **Instruments Gauge Auto-Advance**:
+  - In the Instruments module, when a user enters a value for a blanked gauge and taps `CONFIRM` on the keypad (or hits physical `Enter`), automatically scan for the next vacant blanked gauge in sequence.
+  - If found, immediately trigger active focus and select it, keeping the keypad open with the active preview buffer.
+  - If all blanked gauges are filled, close the keypad interface automatically.
+- **Visual Step Tracker Logic**:
+  - Update `updateLevelAndHUD()` and `finishSession()` to dynamically render the 8 horizontal progress capsule dots.
+  - Compute states using completed elements inside `roundByRoundHistory` in real time, updating dot colors dynamically between rounds.
 
 ---
 
 ## Verification Plan
 
 ### Automated & Manual Verification
-1. **Pause Test**: Engage a training session and press `Space` or the pause button during the briefing screen. Verify that the study card blurs, the timer pauses, and no text can be read.
-2. **Help/Shortcut Test**: Trigger the `[?]` help menu from both the home screen and during gameplay. Verify keyboard bindings (`1` to `9`, `Backspace`, `Enter`, `Escape`) are clearly shown.
-3. **Session Reset Test**: Press `Escape` or the abort button, click `RESET & RESTART SESSION`, and verify the session restarts on Round 1 instantly.
-4. **Stats Purge Test**: Select the theme menu, click `Purge Telemetry`, confirm, and verify stats cards reset to `0000`, the chart shows `NO RECENT SESSION DATA`, and `localStorage` is cleared.
-5. **Confetti & Victory Test**: Achieve a score $\ge 90\%$ accuracy and verify a gorgeous pure CSS confetti animation cascades down. Check contrast across Nordic Sage, Apple Light, OLED Dark, Monochrome, and Warm Sand themes.
+1. **CSP Hardness Audit**:
+   - Deploy/run the app and verify the console remains clean of CSP violation reports.
+   - Confirm that inline `<script>` injections are blocked completely.
+2. **Parallel Font Loading**:
+   - Check network waterfall charts via Chrome Developer Tools to ensure `Inter` font assets download in parallel with `styles.css`, speeding up layout stabilization.
+3. **ATC Auto-Advance Flow**:
+   - Start an ATC round. Click Callsign option $\rightarrow$ verify focus shifts to Facility automatically.
+   - Click Facility option $\rightarrow$ verify focus shifts to Frequency and the numeric keypad pops open instantly.
+   - Enter Frequency and click `CONFIRM` $\rightarrow$ verify focus shifts to Squawk automatically.
+4. **Instruments Auto-Advance Flow**:
+   - Start an Instruments round. Click the first blanked gauge card $\rightarrow$ enter a number $\rightarrow$ click `CONFIRM` (or hit physical `Enter`).
+   - Verify that focus automatically shifts to the second blanked gauge, highlighting it and updating the keypad indicator.
+   - Enter the last value and click `CONFIRM` $\rightarrow$ verify the keypad closes smoothly.
+5. **Horizontal Progress Step Tracker**:
+   - Verify that 8 horizontal pill capsules render below the dashboard header.
+   - Confirm the active round dot pulses sapphire-blue.
+   - Complete rounds with different accuracies (Perfect/Great, Partial, Failed) and verify dots turn emerald-green, amber-orange, and ruby-red in real time.
