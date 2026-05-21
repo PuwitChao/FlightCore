@@ -29,6 +29,13 @@
               <path d="M12 2v20a10 10 0 0 0 0-20" fill="currentColor" />
             </svg>
           </button>
+          <button class="theme-toggle-btn" id="btn-help-toggle" title="Keyboard & Gesture Help">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </button>
           <div class="telemetry-value accent" id="hud-level">LVL: 01</div>
         </div>
       </div>
@@ -144,8 +151,16 @@
 
       <!-- SCREEN 2: STUDY/BRIEFING SCREEN -->
       <section class="screen-container" id="screen-study">
-        <div class="timer-container">
-          <div class="timer-bar" id="study-timer-bar"></div>
+        <div class="timer-container" style="display: flex; gap: 8px; align-items: center; background: transparent; border: none; padding: 0;">
+          <div style="flex-grow: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); overflow: hidden; position: relative;">
+            <div class="timer-bar" id="study-timer-bar" style="width: 100%; height: 100%; background: var(--accent-blue); border-radius: var(--radius-sm); transition: width 0.05s linear;"></div>
+          </div>
+          <button class="theme-toggle-btn" id="btn-study-pause" title="Pause/Play Briefing" style="width: 24px; height: 24px; flex-shrink: 0; background: var(--btn-neutral-bg); border: 1px solid var(--border-subtle); border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" id="study-pause-icon">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
         </div>
         
         <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
@@ -153,7 +168,19 @@
           <span class="type-tag" id="study-timer-display" style="font-weight: 700;">05.00s</span>
         </div>
 
-        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 180px;">
+        <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 180px; position: relative; overflow: hidden;">
+          <!-- Briefing Paused Overlay -->
+          <div class="briefing-paused-overlay" id="paused-overlay" style="display: none;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+              <svg class="paused-pulse" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="4" width="4" height="16" fill="var(--accent-amber)"></rect>
+                <rect x="14" y="4" width="4" height="16" fill="var(--accent-amber)"></rect>
+              </svg>
+              <span style="font-size: 0.85rem; font-weight: 800; color: var(--accent-amber); letter-spacing: 1.5px; text-transform: uppercase;">BRIEFING PAUSED</span>
+              <span style="font-size: 0.65rem; color: var(--text-muted);">Press Space or Tap Play to Resume</span>
+            </div>
+          </div>
+
           <!-- Checklist briefing slot -->
           <div id="briefing-checklist" style="display: none; width: 100%;">
             <h3 style="font-size: 0.78rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 12px; text-transform: uppercase;" id="checklist-title-brief">APU INITIALIZATION SEQUENCE</h3>
@@ -438,6 +465,55 @@
             <span class="theme-opt-label">Warm Sand</span>
           </button>
         </div>
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 8px;">
+          <button class="theme-opt-btn" id="btn-clear-history" style="justify-content: center; color: var(--error-rose); border-color: var(--error-border); background: var(--error-bg); font-weight: 700;">
+            PURGE TELEMETRY HISTORY
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onboarding Help Modal Overlay -->
+    <div class="theme-selector-overlay" id="help-modal-overlay" style="display: none; z-index: 1200;">
+      <div class="theme-selector-card" style="max-width: 380px;">
+        <div class="theme-selector-header">
+          <span>Simulator Help & Keymap</span>
+          <button class="theme-close-btn" id="btn-help-close">&times;</button>
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.5; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+          <p style="margin-bottom: 12px; color: var(--text-primary); font-weight: 600;">Welcome to Flight Core. Use these physical key shortcuts or touch targets:</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+            <div class="help-key-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+              <span>Select Block / Gauge / Choice</span>
+              <div><span class="shortcut-badge" style="margin: 0 !important;">1</span> to <span class="shortcut-badge" style="margin: 0 !important;">8</span></div>
+            </div>
+            <div class="help-key-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+              <span>Pause / Resume Study Timer</span>
+              <span class="shortcut-badge" style="margin: 0 !important;">Space</span>
+            </div>
+            <div class="help-key-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+              <span>Undo Last Selection / Backspace</span>
+              <span class="shortcut-badge" style="margin: 0 !important;">Backspace</span>
+            </div>
+            <div class="help-key-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+              <span>Confirm Value / Continue Round</span>
+              <span class="shortcut-badge" style="margin: 0 !important;">Enter</span>
+            </div>
+            <div class="help-key-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
+              <span>Abort Training Session Overlay</span>
+              <span class="shortcut-badge" style="margin: 0 !important;">Escape</span>
+            </div>
+          </div>
+
+          <p style="color: var(--text-primary); font-weight: 700; margin-bottom: 6px;">Module Checklist:</p>
+          <ul style="padding-left: 16px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 4px; list-style-type: square;">
+            <li><strong>Checklist</strong>: Tap/select procedural blocks in chronological order.</li>
+            <li><strong>Instruments</strong>: Scan dials. Enter remembered values via keypad.</li>
+            <li><strong>ATC</strong>: Hold Callsign, Facility, Freq, wind and Squawk.</li>
+            <li><strong>Fault</strong>: Connect compound symptoms directly to mitigation paths.</li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -445,14 +521,17 @@
     <div class="theme-selector-overlay" id="abort-confirm-overlay" style="display: none; z-index: 1100;">
       <div class="theme-selector-card" style="max-width: 320px;">
         <div class="theme-selector-header" style="border-bottom: none; margin-bottom: 4px;">
-          <span style="color: var(--error-rose); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">ABORT TRAINING?</span>
+          <span style="color: var(--accent-amber); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">SESSION PAUSED</span>
         </div>
         <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 20px;">
-          Are you sure you want to end this training session? Your current progress will be lost and won't be saved to history.
+          Select telemetry action. Restarting instantly starts Round 1. Exiting terminates the training loop.
         </p>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button class="btn btn-danger btn-block" id="btn-abort-confirm" style="min-height: 44px; padding: 10px 16px;">
-            YES, ABORT SESSION
+          <button class="btn btn-primary btn-block" id="btn-abort-restart" style="min-height: 44px; padding: 10px 16px; background: var(--success-emerald); border-color: var(--success-border); color: #FFFFFF;">
+            RESET & RESTART SESSION
+          </button>
+          <button class="btn btn-danger btn-block" id="btn-abort-confirm" style="min-height: 44px; padding: 10px 16px; background: var(--error-rose); border-color: var(--error-border); color: #FFFFFF;">
+            ABORT & EXIT TO HOME
           </button>
           <button class="btn btn-block" id="btn-abort-cancel" style="min-height: 44px; padding: 10px 16px; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
             RESUME TRAINING

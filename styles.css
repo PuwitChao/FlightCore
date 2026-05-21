@@ -1574,3 +1574,75 @@ body[data-theme="mono"] .module-select-card.active .select-indicator {
   color: var(--accent-blue) !important;
   border-color: var(--border-active) !important;
 }
+
+/* --- BRIEFING TIMER PAUSED GLASSMORPHISM --- */
+.briefing-paused-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(10, 12, 16, 0.45);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body[data-theme="light"] .briefing-paused-overlay {
+  background-color: rgba(240, 240, 245, 0.45);
+}
+
+.paused-pulse {
+  animation: pause-pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pause-pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* --- CELEBRATORY CSS CONFETTI PIECES --- */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 999;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confetti-fall 3.2s linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) translateX(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg) translateX(40px);
+    opacity: 0;
+  }
+}
+

@@ -437,6 +437,19 @@ function startRound() {
 // ==========================================
 
 function setupStudyScreen(module) {
+  isTimerPaused = false;
+  const pauseIcon = document.getElementById("study-pause-icon");
+  if (pauseIcon) {
+    pauseIcon.innerHTML = `
+      <rect x="6" y="4" width="4" height="16"></rect>
+      <rect x="14" y="4" width="4" height="16"></rect>
+    `;
+  }
+  const pausedOverlay = document.getElementById("paused-overlay");
+  if (pausedOverlay) {
+    pausedOverlay.style.display = "none";
+  }
+
   // Hide all briefing content blocks first
   document.getElementById("briefing-checklist").style.display = "none";
   document.getElementById("briefing-instruments").style.display = "none";
@@ -1253,6 +1266,7 @@ function finishSession() {
   if (percentage >= 90) {
     tier = "PROFICIENT";
     tierClass = "proficient";
+    launchConfetti(); // Trigger confetti celebration!
   } else if (percentage >= 75) {
     tier = "SATISFACTORY";
     tierClass = "satisfactory";
@@ -1336,6 +1350,56 @@ function finishSession() {
   localStorage.setItem("flightcore_history", JSON.stringify(globalHistory));
   
   showScreen("screen-debrief");
+}
+
+function launchConfetti() {
+  const debriefScreen = document.getElementById("screen-debrief");
+  if (!debriefScreen) return;
+
+  const container = document.createElement("div");
+  container.className = "confetti-container";
+  debriefScreen.appendChild(container);
+
+  const colors = [
+    "var(--accent-blue)",
+    "var(--accent-amber)",
+    "var(--success-emerald)",
+    "var(--error-rose)",
+    "#A54657",
+    "#FFD700",
+    "#70E000",
+    "#4895EF"
+  ];
+
+  for (let i = 0; i < 70; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const left = Math.random() * 100;
+    const sizeWidth = Math.floor(Math.random() * 6) + 6;
+    const sizeHeight = Math.floor(Math.random() * 6) + 6;
+    const animDelay = Math.random() * 2.5;
+    const animDuration = Math.random() * 1.5 + 2.0;
+    
+    piece.style.backgroundColor = color;
+    piece.style.left = `${left}%`;
+    piece.style.width = `${sizeWidth}px`;
+    piece.style.height = `${sizeHeight}px`;
+    piece.style.animationDelay = `${animDelay}s`;
+    piece.style.animationDuration = `${animDuration}s`;
+    
+    const initialRot = Math.random() * 360;
+    piece.style.transform = `rotate(${initialRot}deg)`;
+
+    container.appendChild(piece);
+  }
+
+  playSound("success");
+
+  setTimeout(() => {
+    container.remove();
+  }, 5000);
 }
 
 // Restart session trigger
@@ -1514,6 +1578,16 @@ function loadHomeStats() {
     const sideAvgScore = document.getElementById("side-stat-avg-score");
     if (sideHighScore) sideHighScore.textContent = maxScore.toLocaleString();
     if (sideAvgScore) sideAvgScore.textContent = `${averageGrade}%`;
+  } else {
+    document.getElementById("stat-high-score").textContent = "0";
+    document.getElementById("stat-avg-score").textContent = "0.0%";
+    document.getElementById("stat-sessions").textContent = "0";
+    document.getElementById("stat-max-streak").textContent = "0";
+    
+    const sideHighScore = document.getElementById("side-stat-high-score");
+    const sideAvgScore = document.getElementById("side-stat-avg-score");
+    if (sideHighScore) sideHighScore.textContent = "0";
+    if (sideAvgScore) sideAvgScore.textContent = "0.0%";
   }
   
   renderHistoryChart();
@@ -1590,6 +1664,17 @@ function initAbortSystem() {
     btnCancel.addEventListener("click", hideAbortConfirm);
   }
   
+  const btnRestart = document.getElementById("btn-abort-restart");
+  if (btnRestart) {
+    btnRestart.addEventListener("click", () => {
+      playSound("click");
+      if (studyTimer) clearInterval(studyTimer);
+      isTimerPaused = false;
+      document.getElementById("abort-confirm-overlay").style.display = "none";
+      initSession();
+    });
+  }
+  
   const btnDebriefHome = document.getElementById("btn-debrief-home");
   if (btnDebriefHome) {
     btnDebriefHome.addEventListener("click", returnToHomeFromDebrief);
@@ -1651,6 +1736,27 @@ function initThemeSystem() {
       overlay.style.display = "none";
     });
   });
+
+  // Bind clear history button
+  const btnClearHistory = document.getElementById("btn-clear-history");
+  if (btnClearHistory) {
+    btnClearHistory.addEventListener("click", () => {
+      playSound("click");
+      if (confirm("Are you sure you want to purge all telemetry history? This action is irreversible.")) {
+        globalHistory = [];
+        localStorage.removeItem("flightcore_history");
+        playSound("error");
+        
+        // Refresh home stats in real-time
+        loadHomeStats();
+        
+        // Hide theme selector overlay
+        if (overlay) {
+          overlay.style.display = "none";
+        }
+      }
+    });
+  }
 }
 
 function setTheme(themeVal) {
@@ -1816,6 +1922,27 @@ window.addEventListener("keydown", (e) => {
   }
   
   if (key === "Escape") {
+    const helpOverlay = document.getElementById("help-modal-overlay");
+    if (helpOverlay && helpOverlay.style.display === "flex") {
+      e.preventDefault();
+      playSound("click");
+      helpOverlay.style.display = "none";
+      return;
+    }
+    const themeOverlay = document.getElementById("theme-selector-overlay");
+    if (themeOverlay && themeOverlay.style.display === "flex") {
+      e.preventDefault();
+      playSound("click");
+      themeOverlay.style.display = "none";
+      return;
+    }
+    const confirmOverlay = document.getElementById("abort-confirm-overlay");
+    if (confirmOverlay && confirmOverlay.style.display === "flex") {
+      e.preventDefault();
+      hideAbortConfirm();
+      return;
+    }
+    
     if (activeScreen.id === "screen-study" || activeScreen.id === "screen-test" || activeScreen.id === "screen-feedback") {
       e.preventDefault();
       showAbortConfirm();
@@ -1824,8 +1951,14 @@ window.addEventListener("keydown", (e) => {
   }
   
   if (key === "Enter" || key === " ") {
-    e.preventDefault();
     const screenId = activeScreen.id;
+    if (screenId === "screen-study" && key === " ") {
+      e.preventDefault();
+      toggleStudyPause();
+      return;
+    }
+    
+    e.preventDefault();
     if (screenId === "screen-home") {
       document.getElementById("btn-engage-session").click();
     } else if (screenId === "screen-study") {
@@ -1867,6 +2000,72 @@ function initModuleSelection() {
   });
 }
 
+function initHelpSystem() {
+  const btnToggle = document.getElementById("btn-help-toggle");
+  const btnClose = document.getElementById("btn-help-close");
+  const overlay = document.getElementById("help-modal-overlay");
+
+  if (btnToggle && overlay) {
+    btnToggle.addEventListener("click", () => {
+      playSound("click");
+      overlay.style.display = "flex";
+    });
+  }
+
+  if (btnClose && overlay) {
+    btnClose.addEventListener("click", () => {
+      playSound("click");
+      overlay.style.display = "none";
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        playSound("click");
+        overlay.style.display = "none";
+      }
+    });
+  }
+}
+
+function initStudyPauseSystem() {
+  const btnStudyPause = document.getElementById("btn-study-pause");
+  if (btnStudyPause) {
+    btnStudyPause.addEventListener("click", toggleStudyPause);
+  }
+}
+
+function toggleStudyPause() {
+  const activeScreen = document.querySelector(".screen-container.active");
+  if (activeScreen && activeScreen.id === "screen-study") {
+    isTimerPaused = !isTimerPaused;
+    const pauseIcon = document.getElementById("study-pause-icon");
+    const pausedOverlay = document.getElementById("paused-overlay");
+    
+    if (isTimerPaused) {
+      playSound("click");
+      if (pauseIcon) {
+        pauseIcon.innerHTML = `<polygon points="6,4 20,12 6,20" />`;
+      }
+      if (pausedOverlay) {
+        pausedOverlay.style.display = "flex";
+      }
+    } else {
+      playSound("click");
+      if (pauseIcon) {
+        pauseIcon.innerHTML = `
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        `;
+      }
+      if (pausedOverlay) {
+        pausedOverlay.style.display = "none";
+      }
+    }
+  }
+}
+
 // Bootstrap application on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
   initThemeSystem();
@@ -1874,4 +2073,6 @@ window.addEventListener("DOMContentLoaded", () => {
   loadHomeStats();
   initModuleSelection();
   initAbortSystem();
+  initHelpSystem();
+  initStudyPauseSystem();
 });
