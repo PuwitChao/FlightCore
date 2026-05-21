@@ -1,8 +1,30 @@
-# Execution Tasks - Encouraging Graded Criteria (Partial Success)
+# Flight Core - Audit and Enhancements Checklist
 
-- `[x]` 1. Add warning color/glow style variables and classes to `styles.css`.
-- `[x]` 2. Add accuracy assessment logic to each module in `app.js` (`submitTelemetry`).
-- `[x]` 3. Implement the three-tier grading and score calculation in `submitTelemetry`.
-- `[x]` 4. Update the immediate feedback display in `setupFeedbackScreen` with accuracy badge & amber state support.
-- `[x]` 5. Refactor session completion and final debrief scoring/table rendering.
-- `[x]` 6. Verify perfect, partial, and fail states locally.
+- `[x]` Audit & Enhance Home Screen Statistics Mismatch
+  - `[x]` Declare `sessionMaxStreak` at session start in `app.js`
+  - `[x]` Update and record `sessionMaxStreak` during round telemetry evaluation
+  - `[x]` Save `maxStreak` in the localStorage history array
+  - `[x]` Refactor `loadHomeStats()` to fetch the highest historical max streak and display it on `stat-max-streak` card (replacing Max Level representation)
+- `[x]` Upgrade Empty History Chart to High-Fidelity Mockup Placeholder
+  - `[x]` Craft an elegant mockup SVG placeholder representing dashed grids and bar heights
+  - `[x]` Center an absolute glassmorphic warning banner over the empty SVG structure
+  - `[x]` Update both `history-chart` and `sidebar-chart` layout triggers
+- `[x]` Implement Dynamic Real-Time SVG sparkline Trend Chart
+  - `[x]` Slice the last 6 training runs in chronological order
+  - `[x]` Build coordinate scaling (X for spacing, Y mapping 0%-100% accuracy)
+  - `[x]` Render a sleek gradient area overlay path with neon stroke lines
+  - `[x]` Append checkpoint dots and accuracy percentages below each point
+- `[x]` Implement Pro-Terminal Keyboard Shortcuts (100% Playable via PC Keys)
+  - `[x]` Render keyboard index badges `[1]`, `[2]` next to Checklist pool items
+  - `[x]` Render corner index badges on Blanked Instruments dials during test
+  - `[x]` Render quick-select shortcut labels on ATC clearance option buttons
+  - `[x]` Render index badges next to Fault mitigation blocks
+  - `[x]` Build a key down router processing keys `1`-`9`, `Backspace`, `Enter`, `Escape` for each active module recall phase
+- `[x]` Implement Organic Audio Synthesizer Engine & Mute Switcher
+  - `[x]` Add a speaker toggle icon button next to the theme switcher in `index.html`
+  - `[x]` Build standard speaker/mute SVG paths toggled dynamically via JS
+  - `[x]` Implement low-latency Web Audio API oscillators for keypresses, success chimes, and failure buzzer tones
+  - `[x]` Persist sound preference inside `localStorage`
+- `[x]` Perform Theme Contrast Audit & Visual Polish
+  - `[x]` Double-check legibility and AAA compliance across all 5 themes
+  - `[x]` Test mobile aspect ratio resizing and key borders

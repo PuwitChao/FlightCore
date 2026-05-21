@@ -80,27 +80,56 @@ We have implemented an elegant, high-fidelity **Abort Session** flow, an intelli
 
 ---
 
-## 🛡️ Encouraging Graded Criteria (Partial Success Implementation)
+## 🛡️ Encouraging Graded Criteria (Forgiving Success Tiers)
 
-To prevent users from feeling discouraged by minor recall errors, we transitioned from a binary PASS/FAIL scoring model to a three-tier, accuracy-based evaluation system:
+To prevent users from feeling discouraged by minor recall errors, we transitioned from a binary PASS/FAIL scoring model to an extremely encouraging, four-tier, accuracy-based evaluation system:
 
 1. **Perfect Success (100% Accuracy):**
    * Streak increments (`streak++`).
    * Awards full base points + speed bonus.
    * Triggers a stunning emerald green alert glow (`screen-glow-success`) and success haptic vibrations.
-2. **Partial Success (50% to 99% Accuracy):**
+2. **Great Recall (80% to 99% Accuracy - e.g., at most one error):**
+   * **Streak increments (`streak++`)**, allowing users to continue climbing levels even with a minor slip-up! This is exceptionally forgiving and encouraging.
+   * Awards partial points proportional to accuracy.
+   * Triggers the positive emerald green alert glow (`screen-glow-success`) and success sounds.
+3. **Partial Success (50% to 79% Accuracy):**
    * **Streak persists intact (saved from reset to 0!)**, allowing users to maintain their level and progression.
    * Awards partial points calculated proportional to the round accuracy: `Math.round((basePoints + speedBonus) * (accuracy / 100))`.
-   * Triggers a smooth amber alert glow (`screen-glow-warning`) and warning haptic double pulse (`[60, 40, 60]`).
-3. **Failed (< 50% Accuracy):**
+   * Triggers a smooth amber alert glow (`screen-glow-warning`) and warning haptic double pulse.
+4. **Failed (< 50% Accuracy):**
    * Streak resets to `0`.
    * Awards `0` points.
    * Triggers a crimson red alert glow (`screen-glow-error`) and error haptic pulse.
 
 ### 📊 UI & Debrief Screen Enhancements:
-* **Immediate Feedback Screen:** Added clear accuracy percentage badges (e.g. `PARTIAL SUCCESS (83%)`) and encouraging state indicators such as `STREAK SAVED!` or `STREAK INCREMENTED` to keep users engaged and positive.
+* **Immediate Feedback Screen:** Added clear accuracy percentage badges (e.g. `GREAT RECALL (83%)` or `PARTIAL SUCCESS (60%)`) and encouraging state indicators such as `STREAK INCREMENTED!` or `STREAK SAVED!` to keep users engaged and positive.
 * **Average Session Accuracy:** The final debrief card now reflects average recall accuracy across all 8 rounds:
   `const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / 8);`
   This is a vastly fairer representation of overall user performance.
-* **Visual Breakdown Logs:** Replaced generic `PASS`/`FAIL` labels in the round history table with `PERFECT`, `PARTIAL (83%)`, or `FAIL (25%)` colored in emerald, amber, and crimson respectively. Partial rounds are styled with a modern `warning-row` background glow.
+* **Visual Breakdown Logs:** Replaced generic `PASS`/`FAIL` labels in the round history table with `PERFECT`, `GREAT (83%)`, `PARTIAL (60%)`, or `FAIL (25%)` colored in emerald, amber, and crimson respectively. Partial rounds are styled with a modern `warning-row` background glow.
+
+---
+
+## 🔊 Organic Audio Synthesizer & Mute Switcher
+
+We built a custom, zero-dependency live audio synthesizer using the native browser **Web Audio API** and paired it with a persistent mute button:
+
+1. **Sleek Header Speaker Switcher (`index.html`, `app.js`):**
+   * Placed a dedicated `<button id="btn-sound-toggle">` right next to the theme selector.
+   * Injects standard Apple-style speaker on/off SVG paths dynamically to cleanly reflect state changes.
+2. **Organic Live Oscillators (`app.js`):**
+   * **Keyboard click:** A brief sine wave sweeping rapidly from 600Hz down to 120Hz over 0.04s, producing a tight, satisfying physical switch sound.
+   * **Success arpeggio:** A gorgeous chime arpeggiating from C5 (523Hz) to E5 (659Hz) over 0.35s using organic sine waves.
+   * **Error caution buzz:** A deep, caution-like triangle wave sweep from 140Hz down to 90Hz over 0.22s, alerting the pilot without sounding harsh.
+3. **Mute by Default & Preference Retention:**
+   * Mutes sound by default on fresh load to prevent unsolicited audio issues.
+   * Persists sound preferences seamlessly inside `localStorage` across page refreshes.
+
+---
+
+## 🎹 Keyboard Shortcut Styling Polish (`styles.css`)
+
+Polished the physical keyboard playability index indicators (`[1]` - `[9]`, etc.) to feel incredibly premium and responsive:
+* **Keycap Styling (`styles.css`):** Extracted badges into elegant `.shortcut-badge` and `.gauge-shortcut-badge` selectors. They are styled with micro drop shadows and contrast-separated backgrounds resembling high-end physical/glassmorphic keyboard keys.
+* **Micro-Animations (`styles.css`):** Hovering over interactive tiles (such as checklist sortable blocks or blanked instruments) smoothly highlights both the element border and the shortcut index badge, providing a responsive, state-of-the-art interactive feedback look.
 

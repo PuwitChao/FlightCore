@@ -1533,3 +1533,44 @@ body[data-theme="mono"] .module-select-card.active .select-indicator {
   background-color: var(--text-primary);
   box-shadow: 0 0 6px var(--text-primary);
 }
+
+/* --- KEYBOARD SHORTCUT BADGES --- */
+.shortcut-badge {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-muted) !important;
+  background: var(--btn-neutral-bg) !important;
+  border: 1px solid var(--border-subtle) !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
+  margin-left: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  opacity: 0.75 !important;
+  transition: var(--transition-fast) !important;
+}
+
+.gauge-shortcut-badge {
+  font-family: var(--font-sans);
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--text-muted) !important;
+  background: var(--btn-neutral-bg) !important;
+  border: 1px solid var(--border-subtle) !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  opacity: 0.55 !important;
+  transition: var(--transition-fast) !important;
+  pointer-events: none;
+}
+
+.sortable-item:hover .shortcut-badge,
+.gauge-card:hover .gauge-shortcut-badge {
+  opacity: 1 !important;
+  color: var(--accent-blue) !important;
+  border-color: var(--border-active) !important;
+}

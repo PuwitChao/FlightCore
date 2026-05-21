@@ -70,6 +70,7 @@ let sessionRound = 0;
 let sessionScore = 0;
 let streak = 0;
 let level = 1;
+let sessionMaxStreak = 0;
 let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
 let selectedModules = ["checklist", "instruments", "atc", "fault"];
@@ -88,11 +89,117 @@ let roundByRoundHistory = []; // Session history
 let globalHistory = JSON.parse(localStorage.getItem("flightcore_history") || "[]");
 
 // ==========================================
-// 3. AUDIO SYNTH (Muted for Silent Visual Alerts)
+// 3. AUDIO SYNTH (Organic Low-Latency Web Audio API)
 // ==========================================
 
+let isSoundEnabled = localStorage.getItem("flightcore_sound") === "true";
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
 function playSound(type) {
-  // Sounds muted in favor of sleek, silent premium visual cockpit alert flashes
+  if (!isSoundEnabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    
+    if (type === "click") {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.type = "sine";
+      const now = ctx.currentTime;
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.04);
+      gainNode.gain.setValueAtTime(0.08, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } 
+    else if (type === "success") {
+      const now = ctx.currentTime;
+      
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(523.25, now); // C5
+      gain1.gain.setValueAtTime(0.06, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc1.start(now);
+      osc1.stop(now + 0.25);
+      
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(659.25, now + 0.08); // E5
+      gain2.gain.setValueAtTime(0.08, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.35);
+    } 
+    else if (type === "error") {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.type = "triangle";
+      const now = ctx.currentTime;
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.linearRampToValueAtTime(90, now + 0.22);
+      gainNode.gain.setValueAtTime(0.12, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    }
+  } catch (e) {
+    console.warn("Web Audio API not allowed or supported on this device.", e);
+  }
+}
+
+function updateSoundToggleUI() {
+  const icon = document.getElementById("sound-icon");
+  if (!icon) return;
+  if (isSoundEnabled) {
+    icon.innerHTML = `<path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+    icon.closest("button").setAttribute("title", "Mute Sound");
+  } else {
+    icon.innerHTML = `<path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+    icon.closest("button").setAttribute("title", "Unmute Sound");
+  }
+}
+
+function initSoundSystem() {
+  updateSoundToggleUI();
+  
+  const btnSound = document.getElementById("btn-sound-toggle");
+  if (btnSound) {
+    btnSound.addEventListener("click", () => {
+      isSoundEnabled = !isSoundEnabled;
+      localStorage.setItem("flightcore_sound", isSoundEnabled);
+      updateSoundToggleUI();
+      
+      // Try to initialize or resume context on interaction
+      if (isSoundEnabled) {
+        try {
+          const ctx = getAudioContext();
+          playSound("click");
+        } catch (e) {}
+      }
+    });
+  }
 }
 
 // Simulates tactile feedback
@@ -525,21 +632,27 @@ function renderChecklistPool() {
   const poolContainer = document.getElementById("checklist-pool");
   poolContainer.innerHTML = "";
   
+  let visibleIndex = 0;
   // Load remaining steps that haven't been selected yet
   currentRndExpected.pool.forEach(item => {
     if (!currentRndInput.includes(item)) {
+      visibleIndex++;
       const el = document.createElement("div");
       el.className = "sortable-item";
-      el.textContent = item;
+      el.innerHTML = `
+        <span>${item}</span>
+        <span class="shortcut-badge" style="font-size: 0.6rem; opacity: 0.4; font-weight: 700; border: 1px solid var(--border-subtle); padding: 1px 4px; border-radius: 4px; margin-left: 8px;">${visibleIndex}</span>
+      `;
+      const currentVal = item;
       el.addEventListener("click", () => {
         playSound("click");
         // Add to input array
-        currentRndInput.push(item);
+        currentRndInput.push(currentVal);
         
         // Update slots
         const slotIdx = currentRndInput.length - 1;
         const slotText = document.getElementById(`checklist-slot-text-${slotIdx}`);
-        slotText.textContent = item;
+        slotText.textContent = currentVal;
         slotText.style.color = "var(--text-white)";
         
         // Re-render remaining pool
@@ -574,8 +687,24 @@ function renderInstrumentsTestLayout() {
   const grid = document.getElementById("instruments-grid-test");
   grid.innerHTML = "";
   
-  currentRndExpected.expected.forEach(g => {
+  currentRndExpected.expected.forEach((g, idx) => {
     const card = createGaugeHTML(g, true); // Blanked layout
+    
+    // Append a corner keyboard shortcut badge
+    const badge = document.createElement("span");
+    badge.className = "gauge-shortcut-badge";
+    badge.style.position = "absolute";
+    badge.style.top = "6px";
+    badge.style.left = "6px";
+    badge.style.fontSize = "0.55rem";
+    badge.style.opacity = "0.35";
+    badge.style.fontWeight = "700";
+    badge.style.border = "1px solid var(--border-subtle)";
+    badge.style.padding = "1px 3px";
+    badge.style.borderRadius = "3px";
+    badge.textContent = idx + 1;
+    card.appendChild(badge);
+    card.style.position = "relative";
     
     // Tap to select / focus gauge to input!
     card.addEventListener("click", () => {
@@ -668,17 +797,18 @@ function renderATCQuickSelectOptions(field, inputEl) {
   }
   options = shuffle(options);
   
-  options.forEach(opt => {
+  options.forEach((opt, idx) => {
     const btn = document.createElement("button");
     btn.className = "keypad-btn";
     btn.style.height = "44px";
     btn.style.fontSize = "0.75rem";
-    btn.textContent = opt;
+    btn.innerHTML = `<span style="opacity: 0.4; font-size: 0.6rem; margin-right: 6px; font-weight: 700; border: 1px solid var(--border-subtle); padding: 1px 4px; border-radius: 4px;">${idx + 1}</span> ${opt}`;
+    const currentVal = opt;
     btn.addEventListener("click", () => {
       playSound("click");
-      currentRndInput[field] = opt;
-      inputEl.value = opt;
-      document.getElementById("text-keypad-preview-value").textContent = opt;
+      currentRndInput[field] = currentVal;
+      inputEl.value = currentVal;
+      document.getElementById("text-keypad-preview-value").textContent = currentVal;
     });
     optionsContainer.appendChild(btn);
   });
@@ -724,22 +854,28 @@ function renderFaultPool() {
   const poolContainer = document.getElementById("fault-pool");
   poolContainer.innerHTML = "";
   
+  let visibleIndex = 0;
   // Populate options
   currentRndExpected.pool.forEach(item => {
     // Only display option if it hasn't been placed in another slot
     if (!currentRndInput.includes(item)) {
+      visibleIndex++;
       const btn = document.createElement("div");
       btn.className = "sortable-item";
-      btn.textContent = item;
+      btn.innerHTML = `
+        <span>${item}</span>
+        <span class="shortcut-badge" style="font-size: 0.6rem; opacity: 0.4; font-weight: 700; border: 1px solid var(--border-subtle); padding: 1px 4px; border-radius: 4px; margin-left: 8px;">${visibleIndex}</span>
+      `;
+      const currentVal = item;
       btn.addEventListener("click", () => {
         playSound("click");
         
         // Write choice
-        currentRndInput[focusedInputId] = item;
+        currentRndInput[focusedInputId] = currentVal;
         
         // Update slot text
         const textEl = document.getElementById(`fault-slot-text-${focusedInputId}`);
-        textEl.textContent = item;
+        textEl.textContent = currentVal;
         textEl.style.color = "var(--text-white)";
         
         // Advance focus if slot 0 is filled
@@ -977,6 +1113,19 @@ function submitTelemetry() {
     
     // Edge glow effect
     document.getElementById("main-viewport").className = "viewport-content screen-glow-success";
+  } else if (accuracy >= 80) {
+    grade = "good";
+    streak++;
+    const basePoints = 1000 + (level * 200);
+    const studyBonus = Math.round(studyDurationRemaining * 50);
+    addedPoints = Math.round((basePoints + studyBonus) * (accuracy / 100));
+    
+    sessionScore += addedPoints;
+    playSound("success");
+    triggerHaptic("success");
+    
+    // Edge glow effect
+    document.getElementById("main-viewport").className = "viewport-content screen-glow-success";
   } else if (accuracy >= 50) {
     grade = "partial";
     // Streak persists intact (streak remains unchanged)
@@ -985,7 +1134,7 @@ function submitTelemetry() {
     addedPoints = Math.round((basePoints + studyBonus) * (accuracy / 100));
     
     sessionScore += addedPoints;
-    playSound("success"); // Muted by default, but wired logically
+    playSound("success");
     triggerHaptic("warning");
     
     // Edge glow effect
@@ -999,6 +1148,9 @@ function submitTelemetry() {
     // Edge glow effect
     document.getElementById("main-viewport").className = "viewport-content screen-glow-error";
   }
+  
+  // Update session max streak
+  sessionMaxStreak = Math.max(sessionMaxStreak, streak);
   
   // Save round result
   const rndResult = {
@@ -1033,6 +1185,12 @@ function setupFeedbackScreen(res) {
     verdictCard.style.borderColor = "var(--success-border)";
     verdictCard.style.backgroundColor = "var(--success-bg)";
     scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK INCREMENTED)`;
+  } else if (res.grade === "good") {
+    ratingEl.textContent = `GREAT RECALL (${res.accuracy}%)`;
+    ratingEl.className = "debrief-rating proficient";
+    verdictCard.style.borderColor = "var(--success-border)";
+    verdictCard.style.backgroundColor = "var(--success-bg)";
+    scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK INCREMENTED!)`;
   } else if (res.grade === "partial") {
     ratingEl.textContent = `PARTIAL SUCCESS (${res.accuracy}%)`;
     ratingEl.className = "debrief-rating warning";
@@ -1123,6 +1281,9 @@ function finishSession() {
     if (r.grade === "perfect") {
       resultText = "PERFECT";
       resultColor = "var(--success-emerald)";
+    } else if (r.grade === "good") {
+      resultText = `GREAT (${r.accuracy}%)`;
+      resultColor = "var(--success-emerald)";
     } else if (r.grade === "partial") {
       tr.className = "warning-row";
       resultText = `PARTIAL (${r.accuracy}%)`;
@@ -1166,7 +1327,8 @@ function finishSession() {
     score: sessionScore,
     percentage: percentage,
     tier: tier,
-    maxLevel: level
+    maxLevel: level,
+    maxStreak: sessionMaxStreak
   };
   globalHistory.push(sessionRecord);
   // Cap history at 30 items
@@ -1193,6 +1355,7 @@ function initSession() {
   sessionScore = 0;
   streak = 0;
   level = 1;
+  sessionMaxStreak = 0;
   activeModule = null;
   recentlyPlayedModules = [];
   roundByRoundHistory = [];
@@ -1211,32 +1374,120 @@ function renderHistoryChart() {
   if (sideWrapper) sideWrapper.innerHTML = "";
   
   if (globalHistory.length === 0) {
-    const emptyHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO SESSION HISTORY RECORDED</div>`;
-    chartWrapper.innerHTML = emptyHTML;
-    if (sideWrapper) sideWrapper.innerHTML = emptyHTML;
+    const createDummyChartHTML = () => `
+      <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px;">
+        <!-- Background Mockup SVG -->
+        <svg width="100%" height="80" viewBox="0 0 300 80" preserveAspectRatio="none" style="opacity: 0.15; filter: blur(0.5px);">
+          <defs>
+            <linearGradient id="dummy-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid Lines -->
+          <line x1="0" y1="16" x2="300" y2="16" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.3"/>
+          <line x1="0" y1="40" x2="300" y2="40" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.3"/>
+          <line x1="0" y1="64" x2="300" y2="64" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.3"/>
+          
+          <!-- Mockup Bars -->
+          <rect x="20" y="45" width="14" height="25" rx="3" fill="url(#dummy-grad)"/>
+          <rect x="60" y="30" width="14" height="40" rx="3" fill="url(#dummy-grad)"/>
+          <rect x="100" y="50" width="14" height="20" rx="3" fill="url(#dummy-grad)"/>
+          <rect x="140" y="20" width="14" height="50" rx="3" fill="url(#dummy-grad)"/>
+          <rect x="180" y="35" width="14" height="35" rx="3" fill="url(#dummy-grad)"/>
+          <rect x="220" y="15" width="14" height="55" rx="3" fill="url(#dummy-grad)"/>
+          <rect x="260" y="25" width="14" height="45" rx="3" fill="url(#dummy-grad)"/>
+          
+          <!-- Trend line -->
+          <path d="M 27 45 L 67 30 L 107 50 L 147 20 L 187 35 L 227 15 L 267 25" fill="none" stroke="var(--accent-blue)" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.4"/>
+        </svg>
+        
+        <!-- Foreground Alert Badge -->
+        <div style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center; max-width: 90%;">
+          <span style="font-size: 0.58rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase;">NO RECORDED RUNS</span>
+          <span style="font-size: 0.52rem; color: var(--text-muted); font-weight: 500;">Complete a session to plot telemetry trends</span>
+        </div>
+      </div>
+    `;
+    
+    chartWrapper.innerHTML = createDummyChartHTML();
+    if (sideWrapper) {
+      sideWrapper.innerHTML = createDummyChartHTML();
+    }
     return;
   }
   
-  const createHistoryListHTML = (historyData) => {
-    let html = `<div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">`;
-    const recent = [...historyData].reverse().slice(0, 3);
-    recent.forEach((h) => {
-      const dateStr = new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: rgba(255,255,255,0.01);">
-          <span style="font-weight: 700; color: var(--accent-blue);">${dateStr}</span>
-          <span style="color: var(--text-primary); font-weight: 600;">${h.score.toLocaleString()} PTS</span>
-          <span style="font-weight: 700; font-size: 0.65rem; color: ${h.percentage >= 90 ? 'var(--success-emerald)' : 'var(--text-secondary)'};">${h.percentage}% ACC</span>
-        </div>
+  // Real Chart populated state
+  // Slice the last 6 sessions in chronological order
+  const recent = globalHistory.slice(-6);
+  
+  const createRealChartHTML = (widthPercent = "100%") => {
+    // Generate coordinate mapping
+    // X goes from 20 to 280 across a 300px viewBox
+    // Y goes from 12 (100% accuracy) to 58 (0% accuracy)
+    const points = recent.map((h, idx) => {
+      const x = 20 + idx * (260 / (recent.length - 1 || 1));
+      const y = 58 - (h.percentage / 100) * 46;
+      return { x, y, percentage: h.percentage, date: new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), score: h.score };
+    });
+    
+    let pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      pathD += ` L ${points[i].x} ${points[i].y}`;
+    }
+    
+    let areaD = `${pathD} L ${points[points.length - 1].x} 60 L ${points[0].x} 60 Z`;
+    
+    // Draw dots and labels
+    let dotsHTML = "";
+    let labelsHTML = "";
+    
+    points.forEach((pt) => {
+      dotsHTML += `
+        <circle cx="${pt.x}" cy="${pt.y}" r="3.5" fill="var(--bg-dark)" stroke="var(--accent-blue)" stroke-width="2" />
+      `;
+      
+      // Render text value (accuracy %) above/below the dot
+      const isAbove = pt.y > 35;
+      const textY = isAbove ? pt.y - 7 : pt.y + 12;
+      labelsHTML += `
+        <text x="${pt.x}" y="${textY}" font-family="var(--font-sans)" font-size="7" font-weight="700" fill="var(--text-primary)" text-anchor="middle">${pt.percentage}%</text>
+        <text x="${pt.x}" y="74" font-family="var(--font-sans)" font-size="5.5" font-weight="600" fill="var(--text-muted)" text-anchor="middle">${pt.date}</text>
       `;
     });
-    html += `</div>`;
-    return html;
+    
+    return `
+      <svg width="${widthPercent}" height="100%" viewBox="0 0 300 80" style="overflow: visible;">
+        <defs>
+          <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Grid Lines -->
+        <line x1="10" y1="12" x2="290" y2="12" stroke="var(--border-subtle)" stroke-width="0.75" stroke-dasharray="3,3" />
+        <line x1="10" y1="35" x2="290" y2="35" stroke="var(--border-subtle)" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.6" />
+        <line x1="10" y1="58" x2="290" y2="58" stroke="var(--border-subtle)" stroke-width="0.75" stroke-dasharray="3,3" />
+        
+        <!-- Area path -->
+        <path d="${areaD}" fill="url(#chart-area-grad)" />
+        
+        <!-- Stroke path -->
+        <path d="${pathD}" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        
+        <!-- Dots -->
+        ${dotsHTML}
+        
+        <!-- Labels -->
+        ${labelsHTML}
+      </svg>
+    `;
   };
   
-  chartWrapper.innerHTML = createHistoryListHTML(globalHistory);
+  chartWrapper.innerHTML = createRealChartHTML("100%");
   if (sideWrapper) {
-    sideWrapper.innerHTML = createHistoryListHTML(globalHistory);
+    sideWrapper.innerHTML = createRealChartHTML("100%");
   }
 }
 
@@ -1251,11 +1502,12 @@ function loadHomeStats() {
     
     // Max level achieved
     const maxLv = Math.max(...globalHistory.map(h => h.maxLevel || 1));
+    const maxStreakAchieved = Math.max(...globalHistory.map(h => h.maxStreak || 0));
     
     document.getElementById("stat-high-score").textContent = maxScore.toLocaleString();
     document.getElementById("stat-avg-score").textContent = `${averageGrade}%`;
     document.getElementById("stat-sessions").textContent = totalRuns;
-    document.getElementById("stat-max-streak").textContent = `LVL ${maxLv}`;
+    document.getElementById("stat-max-streak").textContent = maxStreakAchieved;
     
     // Update side panel stats
     const sideHighScore = document.getElementById("side-stat-high-score");
@@ -1435,7 +1687,7 @@ window.addEventListener("keydown", (e) => {
     }
   }
   
-  // Case 1: Active keypad input session
+  // Case 1: Active keypad/select input session
   if (focusedInputId !== null) {
     // Check if numeric field is currently focused
     const isNumericField = activeModule === "instruments" || 
@@ -1479,6 +1731,23 @@ window.addEventListener("keydown", (e) => {
         document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
         focusedInputId = null;
       }
+    } else {
+      // Text quick-select options are active for ATC Callsign / Facility
+      if (/^[1-4]$/.test(key)) {
+        e.preventDefault();
+        const optionBtns = document.querySelectorAll("#text-keypad-options .keypad-btn");
+        const idx = parseInt(key) - 1;
+        if (optionBtns[idx]) {
+          optionBtns[idx].click();
+        }
+      } else if (key === "Escape" || key === "Enter") {
+        e.preventDefault();
+        playSound("click");
+        // Close text selector
+        document.getElementById("custom-text-keypad").style.display = "none";
+        document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
+        focusedInputId = null;
+      }
     }
     return;
   }
@@ -1486,6 +1755,65 @@ window.addEventListener("keydown", (e) => {
   // Case 2: Global application flow hotkeys (Space / Enter / Escape abort)
   const activeScreen = document.querySelector(".screen-container.active");
   if (!activeScreen) return;
+  
+  // Custom Keyboard playability for each module in the Test screen
+  if (activeScreen.id === "screen-test" && focusedInputId === null) {
+    if (activeModule === "checklist") {
+      if (/^[1-9]$/.test(key)) {
+        e.preventDefault();
+        const poolItems = document.querySelectorAll("#checklist-pool .sortable-item");
+        const idx = parseInt(key) - 1;
+        if (poolItems[idx]) {
+          poolItems[idx].click();
+        }
+      } else if (key === "Backspace") {
+        // Find reset/undo button inside the pool
+        const undoBtn = document.querySelector("#checklist-pool .btn-danger");
+        if (undoBtn) {
+          e.preventDefault();
+          undoBtn.click();
+        }
+      }
+    } 
+    else if (activeModule === "fault") {
+      if (/^[1-9]$/.test(key)) {
+        e.preventDefault();
+        const poolItems = document.querySelectorAll("#fault-pool .sortable-item");
+        const idx = parseInt(key) - 1;
+        if (poolItems[idx]) {
+          poolItems[idx].click();
+        }
+      } else if (key === "Backspace") {
+        // Find reset/clear button inside the pool
+        const clearBtn = document.querySelector("#fault-pool .btn-danger");
+        if (clearBtn) {
+          e.preventDefault();
+          clearBtn.click();
+        }
+      }
+    }
+    else if (activeModule === "instruments") {
+      if (/^[1-8]$/.test(key)) {
+        e.preventDefault();
+        const cards = document.querySelectorAll("#instruments-grid-test .gauge-card");
+        const idx = parseInt(key) - 1;
+        if (cards[idx]) {
+          cards[idx].click();
+        }
+      }
+    }
+    else if (activeModule === "atc") {
+      if (/^[1-4]$/.test(key)) {
+        e.preventDefault();
+        const fields = ["callsign", "facility", "freq", "squawk"];
+        const idx = parseInt(key) - 1;
+        const el = document.getElementById(`atc-input-${fields[idx]}`);
+        if (el) {
+          el.click();
+        }
+      }
+    }
+  }
   
   if (key === "Escape") {
     if (activeScreen.id === "screen-study" || activeScreen.id === "screen-test" || activeScreen.id === "screen-feedback") {
@@ -1542,6 +1870,7 @@ function initModuleSelection() {
 // Bootstrap application on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
   initThemeSystem();
+  initSoundSystem();
   loadHomeStats();
   initModuleSelection();
   initAbortSystem();
