@@ -1,31 +1,27 @@
 # Flight Core - Audit and Enhancements Checklist
 
-- `[x]` Audit & Enhance Home Screen Statistics Mismatch
-  - `[x]` Declare `sessionMaxStreak` at session start in `app.js`
-  - `[x]` Update and record `sessionMaxStreak` during round telemetry evaluation
-  - `[x]` Save `maxStreak` in the localStorage history array
-  - `[x]` Refactor `loadHomeStats()` to fetch the highest historical max streak and display it on `stat-max-streak` card (replacing Max Level representation)
-- `[x]` Upgrade Empty History Chart to High-Fidelity Mockup Placeholder
-  - `[x]` Craft an elegant mockup SVG placeholder representing dashed grids and bar heights
-  - `[x]` Center an absolute glassmorphic warning banner over the empty SVG structure
-  - `[x]` Update both `history-chart` and `sidebar-chart` layout triggers
-- `[x]` Implement Pro-Terminal Keyboard Shortcuts (100% Playable via PC Keys)
-  - `[x]` Render keyboard index badges `[1]`, `[2]` next to Checklist pool items
-  - `[x]` Render corner index badges on Blanked Instruments dials during test
-  - `[x]` Render quick-select shortcut labels on ATC clearance option buttons
-  - `[x]` Render index badges next to Fault mitigation blocks
-  - `[x]` Build a key down router processing keys `1`-`9`, `Backspace`, `Enter`, `Escape` for each active module recall phase
-- `[x]` Implement Organic Audio Synthesizer Engine & Mute Switcher
-  - `[x]` Add a speaker toggle icon button next to the theme switcher in `index.html`
-  - `[x]` Build standard speaker/mute SVG paths toggled dynamically via JS
-  - `[x]` Implement low-latency Web Audio API oscillators for keypresses, success chimes, and failure buzzer tones
-  - `[x]` Persist sound preference inside `localStorage`
-- `[x]` Perform Theme Contrast Audit & Visual Polish
-  - `[x]` Double-check legibility and AAA compliance across all 5 themes
-  - `[x]` Test mobile aspect ratio resizing and key borders
-- `[x]` Execute UI/UX Professional Enhancements
-  - `[x]` Add Onboarding/Keyboard Help Modal and `[?] Help` toggle button
-  - `[x]` Implement Briefing Pause/Play Timer Gate with glassmorphic backdrop
-  - `[x]` Upgrade Abort Session Overlay to three-option list
-  - `[x]` Build Clear Stats & Telemetry History Reset option
-  - `[x]` Craft Celebratory CSS Confetti Victory Glow for PROFICIENT rating
+## Phase 1: Planning & Setup
+- `[x]` Perform full audit of code, layout, security, and usability
+- `[x]` Write and obtain approval for the implementation plan
+- `[x]` Establish tasks in `task.md`
+
+## Phase 2: Production Security & Performance Hardening
+- `[ ]` Harden Content-Security-Policy (CSP) inside `_headers` (remove `'unsafe-inline'` from `script-src`)
+- `[ ]` Parallelize font loading in `index.html` (replace CSS `@import` with header `<link>` elements)
+
+## Phase 3: Dashboard Real-Time Progress Tracker
+- `[ ]` Add `#hud-round-dots` container below fixed dashboard header in `index.html`
+- `[ ]` Style `.round-step-tracker` and `.round-dot` states (success, warning, error, active, upcoming) in `styles.css`
+- `[ ]` Implement real-time dot rendering logic in `app.js` (`updateLevelAndHUD` and `finishSession`)
+
+## Phase 4: Cupertino-Style Intelligent UX Auto-Advance
+- `[ ]` Implement smart ATC field auto-advance chain (Callsign $\rightarrow$ Facility $\rightarrow$ Frequency $\rightarrow$ Squawk) in `app.js`
+- `[ ]` Implement smart Instruments dial card auto-advance chain in `app.js`
+
+## Phase 5: Verification & Walkthrough
+- `[ ]` Verify CSP status & console behavior
+- `[ ]` Verify parallel network font loading in developer tools
+- `[ ]` Verify ATC auto-advance flow on quick-select and numeric input
+- `[ ]` Verify Instruments card auto-advance flow on numeric keypad confirmation
+- `[ ]` Verify real-time progress dot updates and pulses across 8 rounds
+- `[ ]` Document all accomplishments in `walkthrough.md`
