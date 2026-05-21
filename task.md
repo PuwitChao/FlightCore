@@ -19,9 +19,9 @@
 - `[x]` Implement smart Instruments dial card auto-advance chain in `app.js`
 
 ## Phase 5: Verification & Walkthrough
-- `[ ]` Verify CSP status & console behavior
-- `[ ]` Verify parallel network font loading in developer tools
-- `[ ]` Verify ATC auto-advance flow on quick-select and numeric input
-- `[ ]` Verify Instruments card auto-advance flow on numeric keypad confirmation
-- `[ ]` Verify real-time progress dot updates and pulses across 8 rounds
-- `[ ]` Document all accomplishments in `walkthrough.md`
+- `[x]` Verify CSP status & console behavior
+- `[x]` Verify parallel network font loading in developer tools
+- `[x]` Verify ATC auto-advance flow on quick-select and numeric input
+- `[x]` Verify Instruments card auto-advance flow on numeric keypad confirmation
+- `[x]` Verify real-time progress dot updates and pulses across 8 rounds
+- `[x]` Document all accomplishments in `walkthrough.md`
