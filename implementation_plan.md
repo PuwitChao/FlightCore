@@ -1,88 +1,74 @@
-# Flight Core Memory Trainer - Audit & Enhancement Plan
+# Flight Core - UI & User Experience Enhancements Plan
 
-Following a comprehensive audit of the entire Flight Core memory training codebase, we have identified several outstanding opportunities to elevate the user experience, fix minor logic mismatches, and make the application look and feel exceptionally premium and state-of-the-art.
-
-This document details the planned changes, layout updates, and verification processes.
-
----
-
-## User Review Required
-
-> [!IMPORTANT]
-> All changes will remain 100% offline-first, dependency-free, and written in native vanilla HTML5, CSS3, and ES6 Javascript. They will be written directly inside the `D:\Documents\Personal_Project\Google_AG\FlightCore` project directory.
-> No bundlers, compilers, or heavy libraries are introduced, maintaining immediate deployability to GitHub Pages and Cloudflare Pages.
-
-### Highlighted Enhancements:
-1. **Real SVG Trend Sparklines**: Instead of a plain text list under the "Session History Trend" card, we will generate a high-fidelity SVG sparkline area chart.
-   - **Empty State**: Renders a beautiful dashed mockup grid and bar structure with a centered glassmorphic banner: `NO RECORDED RUNS - Complete a session to plot telemetry trends`.
-   - **Populated State**: Draws a fluid neon gradient area chart charting accuracy percentages over the last 6 sessions, complete with pinpoint dots and readable indicators.
-2. **True Max Streak Tracking**: The home dashboard card labeled "Max Streak" currently shows the max level achieved (e.g. `LVL 03`). We will track the actual maximum recall streak achieved *during* a session (between 0 and 8 consecutive correct submissions), store it in `localStorage` records, and display the true highest streak achieved on the home screen.
-3. **Pro-Terminal Keyboard Navigation**: Enable full keyboard playability for PC/Desktop training.
-   - Prepend subtle numeric shortcuts (e.g. `[1]`, `[2]`, `[3]`) to all option panels, checklists, and blanked gauges on the test screen.
-   - Enable key listeners (`1`-`9`, `Backspace`, `Enter`, `Escape`) to seamlessly select items, enter values, and advance/reset choices in sub-20ms.
-4. **Organic Audio Synthesis & Mute Toggle**: Add a speaker sound toggle button to the top header. Implement low-latency Web Audio API synthesizers for organic key clicks, rewarding chimes, and warning alerts, fully stored in browser preferences.
+We will perform a full UI and User Experience (UX) audit and implement production-ready best practices to elevate **Flight Core** into a highly polished, professional cognitive trainer suitable for the general public.
 
 ---
 
 ## Proposed Changes
 
-### Component 1: Structural Additions (`index.html`)
+### Component 1: Structural UI Framework (`index.html`)
+
+We will add new glassmorphic modal overlays, controls, and helpers to support modern UX paradigms.
 
 #### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- Add the sound toggle button in the header right next to the theme selector:
-  ```html
-  <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sound-icon">
-      <!-- Injected via JS -->
-    </svg>
-  </button>
-  ```
-- Review and refine the grid structures to support desktop and mobile layouts seamlessly.
+- **Header Enhancements**:
+  - Add a help toggle button `<button class="theme-toggle-btn" id="btn-help-toggle" title="Keyboard & Gesture Help">?</button>` in the top-right header next to the sound toggle.
+- **Study Briefing Panel**:
+  - Insert a glassmorphic pause button next to the study progress bar.
+  - Insert a `<div class="briefing-paused-overlay" id="paused-overlay" style="display: none;">` to cover the briefing cards when the timer is paused, showing a subtle scanline blur and a glowing `BRIEFING PAUSED` indicator.
+- **Upgrade Abort Overlay**:
+  - Replace the binary two-button confirmation in `#abort-confirm-overlay` with three clear, structured, glassmorphic option blocks:
+    - `[RESET & RESTART SESSION]` (Primary accent, starts current session over at Round 1)
+    - `[ABORT & EXIT TO HOME]` (Danger accent, returns to main home screen)
+    - `[RESUME TRAINING]` (Neutral secondary, closes the overlay)
+- **Theme and Settings Overlay**:
+  - Add a secondary option block inside the theme overlay card: `<button class="theme-opt-btn btn-danger-text" id="btn-clear-history">Purge Telemetry Stats & History</button>` to allow users to reset their local training history.
+- **Onboarding Modal**:
+  - Insert a `<div class="theme-selector-overlay" id="help-modal-overlay" style="display: none;">` that displays a clean, responsive terminal keymap cheatsheet explaining PC keyboard shortcuts and touch controls.
 
 ---
 
-### Component 2: CSS Stylesheets (`styles.css`)
+### Component 2: Sleek Animations & Accessiblity (`styles.css`)
+
+We will expand our styling system to support modern glass overlays, accessibility contrasts, and celebratory particle animations.
 
 #### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-- Implement class styles for shortcuts, sparklines, and theme contrast fixes:
-  - `.shortcut-badge`: Subtle inline keypad-like indicators for keyboard hotkeys.
-  - `.gauge-shortcut-badge`: Positioned in the upper corner of instruments cards.
-  - Sparkline paths and gradient settings for SVG elements.
-- Fine-tune color variable contrasts on Apple Light, OLED Dark, Monochrome, Nordic Sage, and Warm Sand themes. Ensure AAA contrast targets on header metadata and sidebar telemetry blocks.
+- **Glassmorphic Pause State**:
+  - Define `.briefing-paused-overlay` using a heavy `-webkit-backdrop-filter: blur(12px) saturate(140%)` and a frosted slate or stone background, coupled with a pulsing amber keyframe glow.
+- **Theme purger styling**:
+  - Add `.btn-danger-text` containing AAA contrast amber or red text layers that transition gracefully.
+- **Celebratory Confetti Particles**:
+  - Add pure CSS confetti particle systems (`.confetti-container` and `.confetti-piece`).
+  - Create a CSS animation keyframe `@keyframes confetti-fall` that uses dynamic horizontal swaying (using sine-wave translations) and rotating down-screen descents to wow the user on high scores.
+- **Help Modal Layout**:
+  - Define grid arrangements for keyboard shortcut representations (`.help-key-row` and `.kbd-key`).
 
 ---
 
-### Component 3: Game Core & Keyboard Engine (`app.js`)
+### Component 3: Game States, Timers & Telemetry (`app.js`)
+
+We will update the game loop controllers to support timer pausing, session restarts, local database purges, and victory visual queues.
 
 #### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-- **Max Streak Tracking**:
-  - Add `let sessionMaxStreak = 0;` to `initSession()`.
-  - Update `sessionMaxStreak = Math.max(sessionMaxStreak, streak);` inside `submitTelemetry()`.
-  - Write `maxStreak` to `sessionRecord` and save to `localStorage`.
-  - Update `loadHomeStats()` to extract `maxStreak` from records and display it on `stat-max-streak` card.
-- **Audio Synthesizer Engine**:
-  - Connect a lightweight Web Audio API synthesizer that fires for keypress, perfect response, and wrong responses.
-  - Manage mute state using a global preference toggle synced with `localStorage`.
-- **SVG Sparkline Chart Generator**:
-  - Rewrite `renderHistoryChart()`:
-    - If `globalHistory.length === 0`: render a beautiful glassmorphic mockup bar chart with an overlay banner.
-    - If `globalHistory` is populated: render a dynamic SVG chart charting progress metrics for the last 6 sessions.
-- **Keyboard Shortcut Processor**:
-  - Add index badges to options during render loops: Checklist pool items, Instrument dials, ATC fields and text option buttons, Fault pool items.
-  - Bind global keyboard event listeners:
-    - If a number key `1` to `9` is pressed on the test screen, trigger click on the corresponding option button.
-    - Focus and type values into gauges via numeric keypads.
-    - support `Backspace` to undo choices in Checklists and Fault modules.
+- **Help Modal Controls**:
+  - Bind click listeners for `#btn-help-toggle` to open and close the keyboard onboarding sheet.
+- **Briefing Timer Pause States**:
+  - Bind the `Space` bar and briefing pause clicks to toggle `isTimerPaused`.
+  - Pause the study countdown interval, blur the content behind `#paused-overlay`, and show a pulsing state.
+- **Expanded Abort Commands**:
+  - Hook `#btn-abort-restart` to immediately execute `initSession()` (resetting rounds to 1, score to 0, and streaks to 0) without returning to home.
+- **Purge Telemetry History**:
+  - Bind `#btn-clear-history` to prompt a confirmation dialogue. If approved, empty `globalHistory`, wipe `flightcore_history` from `localStorage`, immediately update home screen/sidebar sparkline metrics, and play a down-pitch warning sound.
+- **Victory Confetti Launcher**:
+  - Create a dynamic `launchConfetti()` generator in JS that injects 50+ CSS-animated confetti pieces of varying hues, dimensions, and delay profiles inside a transient container over the debriefing screen when scoring a `PROFICIENT` status.
 
 ---
 
 ## Verification Plan
 
 ### Automated & Manual Verification
-We will manually verify the application under standard modern web specifications:
-1. **Keyboard-Only Challenge Run**: Conduct a full 8-round training session exclusively using the physical keyboard to check navigation flow, focus targets, and validation correctness.
-2. **Chart Layout Rendering Checks**:
-   - Reset local storage to inspect the high-fidelity dummy chart layout placeholder.
-   - Complete 3 sessions to inspect the dynamic SVG line path rendering and coordinate scaling.
-3. **Sound Toggle Auditing**: Verify that sound defaults to muted, toggles on to play low-latency organic tones, and successfully persists across page reloads.
-4. **Theme Contrast Auditing**: Ensure legibility and AA/AAA compliance across all five themes.
+1. **Pause Test**: Engage a training session and press `Space` or the pause button during the briefing screen. Verify that the study card blurs, the timer pauses, and no text can be read.
+2. **Help/Shortcut Test**: Trigger the `[?]` help menu from both the home screen and during gameplay. Verify keyboard bindings (`1` to `9`, `Backspace`, `Enter`, `Escape`) are clearly shown.
+3. **Session Reset Test**: Press `Escape` or the abort button, click `RESET & RESTART SESSION`, and verify the session restarts on Round 1 instantly.
+4. **Stats Purge Test**: Select the theme menu, click `Purge Telemetry`, confirm, and verify stats cards reset to `0000`, the chart shows `NO RECENT SESSION DATA`, and `localStorage` is cleared.
+5. **Confetti & Victory Test**: Achieve a score $\ge 90\%$ accuracy and verify a gorgeous pure CSS confetti animation cascades down. Check contrast across Nordic Sage, Apple Light, OLED Dark, Monochrome, and Warm Sand themes.
