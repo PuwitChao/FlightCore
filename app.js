@@ -238,6 +238,43 @@ function updateLevelAndHUD() {
     chev.className = "chevron" + (i < activeChevrons ? " active" : "");
     chevronContainer.appendChild(chev);
   }
+  
+  // Update real-time horizontal progress dots
+  renderRoundStepTracker();
+}
+
+function renderRoundStepTracker() {
+  const container = document.getElementById("hud-round-dots");
+  if (!container) return;
+  
+  container.innerHTML = "";
+  
+  // Create 8 dots representing 8 rounds of a session
+  for (let r = 1; r <= 8; r++) {
+    const dot = document.createElement("div");
+    dot.className = "round-dot";
+    
+    // Check if this round's performance is already recorded in history
+    const pastRound = roundByRoundHistory.find(h => h.round === r);
+    
+    if (pastRound) {
+      if (pastRound.grade === "perfect" || pastRound.grade === "good") {
+        dot.classList.add("completed-success");
+      } else if (pastRound.grade === "partial") {
+        dot.classList.add("completed-warning");
+      } else {
+        dot.classList.add("completed-error");
+      }
+    } else if (r === sessionRound && sessionRound > 0) {
+      // Flashing active round dot
+      dot.classList.add("active");
+    } else {
+      // Upcoming round dot
+      dot.classList.add("upcoming");
+    }
+    
+    container.appendChild(dot);
+  }
 }
 
 function selectNextModule() {
@@ -822,6 +859,17 @@ function renderATCQuickSelectOptions(field, inputEl) {
       currentRndInput[field] = currentVal;
       inputEl.value = currentVal;
       document.getElementById("text-keypad-preview-value").textContent = currentVal;
+      
+      // Auto-advance to the next field in the ATC chain
+      setTimeout(() => {
+        if (field === "callsign") {
+          const nextEl = document.getElementById("atc-input-facility");
+          if (nextEl) nextEl.click();
+        } else if (field === "facility") {
+          const nextEl = document.getElementById("atc-input-freq");
+          if (nextEl) nextEl.click();
+        }
+      }, 150);
     });
     optionsContainer.appendChild(btn);
   });
@@ -970,7 +1018,43 @@ document.getElementById("keypad-enter").addEventListener("click", () => {
   if (focusedInputId === null) return;
   playSound("click");
   
-  // Submit active focused field and hide keypad
+  // Cupertino-Style Auto-Advance logic
+  if (activeModule === "instruments") {
+    const cards = Array.from(document.querySelectorAll("#instruments-grid-test .gauge-card"));
+    const activeCard = document.querySelector(".gauge-card.active-step");
+    if (activeCard) {
+      const activeIdx = cards.indexOf(activeCard);
+      let nextBlankCard = null;
+      for (let i = 1; i <= cards.length; i++) {
+        const nextIdx = (activeIdx + i) % cards.length;
+        const card = cards[nextIdx];
+        const label = card.getAttribute("data-label");
+        if (!currentRndInput[label]) {
+          nextBlankCard = card;
+          break;
+        }
+      }
+      
+      if (nextBlankCard) {
+        setTimeout(() => {
+          nextBlankCard.click();
+        }, 150);
+        return; // Advance focus, do NOT hide keypad or clear active classes
+      }
+    }
+  } else if (activeModule === "atc") {
+    if (focusedInputId === "freq") {
+      const nextEl = document.getElementById("atc-input-squawk");
+      if (nextEl) {
+        setTimeout(() => {
+          nextEl.click();
+        }, 150);
+        return; // Advance focus to Squawk, do NOT hide keypad or clear active classes
+      }
+    }
+  }
+  
+  // Submit active focused field and hide keypad (default/fallback when no further auto-advance is possible)
   document.getElementById("custom-keypad").style.display = "none";
   document.querySelectorAll(".gauge-card").forEach(c => c.classList.remove("active-step"));
   document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
@@ -1591,6 +1675,7 @@ function loadHomeStats() {
   }
   
   renderHistoryChart();
+  renderRoundStepTracker();
 }
 
 // ==========================================

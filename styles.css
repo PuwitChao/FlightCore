@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 /* --- MULTI-THEME CUSTOM VARIABLES (Apple UI Guidelines) --- */
 body {
   /* Default: OLED Dark Theme */
@@ -1645,4 +1643,80 @@ body[data-theme="light"] .briefing-paused-overlay {
     opacity: 0;
   }
 }
+
+/* --- VISUAL PROGRESS STEP TRACKER --- */
+.round-step-tracker {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.round-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--border-subtle);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.round-dot.upcoming {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+}
+
+body[data-theme="light"] .round-dot.upcoming {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.round-dot.active {
+  background-color: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue);
+  animation: pulse-active 1.5s infinite alternate ease-in-out;
+}
+
+body[data-theme="mono"] .round-dot.active {
+  background-color: var(--text-primary);
+  box-shadow: 0 0 8px var(--text-primary);
+}
+
+body[data-theme="sage"] .round-dot.active {
+  background-color: #30D158;
+  box-shadow: 0 0 8px #30D158;
+}
+
+body[data-theme="warm"] .round-dot.active {
+  background-color: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue);
+}
+
+.round-dot.completed-success {
+  background-color: var(--success-emerald);
+  box-shadow: 0 0 6px var(--success-emerald);
+}
+
+.round-dot.completed-warning {
+  background-color: var(--accent-amber);
+  box-shadow: 0 0 6px var(--accent-amber);
+}
+
+.round-dot.completed-error {
+  background-color: var(--error-rose);
+  box-shadow: 0 0 6px var(--error-rose);
+}
+
+@keyframes pulse-active {
+  0% {
+    opacity: 0.55;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1.4);
+  }
+}
+
 

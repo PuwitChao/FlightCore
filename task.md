@@ -6,17 +6,17 @@
 - `[x]` Establish tasks in `task.md`
 
 ## Phase 2: Production Security & Performance Hardening
-- `[ ]` Harden Content-Security-Policy (CSP) inside `_headers` (remove `'unsafe-inline'` from `script-src`)
-- `[ ]` Parallelize font loading in `index.html` (replace CSS `@import` with header `<link>` elements)
+- `[x]` Harden Content-Security-Policy (CSP) inside `_headers` (remove `'unsafe-inline'` from `script-src`)
+- `[x]` Parallelize font loading in `index.html` (replace CSS `@import` with header `<link>` elements)
 
 ## Phase 3: Dashboard Real-Time Progress Tracker
-- `[ ]` Add `#hud-round-dots` container below fixed dashboard header in `index.html`
-- `[ ]` Style `.round-step-tracker` and `.round-dot` states (success, warning, error, active, upcoming) in `styles.css`
-- `[ ]` Implement real-time dot rendering logic in `app.js` (`updateLevelAndHUD` and `finishSession`)
+- `[x]` Add `#hud-round-dots` container below fixed dashboard header in `index.html`
+- `[x]` Style `.round-step-tracker` and `.round-dot` states (success, warning, error, active, upcoming) in `styles.css`
+- `[x]` Implement real-time dot rendering logic in `app.js` (`updateLevelAndHUD` and `finishSession`)
 
 ## Phase 4: Cupertino-Style Intelligent UX Auto-Advance
-- `[ ]` Implement smart ATC field auto-advance chain (Callsign $\rightarrow$ Facility $\rightarrow$ Frequency $\rightarrow$ Squawk) in `app.js`
-- `[ ]` Implement smart Instruments dial card auto-advance chain in `app.js`
+- `[x]` Implement smart ATC field auto-advance chain (Callsign $\rightarrow$ Facility $\rightarrow$ Frequency $\rightarrow$ Squawk) in `app.js`
+- `[x]` Implement smart Instruments dial card auto-advance chain in `app.js`
 
 ## Phase 5: Verification & Walkthrough
 - `[ ]` Verify CSP status & console behavior
