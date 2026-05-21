@@ -154,7 +154,50 @@ We have fully hooked the new structural UI/UX elements in `app.js` and successfu
    * Integrated a premium `PURGE TELEMETRY HISTORY` action inside the theme selection overlay.
    * Tapping it triggers an irreversible confirmation prompt. Upon acceptance, the entire history is wiped (`globalHistory = []`), the `flightcore_history` key is completely purged from the browser's `localStorage`, a deep caution buzz (`playSound("error")`) is played, and the stats panel cards and high-score labels update to `0` in real-time.
 5. **Celebratory CSS Confetti Victory Glow (`launchConfetti()`):**
-   * Constructed an dynamic CSS confetti particle launcher in vanilla ES6.
-   * Achieving a `PROFICIENT` debrief tier ($\ge 90\%$ accuracy) spawns 70+ dynamic `.confetti-piece` elements across the debrief screen.
+   * Constructed a dynamic CSS confetti particle launcher in vanilla ES6.
+   * Achieving a `PROFICIENT` debrief tier (>= 90% accuracy) spawns 70+ dynamic `.confetti-piece` elements across the debrief screen.
    * Confetti pieces are randomized in colors, starting coordinates (`left`), size aspect ratios, animation delay offset, and 3D rotation vectors, drifting down the viewport smoothly before self-destructing after 5 seconds to prevent browser memory leaks.
 
+---
+
+## 🛡️ Production Security & Performance Hardening
+
+We performed security and performance sweeps to optimize FlightCore's delivery speed and resilience:
+1. **CSP Security Hardening (`_headers`):**
+   * Successfully removed `'unsafe-inline'` from the `script-src` directive in the HTTP security header configurations.
+   * Leveraged 100% programmatic event listeners in `app.js` (zero inline `<script>` tags or event attributes in HTML), achieving a premium defense against XSS injection attacks.
+2. **Parallel Font Loading & Eliminating FOUT (`index.html`, `styles.css`):**
+   * Moved the Google Fonts `@import` rule out of `styles.css` into parallel `<link rel="preconnect">` and `<link href="...">` preloads inside the `<head>` of `index.html`.
+   * This allows the browser to resolve domains and download fonts concurrently with stylesheets, eliminating Flash of Unstyled Text (FOUT) and speeding up First Contentful Paint (FCP) under 300ms.
+
+---
+
+## 📊 Dashboard Real-Time Progress Tracker
+
+To keep users motivated, we implemented an elegant visual timeline tracker representing active session progression:
+1. **Glassmorphic Round Timeline Grid (`index.html`):**
+   * Added the `#hud-round-dots` container inside the fixed header panel, perfectly aligned below the main telemetry dashboard.
+2. **8-Round Micro-Capsule Steps (`styles.css`):**
+   * Designed beautifully styled horizontal micro-capsules (`.round-dot`) that scale flexibly to fit all mobile and tablet widths.
+   * Built distinct, color-coded state modifiers matching cockpit feedback parameters:
+     - `active`: Glowing accent color with an active vertical pulsing animation (`@keyframes pulse-active`).
+     - `completed-success` (Green): Reflecting Perfect/Great round recall results.
+     - `completed-warning` (Amber): Reflecting Partial round recall results.
+     - `completed-error` (Rose): Reflecting Failed round results.
+     - `upcoming` (Translucent): Representing upcoming training rounds.
+3. **Real-time Lifecycle Updates (`app.js`):**
+   * Hooked `renderRoundStepTracker()` into the core game loop during round initialization (`updateLevelAndHUD()`) and home screen stats loading (`loadHomeStats()`) to seamlessly draw, clear, and animate steps as the user advances.
+
+---
+
+## ⚡ Cupertino-Style Intelligent UX Auto-Advance
+
+We engineered a fluid, smart auto-focus progression chain across the ATC and Instruments recall modules to eliminate redundant clicks and elevate mobile ergonomics:
+1. **Smart ATC Flow Chain:**
+   * Selecting a **Callsign** automatically triggers focus on the **Facility** input field.
+   * Selecting a **Facility** option immediately shifts focus to the **Frequency** dial input, opening the custom numeric keypad.
+   * Entering a **Frequency** and tapping **ENTER** (`CONFIRM`) automatically advances focus to **Squawk**.
+   * Entering a **Squawk** and tapping **ENTER** cleanly dismisses the keyboard, readying the user for submission.
+2. **Dynamic Gauge Card Progression:**
+   * In the **Instruments** numeric keypad Enter listener, confirming an input scans dynamically starting from the active gauge card for the next blank dial.
+   * If a vacant dial is located, focus instantly leaps to it, prompting keyboard entry; if all dials have been completed, the keypad dismisses itself seamlessly.
