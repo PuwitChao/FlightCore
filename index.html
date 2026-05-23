@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Flight Core - Operational Memory Trainer</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Flight Core">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -113,6 +118,10 @@
             <span class="home-stat-num" id="stat-max-streak">0</span>
             <span class="home-stat-label">Max Streak</span>
           </div>
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="stat-daily-streak">0</span>
+            <span class="home-stat-label">Day Streak</span>
+          </div>
         </div>
 
         <div class="terminal-card" style="margin-bottom: 16px;">
@@ -123,6 +132,18 @@
           <div class="history-chart-wrapper" id="history-chart">
             <!-- SVG sparked dynamically from JS -->
             <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+          </div>
+        </div>
+
+        <!-- Module Accuracy Trends Card -->
+        <div class="terminal-card" style="margin-bottom: 16px;" id="module-stats-card">
+          <div class="terminal-card-header">
+            <span>Module Accuracy</span>
+            <span class="type-tag">Last 10 Sessions</span>
+          </div>
+          <div id="module-stats-bars">
+            <!-- JS Injected -->
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">COMPLETE A SESSION TO SEE TRENDS</div>
           </div>
         </div>
 
@@ -149,6 +170,18 @@
               <span class="select-indicator"></span>
               <span style="font-size: 0.78rem; font-weight: 600;">Fault</span>
             </div>
+          </div>
+        </div>
+
+        <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card-header">
+            <span>Session Length</span>
+            <span class="type-tag" id="session-length-label">8 Rounds</span>
+          </div>
+          <div class="session-length-selector" id="session-length-selector">
+            <button class="session-len-btn" data-len="4">4</button>
+            <button class="session-len-btn active" data-len="8">8</button>
+            <button class="session-len-btn" data-len="12">12</button>
           </div>
         </div>
 
@@ -356,7 +389,11 @@
           </ul>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: auto; width: 100%;">
+        <button class="btn btn-block" id="btn-copy-score" style="width: 100%; margin-top: 10px; min-height: 44px; font-size: 0.78rem; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
+          COPY SCORE CARD
+        </button>
+
+        <div style="display: flex; gap: 10px; margin-top: 8px; width: 100%;">
           <button class="btn btn-block" id="btn-debrief-home" style="flex: 1; min-height: 52px; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
             HOME
           </button>
@@ -548,6 +585,39 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Onboarding Welcome Modal (shown once on first visit) -->
+  <div class="theme-selector-overlay" id="onboarding-overlay" style="display: none; z-index: 1300;">
+    <div class="theme-selector-card" style="max-width: 380px;">
+      <div class="theme-selector-header" style="border-bottom: none; padding-bottom: 0;">
+        <span style="font-size: 1rem; font-weight: 800; color: var(--accent-blue);">Welcome to Flight Core</span>
+      </div>
+      <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+        A cognitive memory trainer built for pilots and flight deck professionals. Each session runs through rapid-fire drills across 4 modules.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">📋</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Checklist Sequencing</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Memorize and recall procedure steps in exact order.</span></div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">🎛️</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Instrument Scanning</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Read gauge values from a brief flash, then recall them.</span></div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">🎙️</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">ATC Communications</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Hold callsign, facility, frequency, and squawk in memory.</span></div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">⚠️</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Emergency Diagnostics</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Connect fault symptoms to isolation and mitigation actions.</span></div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-onboarding-dismiss" style="min-height: 48px;">
+        BEGIN TRAINING
+      </button>
+    </div>
   </div>
 
   <script src="app.js"></script>
