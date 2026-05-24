@@ -32,6 +32,46 @@ const CHECKLIST_POOLS = [
   {
     name: "Engine Fire Protocol",
     steps: ["THRUST LEVER IDLE", "FUEL SHUTOFF ENGAGE", "ENGINE FIRE SWITCH PULL", "DISCHARGE BOTTLE 1", "MONITOR EGT DECLINE"]
+  },
+  {
+    name: "Pushback & Taxi",
+    steps: ["BEACON LIGHT ON", "PARKING BRAKE RELEASE", "TAXI CLEARANCE RECEIVED", "NAV LIGHTS ON", "BRAKE TEMP CHECK"]
+  },
+  {
+    name: "Rejected Takeoff",
+    steps: ["THRUST LEVERS IDLE", "REVERSE THRUST APPLY", "MAX BRAKING APPLY", "SPOILERS DEPLOY", "ATC NOTIFY STOP"]
+  },
+  {
+    name: "Go-Around Procedure",
+    steps: ["TOGA THRUST SET", "POSITIVE RATE GEAR UP", "FLAPS RETRACT SCHEDULE", "AUTOPILOT ENGAGE", "ATC MISSED DECLARE"]
+  },
+  {
+    name: "TCAS RA Response",
+    steps: ["AUTOPILOT DISCONNECT", "FOLLOW RA COMMAND", "ATC ADVISE RA", "MONITOR TRAFFIC", "RESUME CLEARANCE ATC"]
+  },
+  {
+    name: "Hydraulic Failure",
+    steps: ["AFFECTED SYS IDENTIFY", "HYD PUMP SWITCH OFF", "ALTERNATE GEAR CHECK", "BRAKE ACCUMULATOR ARM", "LAND ASAP DECLARE"]
+  },
+  {
+    name: "Pressurization Check",
+    steps: ["OUTFLOW VALVE AUTO", "PACK FLOW VERIFY", "DIFF PRESSURE CHECK", "CABIN ALTITUDE SET", "PRESSURIZATION AUTO"]
+  },
+  {
+    name: "Fuel Management",
+    steps: ["FUEL QTY CROSS CHECK", "CROSSFEED VALVE CHECK", "CENTER TANK PUMP ON", "FUEL BALANCE MONITOR", "LOG FUEL REMAINING"]
+  },
+  {
+    name: "VFR Departure",
+    steps: ["ALTIMETER SET QNH", "TRANSPONDER ALT MODE", "LIGHTS STROBES ON", "FUEL SELECTOR BOTH", "CARB HEAT OFF"]
+  },
+  {
+    name: "Instrument Approach Briefing",
+    steps: ["APPROACH CHART REVIEW", "MINS DA MDA SET", "NAV FREQ IDENT VERIFY", "MISSED APCH BRIEFED", "LANDING SPEEDS SET"]
+  },
+  {
+    name: "After Landing Checklist",
+    steps: ["REVERSE THRUST OFF", "FLAPS RETRACT FULL", "STROBES OFF", "APU START INITIATE", "GROUND SPOILERS DISARM"]
   }
 ];
 
@@ -47,10 +87,14 @@ const INSTRUMENT_METRIC_POOLS = [
 ];
 
 const ATC_POOLS = {
-  callsigns: ["CLIPPER 402", "AIR FORCE ONE", "SPEEDBIRD 117", "LUFTHANSA 440", "DELTA 905", "UNITED 248", "NAVY 801", "FLAGSHIP 332"],
-  facilities: ["SEATTLE CENTER", "CHICAGO TOWER", "LONDON APPROACH", "BOSTON CENTER", "MIAMI GROUND", "LA DEP CON", "TOKYO CONTROL", "JFK TOWER"],
-  frequencies: ["121.90", "124.75", "118.10", "132.85", "128.05", "134.40", "119.50", "127.30"],
-  squawks: ["4201", "7200", "1200", "7700", "3352", "6401", "0422", "5015"]
+  callsigns: ["CLIPPER 402", "AIR FORCE ONE", "SPEEDBIRD 117", "LUFTHANSA 440", "DELTA 905", "UNITED 248", "NAVY 801", "FLAGSHIP 332",
+              "AMERICAN 612", "CATHAY 889", "EMIRATES 202", "QANTAS 455", "KOREAN AIR 74", "SWISS 103", "VIRGIN 330", "HEAVY METAL 1"],
+  facilities: ["SEATTLE CENTER", "CHICAGO TOWER", "LONDON APPROACH", "BOSTON CENTER", "MIAMI GROUND", "LA DEP CON", "TOKYO CONTROL", "JFK TOWER",
+               "DUBAI CONTROL", "PARIS APPROACH", "SYDNEY TOWER", "HONG KONG CTR", "TORONTO GROUND", "FRANKFURT APPR", "DENVER CENTER", "PHOENIX TOWER"],
+  frequencies: ["121.90", "124.75", "118.10", "132.85", "128.05", "134.40", "119.50", "127.30",
+                "123.45", "125.60", "129.70", "131.85", "135.10", "137.80", "122.35", "130.55"],
+  squawks: ["4201", "7200", "1200", "7700", "3352", "6401", "0422", "5015",
+            "2577", "4401", "3602", "5120", "0631", "7301", "1503", "4720"]
 };
 
 const FAULT_POOLS = [
@@ -59,7 +103,13 @@ const FAULT_POOLS = [
   { symptom: "DUAL ENGINE ROTOR LOCK", system: "EMERGENCY APU GENERATOR", action: "PITCH STABILIZE GLIDE" },
   { symptom: "HYDRAULIC RESERVOIR EMPTY", system: "FLUID TRANSFER VALVE", action: "ENGAGE STANDBY FLUIDS" },
   { symptom: "WING FLAPS ASYMMETRY", system: "FLAP POWER ACTUATOR", action: "MATCH CONTRALATERAL" },
-  { symptom: "ELECTRICAL BUS OVERLOAD", system: "CROSSFEED ISOLATOR", action: "RESET ENGINE GENERATOR" }
+  { symptom: "ELECTRICAL BUS OVERLOAD", system: "CROSSFEED ISOLATOR", action: "RESET ENGINE GENERATOR" },
+  { symptom: "UNRELIABLE AIRSPEED INDICATION", system: "PITOT HEAT CIRCUIT", action: "APPLY PITOT HEAT" },
+  { symptom: "SMOKE IN COCKPIT DETECTED", system: "ELECTRICAL WIRING BUS", action: "ISOLATE ELECTRICAL BUS" },
+  { symptom: "RUNAWAY STABILIZER TRIM", system: "TRIM MOTOR ACTUATOR", action: "CUTOUT SWITCHES PULL" },
+  { symptom: "ENGINE OIL PRESSURE LOW", system: "OIL PUMP SCAVENGE LINE", action: "ENGINE SHUTDOWN PREP" },
+  { symptom: "AIRFRAME ICING SEVERE", system: "PNEUMATIC BLEED AIR", action: "MANUAL DEICE ACTIVATE" },
+  { symptom: "GENERATOR BUS DROPOUT", system: "MAIN GENERATOR RELAY", action: "BATTERY BUS ISOLATE" }
 ];
 
 // ==========================================
@@ -74,6 +124,8 @@ let sessionMaxStreak = 0;
 let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
 let selectedModules = ["checklist", "instruments", "atc", "fault"];
+let sessionLength = parseInt(localStorage.getItem("flightcore_session_length") || "8", 10);
+let startingStreak = parseInt(localStorage.getItem("flightcore_starting_streak") || "4", 10);
 
 let currentRndExpected = null;
 let currentRndInput = null;
@@ -87,6 +139,12 @@ let activeKeypadBuffer = "";
 
 let roundByRoundHistory = []; // Session history
 let globalHistory = JSON.parse(localStorage.getItem("flightcore_history") || "[]");
+let dailyStreak = parseInt(localStorage.getItem("flightcore_daily_streak") || "0", 10);
+
+// Tracks pool indices used this session to prevent within-session repeats
+let usedFaultIndices = [];
+let usedChecklistIndices = [];
+let usedATCIndices = {}; // { callsigns: Set, facilities: Set, frequencies: Set, squawks: Set }
 
 // ==========================================
 // 3. AUDIO SYNTH (Organic Low-Latency Web Audio API)
@@ -224,7 +282,7 @@ function triggerHaptic(type) {
 function updateLevelAndHUD() {
   level = 1 + Math.floor(streak / 2);
   document.getElementById("hud-level").textContent = `LVL: ${String(level).padStart(2, "0")}`;
-  document.getElementById("hud-round").textContent = `${String(sessionRound).padStart(2, "0")}/08`;
+  document.getElementById("hud-round").textContent = `${String(sessionRound).padStart(2, "0")}/${String(sessionLength).padStart(2, "0")}`;
   document.getElementById("hud-score").textContent = String(sessionScore).padStart(5, "0");
   
   // Render streak chevrons
@@ -249,30 +307,34 @@ function renderRoundStepTracker() {
   
   container.innerHTML = "";
   
-  // Create 8 dots representing 8 rounds of a session
-  for (let r = 1; r <= 8; r++) {
+  // Create dots representing session rounds
+  for (let r = 1; r <= sessionLength; r++) {
     const dot = document.createElement("div");
     dot.className = "round-dot";
     
     // Check if this round's performance is already recorded in history
     const pastRound = roundByRoundHistory.find(h => h.round === r);
     
+    dot.setAttribute("role", "listitem");
     if (pastRound) {
       if (pastRound.grade === "perfect" || pastRound.grade === "good") {
         dot.classList.add("completed-success");
+        dot.setAttribute("aria-label", `Round ${r}: success`);
       } else if (pastRound.grade === "partial") {
         dot.classList.add("completed-warning");
+        dot.setAttribute("aria-label", `Round ${r}: partial`);
       } else {
         dot.classList.add("completed-error");
+        dot.setAttribute("aria-label", `Round ${r}: failed`);
       }
     } else if (r === sessionRound && sessionRound > 0) {
-      // Flashing active round dot
       dot.classList.add("active");
+      dot.setAttribute("aria-label", `Round ${r}: active`);
     } else {
-      // Upcoming round dot
       dot.classList.add("upcoming");
+      dot.setAttribute("aria-label", `Round ${r}: upcoming`);
     }
-    
+
     container.appendChild(dot);
   }
 }
@@ -305,7 +367,11 @@ function selectNextModule() {
 // ==========================================
 
 function generateChecklistData() {
-  const checklist = CHECKLIST_POOLS[Math.floor(Math.random() * CHECKLIST_POOLS.length)];
+  const availableIdx = CHECKLIST_POOLS.map((_, i) => i).filter(i => !usedChecklistIndices.includes(i));
+  const pickFrom = availableIdx.length > 0 ? availableIdx : CHECKLIST_POOLS.map((_, i) => i);
+  const chosenIdx = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  usedChecklistIndices.push(chosenIdx);
+  const checklist = CHECKLIST_POOLS[chosenIdx];
   const numSteps = Math.min(3 + level, checklist.steps.length); // Scales 3 up to all steps
   const expectedSteps = checklist.steps.slice(0, numSteps);
   
@@ -365,28 +431,53 @@ function generateInstrumentsData() {
   return { expected };
 }
 
+function pickUnused(pool, usedSet) {
+  const unused = pool.filter((_, i) => !usedSet.has(i));
+  const source = unused.length > 0 ? unused : pool;
+  const idx = Math.floor(Math.random() * source.length);
+  const val = source[idx];
+  usedSet.add(pool.indexOf(val));
+  return val;
+}
+
 function generateATCData() {
-  const callsign = ATC_POOLS.callsigns[Math.floor(Math.random() * ATC_POOLS.callsigns.length)];
-  const facility = ATC_POOLS.facilities[Math.floor(Math.random() * ATC_POOLS.facilities.length)];
-  const freq = ATC_POOLS.frequencies[Math.floor(Math.random() * ATC_POOLS.frequencies.length)];
-  const squawk = ATC_POOLS.squawks[Math.floor(Math.random() * ATC_POOLS.squawks.length)];
-  
-  // Custom prompt increases string length/components at Level 3+
-  let levelText = "";
-  if (level >= 3) {
-    const windH = Math.floor(Math.random() * 36) * 10;
-    const windS = Math.floor(Math.random() * 20) + 5;
-    levelText = ` WIND ${windH} AT ${windS} KNOTS.`;
+  if (!usedATCIndices.callsigns) {
+    usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
   }
+  const callsign = pickUnused(ATC_POOLS.callsigns, usedATCIndices.callsigns);
+  const facility = pickUnused(ATC_POOLS.facilities, usedATCIndices.facilities);
+  const freq = pickUnused(ATC_POOLS.frequencies, usedATCIndices.frequencies);
+  const squawk = pickUnused(ATC_POOLS.squawks, usedATCIndices.squawks);
   
+  const windH = Math.floor(Math.random() * 36) * 10;
+  const windS = Math.floor(Math.random() * 20) + 5;
+  const windText = `WIND ${windH} AT ${windS} KNOTS`;
+
+  // Multiple transmission templates — varied phrasing at different levels
+  const templates = level < 3 ? [
+    `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}."`,
+    `"${facility}, ${callsign}, RADAR CONTACT, SQUAWK ${squawk}, MONITOR ${freq}."`,
+    `"${callsign}, IDENT AND SQUAWK ${squawk}, CONTACT ${facility} ON ${freq}."`
+  ] : [
+    `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}. ${windText}."`,
+    `"${callsign}, CLEARED DIRECT, SQUAWK ${squawk}, ${windText}, CONTACT ${facility} ${freq}."`,
+    `"${facility}, ${callsign}, SQUAWK ${squawk}, ${windText}, MONITOR ${freq}."`,
+    `"${callsign}, ${facility}, ${windText}, IDENT SQUAWK ${squawk} ON ${freq}."`
+  ];
+  const displayText = templates[Math.floor(Math.random() * templates.length)];
+
   return {
     expected: { callsign, facility, freq, squawk },
-    displayText: `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}.${levelText}"`
+    displayText
   };
 }
 
 function generateFaultData() {
-  const fault = FAULT_POOLS[Math.floor(Math.random() * FAULT_POOLS.length)];
+  const availableIndices = FAULT_POOLS.map((_, i) => i).filter(i => !usedFaultIndices.includes(i));
+  const pickFrom = availableIndices.length > 0 ? availableIndices : FAULT_POOLS.map((_, i) => i);
+  const chosenIdx = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  usedFaultIndices.push(chosenIdx);
+  const fault = FAULT_POOLS[chosenIdx];
   const expectedChain = [fault.symptom, fault.system, fault.action];
   
   // Grab distractors from other diagnostic blocks
@@ -569,14 +660,33 @@ function setupStudyScreen(module) {
   const totalTicks = (studySecs * 1000) / intervalTime;
   let tick = 0;
   
+  const speedBonusBadge = document.getElementById("study-speed-bonus");
+  if (speedBonusBadge) speedBonusBadge.style.display = "inline-flex";
+
+  let lowTimeWarned = false;
   studyTimer = setInterval(() => {
     if (isTimerPaused) return;
     tick++;
     studyDurationRemaining = Math.max(studySecs - (tick * intervalTime) / 1000, 0);
     timerBar.style.width = `${(studyDurationRemaining / studySecs) * 1000 / 10}%`;
     timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
-    
+    if (speedBonusBadge) speedBonusBadge.textContent = `+${Math.round(studyDurationRemaining * 50)} SPD`;
+
+    // Low-time warning: turn bar amber and pulse tag when ≤ 3 s remain
+    if (studyDurationRemaining <= 3 && !lowTimeWarned) {
+      lowTimeWarned = true;
+      timerBar.style.backgroundColor = "var(--accent-amber)";
+      timerDisplay.style.color = "var(--accent-amber)";
+      triggerHaptic("warning");
+    } else if (studyDurationRemaining > 3) {
+      timerBar.style.backgroundColor = "var(--accent-blue)";
+      timerDisplay.style.color = "";
+      lowTimeWarned = false;
+    }
+
     if (studyDurationRemaining <= 0) {
+      timerBar.style.backgroundColor = "";
+      timerDisplay.style.color = "";
       clearInterval(studyTimer);
       commenceTest();
     }
@@ -614,7 +724,15 @@ function createGaugeHTML(g, isBlanked = false) {
 function commenceTest() {
   if (studyTimer) clearInterval(studyTimer);
   playSound("click");
-  
+
+  // Hide speed bonus badge and reset timer bar colour
+  const speedBonusBadge = document.getElementById("study-speed-bonus");
+  if (speedBonusBadge) speedBonusBadge.style.display = "none";
+  const timerBar = document.getElementById("study-timer-bar");
+  if (timerBar) timerBar.style.backgroundColor = "";
+  const timerDisplay = document.getElementById("study-timer-display");
+  if (timerDisplay) timerDisplay.style.color = "";
+
   // Reset input state variables
   focusedInputId = null;
   activeKeypadBuffer = "";
@@ -1324,7 +1442,7 @@ function setupFeedbackScreen(res) {
 // Proceed loop
 document.getElementById("btn-next-round").addEventListener("click", () => {
   playSound("click");
-  if (sessionRound < 8) {
+  if (sessionRound < sessionLength) {
     startRound();
   } else {
     finishSession();
@@ -1342,7 +1460,7 @@ document.getElementById("btn-submit-test").addEventListener("click", submitTelem
 // ==========================================
 
 function finishSession() {
-  const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / 8);
+  const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / roundByRoundHistory.length);
   
   // Tier designations mapping
   let tier = "UNACCEPTABLE";
@@ -1350,10 +1468,11 @@ function finishSession() {
   if (percentage >= 90) {
     tier = "PROFICIENT";
     tierClass = "proficient";
-    launchConfetti(); // Trigger confetti celebration!
+    launchConfetti();
   } else if (percentage >= 75) {
     tier = "SATISFACTORY";
     tierClass = "satisfactory";
+    launchMiniConfetti();
   } else if (percentage >= 50) {
     tier = "REMEDIAL";
     tierClass = "remedial";
@@ -1370,12 +1489,14 @@ function finishSession() {
   // Construct breakdown table
   const tbody = document.getElementById("debrief-table-rows");
   tbody.innerHTML = "";
-  
+
+  const bestScore = Math.max(...roundByRoundHistory.map(r => r.score));
+
   roundByRoundHistory.forEach(r => {
     const tr = document.createElement("tr");
     let resultText = "FAIL";
     let resultColor = "var(--error-rose)";
-    
+
     if (r.grade === "perfect") {
       resultText = "PERFECT";
       resultColor = "var(--success-emerald)";
@@ -1391,7 +1512,11 @@ function finishSession() {
       resultText = `FAIL (${r.accuracy}%)`;
       resultColor = "var(--error-rose)";
     }
-    
+
+    if (r.score === bestScore && bestScore > 0) {
+      tr.classList.add("best-round");
+    }
+
     tr.innerHTML = `
       <td>${String(r.round).padStart(2, "0")}</td>
       <td>${r.module.toUpperCase()}</td>
@@ -1419,6 +1544,35 @@ function finishSession() {
     blindspotCard.style.display = "none";
   }
   
+  // Compute per-module accuracy for this session
+  const moduleAccuracy = {};
+  ["checklist", "instruments", "atc", "fault"].forEach(mod => {
+    const rounds = roundByRoundHistory.filter(r => r.module === mod);
+    if (rounds.length > 0) {
+      moduleAccuracy[mod] = Math.round(rounds.reduce((s, r) => s + r.accuracy, 0) / rounds.length);
+    }
+  });
+
+  // Update daily training streak
+  const todayStr = new Date().toDateString();
+  const lastTrainedStr = localStorage.getItem("flightcore_last_trained");
+  if (!lastTrainedStr) {
+    dailyStreak = 1;
+  } else {
+    const lastDate = new Date(lastTrainedStr);
+    const today = new Date(todayStr);
+    const diffDays = Math.round((today - new Date(lastDate.toDateString())) / 86400000);
+    if (diffDays === 0) {
+      // Same day — streak unchanged
+    } else if (diffDays === 1) {
+      dailyStreak += 1;
+    } else {
+      dailyStreak = 1;
+    }
+  }
+  localStorage.setItem("flightcore_last_trained", todayStr);
+  localStorage.setItem("flightcore_daily_streak", dailyStreak);
+
   // Save session record to global history in localStorage
   const sessionRecord = {
     date: new Date().toISOString(),
@@ -1426,14 +1580,24 @@ function finishSession() {
     percentage: percentage,
     tier: tier,
     maxLevel: level,
-    maxStreak: sessionMaxStreak
+    maxStreak: sessionMaxStreak,
+    moduleAccuracy: moduleAccuracy
   };
+  // Personal-best detection (compare against all previous sessions, not this one)
+  const previousBest = globalHistory.length > 0
+    ? Math.max(...globalHistory.map(h => h.percentage))
+    : -1;
+
   globalHistory.push(sessionRecord);
   // Cap history at 30 items
   if (globalHistory.length > 30) globalHistory.shift();
   localStorage.setItem("flightcore_history", JSON.stringify(globalHistory));
-  
+
   showScreen("screen-debrief");
+
+  if (percentage > previousBest && previousBest >= 0) {
+    showPersonalBestBanner();
+  }
 }
 
 function launchConfetti() {
@@ -1486,10 +1650,74 @@ function launchConfetti() {
   }, 5000);
 }
 
+function launchMiniConfetti() {
+  const debriefScreen = document.getElementById("screen-debrief");
+  if (!debriefScreen) return;
+  const container = document.createElement("div");
+  container.className = "confetti-container";
+  debriefScreen.appendChild(container);
+  const colors = ["var(--accent-blue)", "var(--success-emerald)", "var(--accent-amber)"];
+  for (let i = 0; i < 25; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.width = `${Math.floor(Math.random() * 4) + 4}px`;
+    piece.style.height = `${Math.floor(Math.random() * 4) + 4}px`;
+    piece.style.animationDelay = `${Math.random() * 1.5}s`;
+    piece.style.animationDuration = `${Math.random() * 1.2 + 1.8}s`;
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.remove(), 4000);
+}
+
+function showPersonalBestBanner() {
+  const debriefScreen = document.getElementById("screen-debrief");
+  if (!debriefScreen) return;
+  const banner = document.createElement("div");
+  banner.className = "pb-banner";
+  banner.textContent = "NEW PERSONAL BEST";
+  debriefScreen.insertBefore(banner, debriefScreen.firstChild);
+  setTimeout(() => banner.remove(), 3000);
+}
+
 // Restart session trigger
 document.getElementById("btn-restart").addEventListener("click", () => {
   playSound("click");
   initSession();
+});
+
+// Copy score card to clipboard
+document.getElementById("btn-copy-score").addEventListener("click", () => {
+  const scoreEl = document.getElementById("debrief-score");
+  const pctEl = document.getElementById("debrief-percentage");
+  const tierEl = document.getElementById("debrief-rating-label");
+
+  const modLines = ["checklist", "instruments", "atc", "fault"].map(mod => {
+    const rounds = roundByRoundHistory.filter(r => r.module === mod);
+    if (rounds.length === 0) return null;
+    const avg = Math.round(rounds.reduce((s, r) => s + r.accuracy, 0) / rounds.length);
+    return `${mod.charAt(0).toUpperCase() + mod.slice(1)}: ${avg}%`;
+  }).filter(Boolean);
+
+  const text = [
+    "✈ FLIGHT CORE — SESSION DEBRIEF",
+    `Score: ${scoreEl ? scoreEl.textContent : "—"} | ${pctEl ? pctEl.textContent : "—"}`,
+    `Tier: ${tierEl ? tierEl.textContent : "—"} | Streak: ${sessionMaxStreak} | Level: ${level}`,
+    modLines.join(" | "),
+    "flightcore.app"
+  ].join("\n");
+
+  const btn = document.getElementById("btn-copy-score");
+  navigator.clipboard.writeText(text).then(() => {
+    playSound("success");
+    btn.textContent = "COPIED!";
+    setTimeout(() => { btn.textContent = "COPY SCORE CARD"; }, 2000);
+  }).catch(() => {
+    btn.textContent = "COPY FAILED";
+    setTimeout(() => { btn.textContent = "COPY SCORE CARD"; }, 2000);
+  });
 });
 
 // Start Session Button
@@ -1501,13 +1729,16 @@ document.getElementById("btn-engage-session").addEventListener("click", () => {
 function initSession() {
   sessionRound = 0;
   sessionScore = 0;
-  streak = 0;
-  level = 1;
+  streak = startingStreak;
+  level = 1 + Math.floor(streak / 2);
   sessionMaxStreak = 0;
   activeModule = null;
   recentlyPlayedModules = [];
   roundByRoundHistory = [];
-  
+  usedFaultIndices = [];
+  usedChecklistIndices = [];
+  usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
+
   startRound();
 }
 
@@ -1565,9 +1796,8 @@ function renderHistoryChart() {
     return;
   }
   
-  // Real Chart populated state
-  // Slice the last 6 sessions in chronological order
-  const recent = globalHistory.slice(-6);
+  // Real Chart populated state — show last 15 sessions
+  const recent = globalHistory.slice(-15);
   
   const createRealChartHTML = (widthPercent = "100%") => {
     // Generate coordinate mapping
@@ -1640,6 +1870,109 @@ function renderHistoryChart() {
 }
 
 // Initial Home Screen Stats Render
+function renderTrainingCalendar() {
+  const grid = document.getElementById("training-calendar");
+  if (!grid) return;
+
+  const trainedDates = {};
+  globalHistory.forEach(h => {
+    const d = h.date ? h.date.slice(0, 10) : null;
+    if (!d) return;
+    if (!trainedDates[d] || h.percentage > trainedDates[d]) {
+      trainedDates[d] = h.percentage;
+    }
+  });
+
+  grid.innerHTML = "";
+  const today = new Date();
+  // Render last 28 days, oldest first
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const pct = trainedDates[key];
+    const cell = document.createElement("div");
+    cell.className = "calendar-cell";
+    cell.title = `${key}${pct !== undefined ? `: ${pct}%` : ""}`;
+
+    if (i === 0) cell.classList.add("today");
+
+    if (pct !== undefined) {
+      if (pct >= 90) cell.classList.add("cal-proficient");
+      else if (pct >= 75) cell.classList.add("cal-satisfactory");
+      else if (pct >= 50) cell.classList.add("cal-remedial");
+      else cell.classList.add("cal-unacceptable");
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function initHistoryTabs() {
+  const tabs = document.querySelectorAll(".history-tab");
+  const panelChart = document.getElementById("history-panel-chart");
+  const panelCal = document.getElementById("history-panel-calendar");
+  const label = document.getElementById("history-tab-label");
+  if (!tabs.length) return;
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      playSound("click");
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      const which = tab.getAttribute("data-tab");
+      if (which === "chart") {
+        panelChart.style.display = "";
+        panelCal.style.display = "none";
+        if (label) label.textContent = "Last 15";
+      } else {
+        panelChart.style.display = "none";
+        panelCal.style.display = "";
+        if (label) label.textContent = "28 Days";
+        renderTrainingCalendar();
+      }
+    });
+  });
+}
+
+function renderModuleStats() {
+  const container = document.getElementById("module-stats-bars");
+  if (!container) return;
+
+  const recent = globalHistory.slice(-10);
+  const modules = [
+    { key: "checklist", label: "Checklist" },
+    { key: "instruments", label: "Instruments" },
+    { key: "atc", label: "ATC" },
+    { key: "fault", label: "Fault" }
+  ];
+
+  // Check if any session has moduleAccuracy data
+  const hasData = recent.some(h => h.moduleAccuracy);
+  if (!hasData) {
+    container.innerHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">COMPLETE A SESSION TO SEE TRENDS</div>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  modules.forEach(({ key, label }) => {
+    const sessionsWithMod = recent.filter(h => h.moduleAccuracy && h.moduleAccuracy[key] !== undefined);
+    if (sessionsWithMod.length === 0) return;
+    const avg = Math.round(sessionsWithMod.reduce((s, h) => s + h.moduleAccuracy[key], 0) / sessionsWithMod.length);
+    const color = avg >= 80 ? "var(--success-emerald)" : avg >= 50 ? "var(--accent-amber)" : "var(--error-rose)";
+
+    const row = document.createElement("div");
+    row.className = "module-stat-row";
+    row.innerHTML = `
+      <span class="module-stat-label">${label}</span>
+      <div class="module-stat-track">
+        <div class="module-stat-fill" style="width: ${avg}%; background: ${color};"></div>
+      </div>
+      <span class="module-stat-pct">${avg}%</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
 function loadHomeStats() {
   if (globalHistory.length > 0) {
     const scores = globalHistory.map(h => h.score);
@@ -1656,7 +1989,7 @@ function loadHomeStats() {
     document.getElementById("stat-avg-score").textContent = `${averageGrade}%`;
     document.getElementById("stat-sessions").textContent = totalRuns;
     document.getElementById("stat-max-streak").textContent = maxStreakAchieved;
-    
+
     // Update side panel stats
     const sideHighScore = document.getElementById("side-stat-high-score");
     const sideAvgScore = document.getElementById("side-stat-avg-score");
@@ -1667,14 +2000,18 @@ function loadHomeStats() {
     document.getElementById("stat-avg-score").textContent = "0.0%";
     document.getElementById("stat-sessions").textContent = "0";
     document.getElementById("stat-max-streak").textContent = "0";
-    
+
     const sideHighScore = document.getElementById("side-stat-high-score");
     const sideAvgScore = document.getElementById("side-stat-avg-score");
     if (sideHighScore) sideHighScore.textContent = "0";
     if (sideAvgScore) sideAvgScore.textContent = "0.0%";
   }
-  
+
+  const dailyStreakEl = document.getElementById("stat-daily-streak");
+  if (dailyStreakEl) dailyStreakEl.textContent = dailyStreak;
+
   renderHistoryChart();
+  renderModuleStats();
   renderRoundStepTracker();
 }
 
@@ -1779,7 +2116,11 @@ function initAbortSystem() {
 // 13. MULTI-THEME SYSTEM (Apple Aesthetics)
 // ==========================================
 function initThemeSystem() {
-  const savedTheme = localStorage.getItem("flightcore_theme") || "dark";
+  let savedTheme = localStorage.getItem("flightcore_theme");
+  if (!savedTheme) {
+    // Respect OS preference on first visit
+    savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
   setTheme(savedTheme);
   
   // Bind toggle button to show selector
@@ -2056,17 +2397,95 @@ window.addEventListener("keydown", (e) => {
       document.getElementById("btn-restart").click();
     }
   }
+
+  if ((key === "c" || key === "C") && document.querySelector(".screen-container.active")?.id === "screen-debrief") {
+    e.preventDefault();
+    document.getElementById("btn-copy-score").click();
+  }
 });
+
+function initOnboarding() {
+  const overlay = document.getElementById("onboarding-overlay");
+  const btn = document.getElementById("btn-onboarding-dismiss");
+  if (!overlay || !btn) return;
+
+  if (!localStorage.getItem("flightcore_onboarded")) {
+    overlay.style.display = "flex";
+  }
+
+  btn.addEventListener("click", () => {
+    playSound("click");
+    overlay.style.display = "none";
+    localStorage.setItem("flightcore_onboarded", "true");
+  });
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      playSound("click");
+      overlay.style.display = "none";
+      localStorage.setItem("flightcore_onboarded", "true");
+    }
+  });
+}
+
+function initDifficultySelector() {
+  const buttons = document.querySelectorAll("#difficulty-selector .session-len-btn");
+  const label = document.getElementById("difficulty-label");
+  const names = { 0: "Novice", 4: "Standard", 8: "Advanced" };
+
+  buttons.forEach(btn => {
+    const val = parseInt(btn.getAttribute("data-streak"), 10);
+    btn.classList.toggle("active", val === startingStreak);
+  });
+  if (label) label.textContent = names[startingStreak] || "Standard";
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      const val = parseInt(btn.getAttribute("data-streak"), 10);
+      startingStreak = val;
+      localStorage.setItem("flightcore_starting_streak", val);
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (label) label.textContent = names[val] || "Standard";
+    });
+  });
+}
+
+function initSessionLengthSelector() {
+  const buttons = document.querySelectorAll(".session-len-btn");
+  const label = document.getElementById("session-length-label");
+
+  // Restore saved selection
+  buttons.forEach(btn => {
+    const len = parseInt(btn.getAttribute("data-len"), 10);
+    btn.classList.toggle("active", len === sessionLength);
+  });
+  if (label) label.textContent = `${sessionLength} Rounds`;
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      const len = parseInt(btn.getAttribute("data-len"), 10);
+      sessionLength = len;
+      localStorage.setItem("flightcore_session_length", len);
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (label) label.textContent = `${len} Rounds`;
+      renderRoundStepTracker();
+    });
+  });
+}
 
 function initModuleSelection() {
   const cards = document.querySelectorAll(".module-select-card");
+  const allMods = ["checklist", "instruments", "atc", "fault"];
+
   cards.forEach(card => {
     card.addEventListener("click", () => {
       const mod = card.getAttribute("data-module");
       if (card.classList.contains("active")) {
-        // Trying to deactivate
         if (selectedModules.length <= 1) {
-          // Play Apple-style shake animation for feedback!
           card.classList.add("shake");
           triggerHaptic("error");
           setTimeout(() => card.classList.remove("shake"), 300);
@@ -2078,11 +2497,29 @@ function initModuleSelection() {
         card.classList.add("active");
         selectedModules.push(mod);
       }
-      
-      // Update label count
       document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
     });
   });
+
+  // ALL toggle button
+  const btnAll = document.getElementById("btn-select-all-modules");
+  if (btnAll) {
+    btnAll.addEventListener("click", () => {
+      playSound("click");
+      const allActive = allMods.every(m => selectedModules.includes(m));
+      if (allActive) {
+        // Leave only the first module active (can't go to 0)
+        selectedModules = [allMods[0]];
+        cards.forEach(c => {
+          c.classList.toggle("active", c.getAttribute("data-module") === allMods[0]);
+        });
+      } else {
+        selectedModules = [...allMods];
+        cards.forEach(c => c.classList.add("active"));
+      }
+      document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
+    });
+  }
 }
 
 function initHelpSystem() {
@@ -2157,7 +2594,15 @@ window.addEventListener("DOMContentLoaded", () => {
   initSoundSystem();
   loadHomeStats();
   initModuleSelection();
+  initSessionLengthSelector();
+  initDifficultySelector();
+  initHistoryTabs();
   initAbortSystem();
   initHelpSystem();
   initStudyPauseSystem();
+  initOnboarding();
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
 });

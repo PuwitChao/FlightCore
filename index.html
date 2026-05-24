@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Flight Core - Operational Memory Trainer</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Flight Core">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -73,7 +78,7 @@
       </div>
       
       <!-- Real-Time Horizontal Visual Progress Step Tracker -->
-      <div class="round-step-tracker" id="hud-round-dots">
+      <div class="round-step-tracker" id="hud-round-dots" role="list" aria-label="Round progress">
         <!-- Injected via JS dynamically -->
       </div>
     </header>
@@ -113,16 +118,44 @@
             <span class="home-stat-num" id="stat-max-streak">0</span>
             <span class="home-stat-label">Max Streak</span>
           </div>
+          <div class="home-stat-box">
+            <span class="home-stat-num" id="stat-daily-streak">0</span>
+            <span class="home-stat-label">Day Streak</span>
+          </div>
         </div>
 
         <div class="terminal-card" style="margin-bottom: 16px;">
           <div class="terminal-card-header">
-            <span>Session History</span>
-            <span class="type-tag">Trend</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>History</span>
+              <div class="history-tab-row">
+                <button class="history-tab active" data-tab="chart">Trend</button>
+                <button class="history-tab" data-tab="calendar">Calendar</button>
+              </div>
+            </div>
+            <span class="type-tag" id="history-tab-label">Last 15</span>
           </div>
-          <div class="history-chart-wrapper" id="history-chart">
-            <!-- SVG sparked dynamically from JS -->
-            <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+          <div id="history-panel-chart">
+            <div class="history-chart-wrapper" id="history-chart">
+              <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+            </div>
+          </div>
+          <div id="history-panel-calendar" style="display: none;">
+            <div class="calendar-grid" id="training-calendar">
+              <!-- JS injected -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Module Accuracy Trends Card -->
+        <div class="terminal-card" style="margin-bottom: 16px;" id="module-stats-card">
+          <div class="terminal-card-header">
+            <span>Module Accuracy</span>
+            <span class="type-tag">Last 10 Sessions</span>
+          </div>
+          <div id="module-stats-bars">
+            <!-- JS Injected -->
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">COMPLETE A SESSION TO SEE TRENDS</div>
           </div>
         </div>
 
@@ -130,7 +163,10 @@
         <div class="terminal-card" style="margin-bottom: 16px;" id="game-selection-card">
           <div class="terminal-card-header">
             <span>Choose Training Modules</span>
-            <span class="type-tag" id="modules-selected-count">4 Active</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button id="btn-select-all-modules" style="font-size: 0.58rem; font-weight: 700; color: var(--accent-blue); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-sans);">ALL</button>
+              <span class="type-tag" id="modules-selected-count">4 Active</span>
+            </div>
           </div>
           <div class="module-selection-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
             <div class="module-select-card active" data-module="checklist" id="select-checklist">
@@ -152,13 +188,40 @@
           </div>
         </div>
 
+        <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card-header">
+            <span>Session Length</span>
+            <span class="type-tag" id="session-length-label">8 Rounds</span>
+          </div>
+          <div class="session-length-selector" id="session-length-selector">
+            <button class="session-len-btn" data-len="4">4</button>
+            <button class="session-len-btn active" data-len="8">8</button>
+            <button class="session-len-btn" data-len="12">12</button>
+          </div>
+        </div>
+
+        <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card-header">
+            <span>Difficulty Preset</span>
+            <span class="type-tag" id="difficulty-label">Standard</span>
+          </div>
+          <div class="session-length-selector" id="difficulty-selector">
+            <button class="session-len-btn" data-streak="0">Novice</button>
+            <button class="session-len-btn active" data-streak="4">Standard</button>
+            <button class="session-len-btn" data-streak="8">Advanced</button>
+          </div>
+          <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+            Sets starting streak to seed your initial difficulty level. Novice = Lvl 1, Standard = Lvl 3, Advanced = Lvl 5.
+          </p>
+        </div>
+
         <button class="btn btn-primary btn-block" id="btn-engage-session">
           START TRAINING SESSION
         </button>
       </section>
 
       <!-- SCREEN 2: STUDY/BRIEFING SCREEN -->
-      <section class="screen-container" id="screen-study">
+      <section class="screen-container" id="screen-study" aria-label="Study briefing phase" aria-live="polite">
         <div class="timer-container" style="display: flex; gap: 8px; align-items: center; background: transparent; border: none; padding: 0;">
           <div style="flex-grow: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); overflow: hidden; position: relative;">
             <div class="timer-bar" id="study-timer-bar" style="width: 100%; height: 100%; background: var(--accent-blue); border-radius: var(--radius-sm); transition: width 0.05s linear;"></div>
@@ -173,7 +236,10 @@
         
         <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
           <span id="study-type-title">STUDY CURRENT FLIGHT DATA</span>
-          <span class="type-tag" id="study-timer-display" style="font-weight: 700;">05.00s</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="type-tag" id="study-speed-bonus" style="font-weight: 700; color: var(--success-emerald); background: rgba(52,199,89,0.1); display: none;">+0 SPD</span>
+            <span class="type-tag" id="study-timer-display" style="font-weight: 700;">05.00s</span>
+          </div>
         </div>
 
         <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 180px; position: relative; overflow: hidden;">
@@ -227,7 +293,7 @@
       </section>
 
       <!-- SCREEN 3: TEST/INPUT SCREEN -->
-      <section class="screen-container" id="screen-test">
+      <section class="screen-container" id="screen-test" aria-label="Recall input phase" aria-live="polite">
         <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
           <span>RECALL FLIGHT CONFIGURATION</span>
           <span class="type-tag" style="color: var(--accent-cyan);" id="test-type-label">RECALL STAGE</span>
@@ -302,7 +368,7 @@
       </section>
 
       <!-- SCREEN 4: IMMEDIATE FEEDBACK SCREEN -->
-      <section class="screen-container" id="screen-feedback">
+      <section class="screen-container" id="screen-feedback" aria-label="Round feedback" aria-live="assertive">
         <div class="debrief-score-card" id="feedback-verdict-card" style="padding: 14px; margin-bottom: 12px;">
           <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">RESPONSE STATUS</span>
           <div class="debrief-rating" id="feedback-verdict-rating">NOMINAL</div>
@@ -325,7 +391,7 @@
       </section>
 
       <!-- SCREEN 5: FINAL DEBRIEFING SCREEN -->
-      <section class="screen-container" id="screen-debrief">
+      <section class="screen-container" id="screen-debrief" aria-label="Session debrief" aria-live="polite">
         <div class="debrief-score-card">
           <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">SESSION COMPLETED</span>
           <div style="font-size: 2rem; font-weight: 800; color: var(--accent-blue); margin: 6px 0;" id="debrief-score">09,450</div>
@@ -356,7 +422,11 @@
           </ul>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: auto; width: 100%;">
+        <button class="btn btn-block" id="btn-copy-score" style="width: 100%; margin-top: 10px; min-height: 44px; font-size: 0.78rem; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
+          COPY SCORE CARD
+        </button>
+
+        <div style="display: flex; gap: 10px; margin-top: 8px; width: 100%;">
           <button class="btn btn-block" id="btn-debrief-home" style="flex: 1; min-height: 52px; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
             HOME
           </button>
@@ -548,6 +618,39 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Onboarding Welcome Modal (shown once on first visit) -->
+  <div class="theme-selector-overlay" id="onboarding-overlay" style="display: none; z-index: 1300;">
+    <div class="theme-selector-card" style="max-width: 380px;">
+      <div class="theme-selector-header" style="border-bottom: none; padding-bottom: 0;">
+        <span style="font-size: 1rem; font-weight: 800; color: var(--accent-blue);">Welcome to Flight Core</span>
+      </div>
+      <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+        A cognitive memory trainer built for pilots and flight deck professionals. Each session runs through rapid-fire drills across 4 modules.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">📋</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Checklist Sequencing</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Memorize and recall procedure steps in exact order.</span></div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">🎛️</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Instrument Scanning</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Read gauge values from a brief flash, then recall them.</span></div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">🎙️</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">ATC Communications</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Hold callsign, facility, frequency, and squawk in memory.</span></div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <span style="font-size: 1rem; line-height: 1;">⚠️</span>
+          <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Emergency Diagnostics</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Connect fault symptoms to isolation and mitigation actions.</span></div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-onboarding-dismiss" style="min-height: 48px;">
+        BEGIN TRAINING
+      </button>
+    </div>
   </div>
 
   <script src="app.js"></script>
