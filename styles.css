@@ -1313,7 +1313,8 @@ body[data-theme="mono"] .keypad-btn.action.enter:active {
   border-radius: var(--radius-md);
   background-color: var(--bg-card);
   margin-bottom: 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: calc(40vh - 60px);
   transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
@@ -1363,6 +1364,10 @@ body[data-theme="light"] .debrief-table tr.warning-row {
 
 .debrief-table tr.warning-row td {
   color: var(--accent-amber);
+}
+
+.debrief-table tr.best-round td:first-child {
+  border-left: 2px solid var(--accent-blue);
 }
 
 .blindspot-log {
@@ -1816,4 +1821,95 @@ body[data-theme="warm"] .round-dot.active {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* --- PERSONAL BEST BANNER --- */
+.pb-banner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--success-emerald);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  padding: 8px 20px;
+  border-radius: 30px;
+  z-index: 50;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.4);
+  animation: pb-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+             pb-fade-out 0.5s ease 2.5s forwards;
+}
+
+@keyframes pb-slide-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes pb-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* --- TRAINING CALENDAR --- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast);
+  min-width: 0;
+}
+
+body[data-theme="light"] .calendar-cell {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.calendar-cell.today {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px var(--accent-blue);
+}
+
+.calendar-cell.cal-proficient   { background: var(--success-emerald); border-color: transparent; }
+.calendar-cell.cal-satisfactory { background: rgba(52, 199, 89, 0.35); border-color: transparent; }
+.calendar-cell.cal-remedial     { background: rgba(255, 149, 0, 0.45); border-color: transparent; }
+.calendar-cell.cal-unacceptable { background: rgba(255, 59, 48, 0.3); border-color: transparent; }
+
+/* --- HISTORY TABS --- */
+.history-tab-row {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+}
+
+.history-tab {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.3px;
+}
+
+.history-tab.active {
+  background: var(--bg-card);
+  color: var(--accent-blue);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }

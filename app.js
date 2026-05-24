@@ -143,6 +143,7 @@ let dailyStreak = parseInt(localStorage.getItem("flightcore_daily_streak") || "0
 
 // Tracks pool indices used this session to prevent within-session repeats
 let usedFaultIndices = [];
+let usedChecklistIndices = [];
 let usedATCIndices = {}; // { callsigns: Set, facilities: Set, frequencies: Set, squawks: Set }
 
 // ==========================================
@@ -366,7 +367,11 @@ function selectNextModule() {
 // ==========================================
 
 function generateChecklistData() {
-  const checklist = CHECKLIST_POOLS[Math.floor(Math.random() * CHECKLIST_POOLS.length)];
+  const availableIdx = CHECKLIST_POOLS.map((_, i) => i).filter(i => !usedChecklistIndices.includes(i));
+  const pickFrom = availableIdx.length > 0 ? availableIdx : CHECKLIST_POOLS.map((_, i) => i);
+  const chosenIdx = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  usedChecklistIndices.push(chosenIdx);
+  const checklist = CHECKLIST_POOLS[chosenIdx];
   const numSteps = Math.min(3 + level, checklist.steps.length); // Scales 3 up to all steps
   const expectedSteps = checklist.steps.slice(0, numSteps);
   
@@ -444,17 +449,26 @@ function generateATCData() {
   const freq = pickUnused(ATC_POOLS.frequencies, usedATCIndices.frequencies);
   const squawk = pickUnused(ATC_POOLS.squawks, usedATCIndices.squawks);
   
-  // Custom prompt increases string length/components at Level 3+
-  let levelText = "";
-  if (level >= 3) {
-    const windH = Math.floor(Math.random() * 36) * 10;
-    const windS = Math.floor(Math.random() * 20) + 5;
-    levelText = ` WIND ${windH} AT ${windS} KNOTS.`;
-  }
-  
+  const windH = Math.floor(Math.random() * 36) * 10;
+  const windS = Math.floor(Math.random() * 20) + 5;
+  const windText = `WIND ${windH} AT ${windS} KNOTS`;
+
+  // Multiple transmission templates — varied phrasing at different levels
+  const templates = level < 3 ? [
+    `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}."`,
+    `"${facility}, ${callsign}, RADAR CONTACT, SQUAWK ${squawk}, MONITOR ${freq}."`,
+    `"${callsign}, IDENT AND SQUAWK ${squawk}, CONTACT ${facility} ON ${freq}."`
+  ] : [
+    `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}. ${windText}."`,
+    `"${callsign}, CLEARED DIRECT, SQUAWK ${squawk}, ${windText}, CONTACT ${facility} ${freq}."`,
+    `"${facility}, ${callsign}, SQUAWK ${squawk}, ${windText}, MONITOR ${freq}."`,
+    `"${callsign}, ${facility}, ${windText}, IDENT SQUAWK ${squawk} ON ${freq}."`
+  ];
+  const displayText = templates[Math.floor(Math.random() * templates.length)];
+
   return {
     expected: { callsign, facility, freq, squawk },
-    displayText: `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}.${levelText}"`
+    displayText
   };
 }
 
@@ -646,6 +660,9 @@ function setupStudyScreen(module) {
   const totalTicks = (studySecs * 1000) / intervalTime;
   let tick = 0;
   
+  const speedBonusBadge = document.getElementById("study-speed-bonus");
+  if (speedBonusBadge) speedBonusBadge.style.display = "inline-flex";
+
   let lowTimeWarned = false;
   studyTimer = setInterval(() => {
     if (isTimerPaused) return;
@@ -653,6 +670,7 @@ function setupStudyScreen(module) {
     studyDurationRemaining = Math.max(studySecs - (tick * intervalTime) / 1000, 0);
     timerBar.style.width = `${(studyDurationRemaining / studySecs) * 1000 / 10}%`;
     timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
+    if (speedBonusBadge) speedBonusBadge.textContent = `+${Math.round(studyDurationRemaining * 50)} SPD`;
 
     // Low-time warning: turn bar amber and pulse tag when ≤ 3 s remain
     if (studyDurationRemaining <= 3 && !lowTimeWarned) {
@@ -706,7 +724,15 @@ function createGaugeHTML(g, isBlanked = false) {
 function commenceTest() {
   if (studyTimer) clearInterval(studyTimer);
   playSound("click");
-  
+
+  // Hide speed bonus badge and reset timer bar colour
+  const speedBonusBadge = document.getElementById("study-speed-bonus");
+  if (speedBonusBadge) speedBonusBadge.style.display = "none";
+  const timerBar = document.getElementById("study-timer-bar");
+  if (timerBar) timerBar.style.backgroundColor = "";
+  const timerDisplay = document.getElementById("study-timer-display");
+  if (timerDisplay) timerDisplay.style.color = "";
+
   // Reset input state variables
   focusedInputId = null;
   activeKeypadBuffer = "";
@@ -1442,10 +1468,11 @@ function finishSession() {
   if (percentage >= 90) {
     tier = "PROFICIENT";
     tierClass = "proficient";
-    launchConfetti(); // Trigger confetti celebration!
+    launchConfetti();
   } else if (percentage >= 75) {
     tier = "SATISFACTORY";
     tierClass = "satisfactory";
+    launchMiniConfetti();
   } else if (percentage >= 50) {
     tier = "REMEDIAL";
     tierClass = "remedial";
@@ -1462,12 +1489,14 @@ function finishSession() {
   // Construct breakdown table
   const tbody = document.getElementById("debrief-table-rows");
   tbody.innerHTML = "";
-  
+
+  const bestScore = Math.max(...roundByRoundHistory.map(r => r.score));
+
   roundByRoundHistory.forEach(r => {
     const tr = document.createElement("tr");
     let resultText = "FAIL";
     let resultColor = "var(--error-rose)";
-    
+
     if (r.grade === "perfect") {
       resultText = "PERFECT";
       resultColor = "var(--success-emerald)";
@@ -1483,7 +1512,11 @@ function finishSession() {
       resultText = `FAIL (${r.accuracy}%)`;
       resultColor = "var(--error-rose)";
     }
-    
+
+    if (r.score === bestScore && bestScore > 0) {
+      tr.classList.add("best-round");
+    }
+
     tr.innerHTML = `
       <td>${String(r.round).padStart(2, "0")}</td>
       <td>${r.module.toUpperCase()}</td>
@@ -1550,12 +1583,21 @@ function finishSession() {
     maxStreak: sessionMaxStreak,
     moduleAccuracy: moduleAccuracy
   };
+  // Personal-best detection (compare against all previous sessions, not this one)
+  const previousBest = globalHistory.length > 0
+    ? Math.max(...globalHistory.map(h => h.percentage))
+    : -1;
+
   globalHistory.push(sessionRecord);
   // Cap history at 30 items
   if (globalHistory.length > 30) globalHistory.shift();
   localStorage.setItem("flightcore_history", JSON.stringify(globalHistory));
 
   showScreen("screen-debrief");
+
+  if (percentage > previousBest && previousBest >= 0) {
+    showPersonalBestBanner();
+  }
 }
 
 function launchConfetti() {
@@ -1606,6 +1648,38 @@ function launchConfetti() {
   setTimeout(() => {
     container.remove();
   }, 5000);
+}
+
+function launchMiniConfetti() {
+  const debriefScreen = document.getElementById("screen-debrief");
+  if (!debriefScreen) return;
+  const container = document.createElement("div");
+  container.className = "confetti-container";
+  debriefScreen.appendChild(container);
+  const colors = ["var(--accent-blue)", "var(--success-emerald)", "var(--accent-amber)"];
+  for (let i = 0; i < 25; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.width = `${Math.floor(Math.random() * 4) + 4}px`;
+    piece.style.height = `${Math.floor(Math.random() * 4) + 4}px`;
+    piece.style.animationDelay = `${Math.random() * 1.5}s`;
+    piece.style.animationDuration = `${Math.random() * 1.2 + 1.8}s`;
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.remove(), 4000);
+}
+
+function showPersonalBestBanner() {
+  const debriefScreen = document.getElementById("screen-debrief");
+  if (!debriefScreen) return;
+  const banner = document.createElement("div");
+  banner.className = "pb-banner";
+  banner.textContent = "NEW PERSONAL BEST";
+  debriefScreen.insertBefore(banner, debriefScreen.firstChild);
+  setTimeout(() => banner.remove(), 3000);
 }
 
 // Restart session trigger
@@ -1662,6 +1736,7 @@ function initSession() {
   recentlyPlayedModules = [];
   roundByRoundHistory = [];
   usedFaultIndices = [];
+  usedChecklistIndices = [];
   usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
 
   startRound();
@@ -1721,9 +1796,8 @@ function renderHistoryChart() {
     return;
   }
   
-  // Real Chart populated state
-  // Slice the last 6 sessions in chronological order
-  const recent = globalHistory.slice(-6);
+  // Real Chart populated state — show last 15 sessions
+  const recent = globalHistory.slice(-15);
   
   const createRealChartHTML = (widthPercent = "100%") => {
     // Generate coordinate mapping
@@ -1796,6 +1870,70 @@ function renderHistoryChart() {
 }
 
 // Initial Home Screen Stats Render
+function renderTrainingCalendar() {
+  const grid = document.getElementById("training-calendar");
+  if (!grid) return;
+
+  const trainedDates = {};
+  globalHistory.forEach(h => {
+    const d = h.date ? h.date.slice(0, 10) : null;
+    if (!d) return;
+    if (!trainedDates[d] || h.percentage > trainedDates[d]) {
+      trainedDates[d] = h.percentage;
+    }
+  });
+
+  grid.innerHTML = "";
+  const today = new Date();
+  // Render last 28 days, oldest first
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const pct = trainedDates[key];
+    const cell = document.createElement("div");
+    cell.className = "calendar-cell";
+    cell.title = `${key}${pct !== undefined ? `: ${pct}%` : ""}`;
+
+    if (i === 0) cell.classList.add("today");
+
+    if (pct !== undefined) {
+      if (pct >= 90) cell.classList.add("cal-proficient");
+      else if (pct >= 75) cell.classList.add("cal-satisfactory");
+      else if (pct >= 50) cell.classList.add("cal-remedial");
+      else cell.classList.add("cal-unacceptable");
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function initHistoryTabs() {
+  const tabs = document.querySelectorAll(".history-tab");
+  const panelChart = document.getElementById("history-panel-chart");
+  const panelCal = document.getElementById("history-panel-calendar");
+  const label = document.getElementById("history-tab-label");
+  if (!tabs.length) return;
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      playSound("click");
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      const which = tab.getAttribute("data-tab");
+      if (which === "chart") {
+        panelChart.style.display = "";
+        panelCal.style.display = "none";
+        if (label) label.textContent = "Last 15";
+      } else {
+        panelChart.style.display = "none";
+        panelCal.style.display = "";
+        if (label) label.textContent = "28 Days";
+        renderTrainingCalendar();
+      }
+    });
+  });
+}
+
 function renderModuleStats() {
   const container = document.getElementById("module-stats-bars");
   if (!container) return;
@@ -2259,6 +2397,11 @@ window.addEventListener("keydown", (e) => {
       document.getElementById("btn-restart").click();
     }
   }
+
+  if ((key === "c" || key === "C") && document.querySelector(".screen-container.active")?.id === "screen-debrief") {
+    e.preventDefault();
+    document.getElementById("btn-copy-score").click();
+  }
 });
 
 function initOnboarding() {
@@ -2453,6 +2596,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initModuleSelection();
   initSessionLengthSelector();
   initDifficultySelector();
+  initHistoryTabs();
   initAbortSystem();
   initHelpSystem();
   initStudyPauseSystem();

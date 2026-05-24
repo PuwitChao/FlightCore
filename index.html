@@ -126,12 +126,24 @@
 
         <div class="terminal-card" style="margin-bottom: 16px;">
           <div class="terminal-card-header">
-            <span>Session History</span>
-            <span class="type-tag">Trend</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>History</span>
+              <div class="history-tab-row">
+                <button class="history-tab active" data-tab="chart">Trend</button>
+                <button class="history-tab" data-tab="calendar">Calendar</button>
+              </div>
+            </div>
+            <span class="type-tag" id="history-tab-label">Last 15</span>
           </div>
-          <div class="history-chart-wrapper" id="history-chart">
-            <!-- SVG sparked dynamically from JS -->
-            <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+          <div id="history-panel-chart">
+            <div class="history-chart-wrapper" id="history-chart">
+              <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+            </div>
+          </div>
+          <div id="history-panel-calendar" style="display: none;">
+            <div class="calendar-grid" id="training-calendar">
+              <!-- JS injected -->
+            </div>
           </div>
         </div>
 
@@ -224,7 +236,10 @@
         
         <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
           <span id="study-type-title">STUDY CURRENT FLIGHT DATA</span>
-          <span class="type-tag" id="study-timer-display" style="font-weight: 700;">05.00s</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="type-tag" id="study-speed-bonus" style="font-weight: 700; color: var(--success-emerald); background: rgba(52,199,89,0.1); display: none;">+0 SPD</span>
+            <span class="type-tag" id="study-timer-display" style="font-weight: 700;">05.00s</span>
+          </div>
         </div>
 
         <div class="terminal-card" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 180px; position: relative; overflow: hidden;">
