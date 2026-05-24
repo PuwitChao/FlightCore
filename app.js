@@ -125,6 +125,7 @@ let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
 let selectedModules = ["checklist", "instruments", "atc", "fault"];
 let sessionLength = parseInt(localStorage.getItem("flightcore_session_length") || "8", 10);
+let startingStreak = parseInt(localStorage.getItem("flightcore_starting_streak") || "4", 10);
 
 let currentRndExpected = null;
 let currentRndInput = null;
@@ -309,22 +310,26 @@ function renderRoundStepTracker() {
     // Check if this round's performance is already recorded in history
     const pastRound = roundByRoundHistory.find(h => h.round === r);
     
+    dot.setAttribute("role", "listitem");
     if (pastRound) {
       if (pastRound.grade === "perfect" || pastRound.grade === "good") {
         dot.classList.add("completed-success");
+        dot.setAttribute("aria-label", `Round ${r}: success`);
       } else if (pastRound.grade === "partial") {
         dot.classList.add("completed-warning");
+        dot.setAttribute("aria-label", `Round ${r}: partial`);
       } else {
         dot.classList.add("completed-error");
+        dot.setAttribute("aria-label", `Round ${r}: failed`);
       }
     } else if (r === sessionRound && sessionRound > 0) {
-      // Flashing active round dot
       dot.classList.add("active");
+      dot.setAttribute("aria-label", `Round ${r}: active`);
     } else {
-      // Upcoming round dot
       dot.classList.add("upcoming");
+      dot.setAttribute("aria-label", `Round ${r}: upcoming`);
     }
-    
+
     container.appendChild(dot);
   }
 }
@@ -1615,13 +1620,13 @@ document.getElementById("btn-engage-session").addEventListener("click", () => {
 function initSession() {
   sessionRound = 0;
   sessionScore = 0;
-  streak = 0;
-  level = 1;
+  streak = startingStreak;
+  level = 1 + Math.floor(streak / 2);
   sessionMaxStreak = 0;
   activeModule = null;
   recentlyPlayedModules = [];
   roundByRoundHistory = [];
-  
+
   startRound();
 }
 
@@ -2239,6 +2244,30 @@ function initOnboarding() {
   });
 }
 
+function initDifficultySelector() {
+  const buttons = document.querySelectorAll("#difficulty-selector .session-len-btn");
+  const label = document.getElementById("difficulty-label");
+  const names = { 0: "Novice", 4: "Standard", 8: "Advanced" };
+
+  buttons.forEach(btn => {
+    const val = parseInt(btn.getAttribute("data-streak"), 10);
+    btn.classList.toggle("active", val === startingStreak);
+  });
+  if (label) label.textContent = names[startingStreak] || "Standard";
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      const val = parseInt(btn.getAttribute("data-streak"), 10);
+      startingStreak = val;
+      localStorage.setItem("flightcore_starting_streak", val);
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (label) label.textContent = names[val] || "Standard";
+    });
+  });
+}
+
 function initSessionLengthSelector() {
   const buttons = document.querySelectorAll(".session-len-btn");
   const label = document.getElementById("session-length-label");
@@ -2364,6 +2393,7 @@ window.addEventListener("DOMContentLoaded", () => {
   loadHomeStats();
   initModuleSelection();
   initSessionLengthSelector();
+  initDifficultySelector();
   initAbortSystem();
   initHelpSystem();
   initStudyPauseSystem();

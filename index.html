@@ -78,7 +78,7 @@
       </div>
       
       <!-- Real-Time Horizontal Visual Progress Step Tracker -->
-      <div class="round-step-tracker" id="hud-round-dots">
+      <div class="round-step-tracker" id="hud-round-dots" role="list" aria-label="Round progress">
         <!-- Injected via JS dynamically -->
       </div>
     </header>
@@ -185,13 +185,28 @@
           </div>
         </div>
 
+        <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card-header">
+            <span>Difficulty Preset</span>
+            <span class="type-tag" id="difficulty-label">Standard</span>
+          </div>
+          <div class="session-length-selector" id="difficulty-selector">
+            <button class="session-len-btn" data-streak="0">Novice</button>
+            <button class="session-len-btn active" data-streak="4">Standard</button>
+            <button class="session-len-btn" data-streak="8">Advanced</button>
+          </div>
+          <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+            Sets starting streak to seed your initial difficulty level. Novice = Lvl 1, Standard = Lvl 3, Advanced = Lvl 5.
+          </p>
+        </div>
+
         <button class="btn btn-primary btn-block" id="btn-engage-session">
           START TRAINING SESSION
         </button>
       </section>
 
       <!-- SCREEN 2: STUDY/BRIEFING SCREEN -->
-      <section class="screen-container" id="screen-study">
+      <section class="screen-container" id="screen-study" aria-label="Study briefing phase" aria-live="polite">
         <div class="timer-container" style="display: flex; gap: 8px; align-items: center; background: transparent; border: none; padding: 0;">
           <div style="flex-grow: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); overflow: hidden; position: relative;">
             <div class="timer-bar" id="study-timer-bar" style="width: 100%; height: 100%; background: var(--accent-blue); border-radius: var(--radius-sm); transition: width 0.05s linear;"></div>
@@ -260,7 +275,7 @@
       </section>
 
       <!-- SCREEN 3: TEST/INPUT SCREEN -->
-      <section class="screen-container" id="screen-test">
+      <section class="screen-container" id="screen-test" aria-label="Recall input phase" aria-live="polite">
         <div class="terminal-card-header" style="border: none; margin-bottom: 8px;">
           <span>RECALL FLIGHT CONFIGURATION</span>
           <span class="type-tag" style="color: var(--accent-cyan);" id="test-type-label">RECALL STAGE</span>
@@ -335,7 +350,7 @@
       </section>
 
       <!-- SCREEN 4: IMMEDIATE FEEDBACK SCREEN -->
-      <section class="screen-container" id="screen-feedback">
+      <section class="screen-container" id="screen-feedback" aria-label="Round feedback" aria-live="assertive">
         <div class="debrief-score-card" id="feedback-verdict-card" style="padding: 14px; margin-bottom: 12px;">
           <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">RESPONSE STATUS</span>
           <div class="debrief-rating" id="feedback-verdict-rating">NOMINAL</div>
@@ -358,7 +373,7 @@
       </section>
 
       <!-- SCREEN 5: FINAL DEBRIEFING SCREEN -->
-      <section class="screen-container" id="screen-debrief">
+      <section class="screen-container" id="screen-debrief" aria-label="Session debrief" aria-live="polite">
         <div class="debrief-score-card">
           <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">SESSION COMPLETED</span>
           <div style="font-size: 2rem; font-weight: 800; color: var(--accent-blue); margin: 6px 0;" id="debrief-score">09,450</div>
