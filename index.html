@@ -151,7 +151,10 @@
         <div class="terminal-card" style="margin-bottom: 16px;" id="game-selection-card">
           <div class="terminal-card-header">
             <span>Choose Training Modules</span>
-            <span class="type-tag" id="modules-selected-count">4 Active</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button id="btn-select-all-modules" style="font-size: 0.58rem; font-weight: 700; color: var(--accent-blue); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-sans);">ALL</button>
+              <span class="type-tag" id="modules-selected-count">4 Active</span>
+            </div>
           </div>
           <div class="module-selection-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
             <div class="module-select-card active" data-module="checklist" id="select-checklist">

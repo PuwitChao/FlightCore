@@ -141,6 +141,10 @@ let roundByRoundHistory = []; // Session history
 let globalHistory = JSON.parse(localStorage.getItem("flightcore_history") || "[]");
 let dailyStreak = parseInt(localStorage.getItem("flightcore_daily_streak") || "0", 10);
 
+// Tracks pool indices used this session to prevent within-session repeats
+let usedFaultIndices = [];
+let usedATCIndices = {}; // { callsigns: Set, facilities: Set, frequencies: Set, squawks: Set }
+
 // ==========================================
 // 3. AUDIO SYNTH (Organic Low-Latency Web Audio API)
 // ==========================================
@@ -422,11 +426,23 @@ function generateInstrumentsData() {
   return { expected };
 }
 
+function pickUnused(pool, usedSet) {
+  const unused = pool.filter((_, i) => !usedSet.has(i));
+  const source = unused.length > 0 ? unused : pool;
+  const idx = Math.floor(Math.random() * source.length);
+  const val = source[idx];
+  usedSet.add(pool.indexOf(val));
+  return val;
+}
+
 function generateATCData() {
-  const callsign = ATC_POOLS.callsigns[Math.floor(Math.random() * ATC_POOLS.callsigns.length)];
-  const facility = ATC_POOLS.facilities[Math.floor(Math.random() * ATC_POOLS.facilities.length)];
-  const freq = ATC_POOLS.frequencies[Math.floor(Math.random() * ATC_POOLS.frequencies.length)];
-  const squawk = ATC_POOLS.squawks[Math.floor(Math.random() * ATC_POOLS.squawks.length)];
+  if (!usedATCIndices.callsigns) {
+    usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
+  }
+  const callsign = pickUnused(ATC_POOLS.callsigns, usedATCIndices.callsigns);
+  const facility = pickUnused(ATC_POOLS.facilities, usedATCIndices.facilities);
+  const freq = pickUnused(ATC_POOLS.frequencies, usedATCIndices.frequencies);
+  const squawk = pickUnused(ATC_POOLS.squawks, usedATCIndices.squawks);
   
   // Custom prompt increases string length/components at Level 3+
   let levelText = "";
@@ -443,7 +459,11 @@ function generateATCData() {
 }
 
 function generateFaultData() {
-  const fault = FAULT_POOLS[Math.floor(Math.random() * FAULT_POOLS.length)];
+  const availableIndices = FAULT_POOLS.map((_, i) => i).filter(i => !usedFaultIndices.includes(i));
+  const pickFrom = availableIndices.length > 0 ? availableIndices : FAULT_POOLS.map((_, i) => i);
+  const chosenIdx = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  usedFaultIndices.push(chosenIdx);
+  const fault = FAULT_POOLS[chosenIdx];
   const expectedChain = [fault.symptom, fault.system, fault.action];
   
   // Grab distractors from other diagnostic blocks
@@ -626,14 +646,29 @@ function setupStudyScreen(module) {
   const totalTicks = (studySecs * 1000) / intervalTime;
   let tick = 0;
   
+  let lowTimeWarned = false;
   studyTimer = setInterval(() => {
     if (isTimerPaused) return;
     tick++;
     studyDurationRemaining = Math.max(studySecs - (tick * intervalTime) / 1000, 0);
     timerBar.style.width = `${(studyDurationRemaining / studySecs) * 1000 / 10}%`;
     timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
-    
+
+    // Low-time warning: turn bar amber and pulse tag when ≤ 3 s remain
+    if (studyDurationRemaining <= 3 && !lowTimeWarned) {
+      lowTimeWarned = true;
+      timerBar.style.backgroundColor = "var(--accent-amber)";
+      timerDisplay.style.color = "var(--accent-amber)";
+      triggerHaptic("warning");
+    } else if (studyDurationRemaining > 3) {
+      timerBar.style.backgroundColor = "var(--accent-blue)";
+      timerDisplay.style.color = "";
+      lowTimeWarned = false;
+    }
+
     if (studyDurationRemaining <= 0) {
+      timerBar.style.backgroundColor = "";
+      timerDisplay.style.color = "";
       clearInterval(studyTimer);
       commenceTest();
     }
@@ -1626,6 +1661,8 @@ function initSession() {
   activeModule = null;
   recentlyPlayedModules = [];
   roundByRoundHistory = [];
+  usedFaultIndices = [];
+  usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
 
   startRound();
 }
@@ -1941,7 +1978,11 @@ function initAbortSystem() {
 // 13. MULTI-THEME SYSTEM (Apple Aesthetics)
 // ==========================================
 function initThemeSystem() {
-  const savedTheme = localStorage.getItem("flightcore_theme") || "dark";
+  let savedTheme = localStorage.getItem("flightcore_theme");
+  if (!savedTheme) {
+    // Respect OS preference on first visit
+    savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
   setTheme(savedTheme);
   
   // Bind toggle button to show selector
@@ -2295,13 +2336,13 @@ function initSessionLengthSelector() {
 
 function initModuleSelection() {
   const cards = document.querySelectorAll(".module-select-card");
+  const allMods = ["checklist", "instruments", "atc", "fault"];
+
   cards.forEach(card => {
     card.addEventListener("click", () => {
       const mod = card.getAttribute("data-module");
       if (card.classList.contains("active")) {
-        // Trying to deactivate
         if (selectedModules.length <= 1) {
-          // Play Apple-style shake animation for feedback!
           card.classList.add("shake");
           triggerHaptic("error");
           setTimeout(() => card.classList.remove("shake"), 300);
@@ -2313,11 +2354,29 @@ function initModuleSelection() {
         card.classList.add("active");
         selectedModules.push(mod);
       }
-      
-      // Update label count
       document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
     });
   });
+
+  // ALL toggle button
+  const btnAll = document.getElementById("btn-select-all-modules");
+  if (btnAll) {
+    btnAll.addEventListener("click", () => {
+      playSound("click");
+      const allActive = allMods.every(m => selectedModules.includes(m));
+      if (allActive) {
+        // Leave only the first module active (can't go to 0)
+        selectedModules = [allMods[0]];
+        cards.forEach(c => {
+          c.classList.toggle("active", c.getAttribute("data-module") === allMods[0]);
+        });
+      } else {
+        selectedModules = [...allMods];
+        cards.forEach(c => c.classList.add("active"));
+      }
+      document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
+    });
+  }
 }
 
 function initHelpSystem() {
