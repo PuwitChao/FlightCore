@@ -328,19 +328,19 @@
             <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; letter-spacing: 0.3px;">ENTER ATC TRANSMISSION DETAILS:</p>
             <div class="atc-inputs-grid">
               <div class="atc-input-wrapper">
-                <span class="atc-input-label">Callsign</span>
+                <span class="atc-input-label">Callsign <span class="shortcut-badge" style="opacity: 0.45; margin-left: 4px;">1</span></span>
                 <input type="text" class="input-terminal" id="atc-input-callsign" readonly placeholder="TAP TO ENTER">
               </div>
               <div class="atc-input-wrapper">
-                <span class="atc-input-label">Facility</span>
+                <span class="atc-input-label">Facility <span class="shortcut-badge" style="opacity: 0.45; margin-left: 4px;">2</span></span>
                 <input type="text" class="input-terminal" id="atc-input-facility" readonly placeholder="TAP TO ENTER">
               </div>
               <div class="atc-input-wrapper">
-                <span class="atc-input-label">Frequency</span>
+                <span class="atc-input-label">Frequency <span class="shortcut-badge" style="opacity: 0.45; margin-left: 4px;">3</span></span>
                 <input type="text" class="input-terminal" id="atc-input-freq" readonly placeholder="TAP TO ENTER">
               </div>
               <div class="atc-input-wrapper">
-                <span class="atc-input-label">Squawk</span>
+                <span class="atc-input-label">Squawk <span class="shortcut-badge" style="opacity: 0.45; margin-left: 4px;">4</span></span>
                 <input type="text" class="input-terminal" id="atc-input-squawk" readonly placeholder="TAP TO ENTER">
               </div>
             </div>
@@ -440,29 +440,68 @@
 
     <!-- DESKTOP SIDEBAR -->
     <aside class="desktop-sidebar">
-      <div class="terminal-card">
-        <div class="terminal-card-header">
-          <span>Telemetry Stats</span>
-          <span class="type-tag">Live</span>
-        </div>
-        <div class="home-stats-summary" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 0;">
-          <div class="home-stat-box">
-            <span class="home-stat-num" id="side-stat-high-score">0000</span>
-            <span class="home-stat-label">High Score</span>
+      <!-- Static stats panel (shown on home/debrief) -->
+      <div id="sidebar-static-panel" style="display: flex; flex-direction: column; gap: 14px; height: 100%;">
+        <div class="terminal-card">
+          <div class="terminal-card-header">
+            <span>Telemetry Stats</span>
+            <span class="type-tag">Live</span>
           </div>
-          <div class="home-stat-box">
-            <span class="home-stat-num" id="side-stat-avg-score">0.0%</span>
-            <span class="home-stat-label">Avg Grade</span>
+          <div class="home-stats-summary" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 0;">
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="side-stat-high-score">0000</span>
+              <span class="home-stat-label">High Score</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="side-stat-avg-score">0.0%</span>
+              <span class="home-stat-label">Avg Grade</span>
+            </div>
+          </div>
+        </div>
+        <div class="terminal-card" style="margin-bottom: 0; flex-grow: 1; display: flex; flex-direction: column;">
+          <div class="terminal-card-header">
+            <span>Session History</span>
+            <span class="type-tag">Trend</span>
+          </div>
+          <div class="history-chart-wrapper" id="sidebar-chart" style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
           </div>
         </div>
       </div>
-      <div class="terminal-card" style="margin-bottom: 0; flex-grow: 1; display: flex; flex-direction: column;">
-        <div class="terminal-card-header">
-          <span>Session History</span>
-          <span class="type-tag">Trend</span>
+      <!-- Live session panel (shown during study/test/feedback) -->
+      <div id="sidebar-live-panel" style="display: none; flex-direction: column; gap: 14px;">
+        <div class="terminal-card">
+          <div class="terminal-card-header">
+            <span>Live Session</span>
+            <span class="type-tag" style="color: var(--success-emerald); background: var(--success-bg);">Active</span>
+          </div>
+          <div class="home-stats-summary" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0;">
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="live-stat-score" style="font-size: 1rem;">00000</span>
+              <span class="home-stat-label">Score</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="live-stat-streak" style="font-size: 1rem;">0</span>
+              <span class="home-stat-label">Streak</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="live-stat-round" style="font-size: 1rem;">0/8</span>
+              <span class="home-stat-label">Round</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="live-stat-level" style="font-size: 1rem;">LVL 1</span>
+              <span class="home-stat-label">Level</span>
+            </div>
+          </div>
         </div>
-        <div class="history-chart-wrapper" id="sidebar-chart" style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
-          <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">NO RECENT SESSION DATA</div>
+        <div class="terminal-card" style="flex-grow: 1;">
+          <div class="terminal-card-header">
+            <span>Module</span>
+            <span class="type-tag" id="live-stat-module">—</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;" id="live-round-history">
+            <!-- JS injected -->
+          </div>
         </div>
       </div>
     </aside>
@@ -488,14 +527,14 @@
         <button class="keypad-btn">8</button>
         <button class="keypad-btn">9</button>
         
-        <button class="keypad-btn" id="keypad-dot">.</button>
-        <button class="keypad-btn">0</button>
-        <button class="keypad-btn action" id="keypad-back">⌫</button>
+        <button class="keypad-btn" id="keypad-dot" aria-label="Decimal point">.</button>
+        <button class="keypad-btn" aria-label="0">0</button>
+        <button class="keypad-btn action" id="keypad-back" aria-label="Backspace">⌫</button>
       </div>
 
       <div class="keypad-grid" style="grid-template-columns: 1fr 1fr; margin-top: 4px;">
-        <button class="keypad-btn action" id="keypad-clear" style="height: 40px; font-size: 0.75rem;">CLEAR</button>
-        <button class="keypad-btn action enter" id="keypad-enter" style="height: 40px; font-size: 0.75rem;">CONFIRM</button>
+        <button class="keypad-btn action" id="keypad-clear" style="height: 40px; font-size: 0.75rem;" aria-label="Clear all">CLEAR</button>
+        <button class="keypad-btn action enter" id="keypad-enter" style="height: 40px; font-size: 0.75rem;" aria-label="Confirm value">CONFIRM</button>
       </div>
     </footer>
 
@@ -543,10 +582,17 @@
             <span class="theme-opt-label">Warm Sand</span>
           </button>
         </div>
-        <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 8px;">
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 8px;" id="purge-section">
           <button class="theme-opt-btn" id="btn-clear-history" style="justify-content: center; color: var(--error-rose); border-color: var(--error-border); background: var(--error-bg); font-weight: 700;">
             PURGE TELEMETRY HISTORY
           </button>
+          <div id="purge-confirm-row" style="display: none; gap: 8px; margin-top: 8px;">
+            <p style="font-size: 0.68rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.4;">This will erase all session history permanently.</p>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-block" id="btn-purge-cancel" style="flex: 1; min-height: 40px; font-size: 0.72rem; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">CANCEL</button>
+              <button class="btn btn-block" id="btn-purge-confirm" style="flex: 1; min-height: 40px; font-size: 0.72rem; background: var(--error-rose); border-color: transparent; color: #FFFFFF;">CONFIRM PURGE</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

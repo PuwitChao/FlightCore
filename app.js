@@ -109,7 +109,15 @@ const FAULT_POOLS = [
   { symptom: "RUNAWAY STABILIZER TRIM", system: "TRIM MOTOR ACTUATOR", action: "CUTOUT SWITCHES PULL" },
   { symptom: "ENGINE OIL PRESSURE LOW", system: "OIL PUMP SCAVENGE LINE", action: "ENGINE SHUTDOWN PREP" },
   { symptom: "AIRFRAME ICING SEVERE", system: "PNEUMATIC BLEED AIR", action: "MANUAL DEICE ACTIVATE" },
-  { symptom: "GENERATOR BUS DROPOUT", system: "MAIN GENERATOR RELAY", action: "BATTERY BUS ISOLATE" }
+  { symptom: "GENERATOR BUS DROPOUT", system: "MAIN GENERATOR RELAY", action: "BATTERY BUS ISOLATE" },
+  { symptom: "WINDSHEAR ENCOUNTER ON APPROACH", system: "WINDSHEAR DETECTION SYSTEM", action: "EXECUTE ESCAPE MANEUVER" },
+  { symptom: "TCAS RA CLIMB ISSUED", system: "TRAFFIC COLLISION AVOIDANCE", action: "FOLLOW RA DISCONNECT AP" },
+  { symptom: "FLAP OVERSPEED EXCEEDANCE", system: "FLAP LOAD RELIEF CIRCUIT", action: "REDUCE AIRSPEED BELOW VFE" },
+  { symptom: "AUTOPILOT UNCOMMANDED DISCONNECT", system: "FLIGHT CONTROL COMPUTER", action: "MANUAL CONTROL ENGAGE" },
+  { symptom: "FUEL IMBALANCE ASYMMETRY", system: "CROSSFEED VALVE SYSTEM", action: "OPEN CROSSFEED BALANCE" },
+  { symptom: "BIRD STRIKE ENGINE DAMAGE", system: "FAN BLADE CONTAINMENT RING", action: "ASSESS THRUST CAPABILITY" },
+  { symptom: "GROUND PROXIMITY WARNING SOUNDED", system: "TERRAIN AWARENESS SYSTEM", action: "MAX THRUST PULL UP" },
+  { symptom: "DOOR SEAL PRESSURE LOSS", system: "FUSELAGE PRESSURE SEAL", action: "VERIFY DOOR LATCHED CLOSED" }
 ];
 
 // ==========================================
@@ -133,6 +141,8 @@ let studyTimer = null;
 let studyDurationRemaining = 0;
 let briefingStartTime = 0;
 let isTimerPaused = false;
+let pausedAccum = 0;
+let pauseStart = 0;
 
 let focusedInputId = null;
 let activeKeypadBuffer = "";
@@ -432,12 +442,14 @@ function generateInstrumentsData() {
 }
 
 function pickUnused(pool, usedSet) {
-  const unused = pool.filter((_, i) => !usedSet.has(i));
-  const source = unused.length > 0 ? unused : pool;
-  const idx = Math.floor(Math.random() * source.length);
-  const val = source[idx];
-  usedSet.add(pool.indexOf(val));
-  return val;
+  const candidates = pool.reduce((acc, v, i) => {
+    if (!usedSet.has(i)) acc.push({ v, i });
+    return acc;
+  }, []);
+  const source = candidates.length > 0 ? candidates : pool.map((v, i) => ({ v, i }));
+  const picked = source[Math.floor(Math.random() * source.length)];
+  usedSet.add(picked.i);
+  return picked.v;
 }
 
 function generateATCData() {
@@ -529,13 +541,51 @@ function showScreen(screenId) {
       el.classList.remove("active");
     }
   });
-  
+
   // Hide keypad and text inputs by default unless needed
   document.getElementById("custom-keypad").style.display = "none";
   document.getElementById("custom-text-keypad").style.display = "none";
-  
+
+  // Toggle desktop sidebar between static and live panels
+  const isActiveSession = screenId === "screen-study" || screenId === "screen-test" || screenId === "screen-feedback";
+  const staticPanel = document.getElementById("sidebar-static-panel");
+  const livePanel = document.getElementById("sidebar-live-panel");
+  if (staticPanel) staticPanel.style.display = isActiveSession ? "none" : "flex";
+  if (livePanel) livePanel.style.display = isActiveSession ? "flex" : "none";
+  if (isActiveSession) updateSidebarLiveStats();
+
   // Automatically toggle abort header based on screen
   updateHeaderControls(screenId);
+}
+
+function updateSidebarLiveStats() {
+  const scoreEl = document.getElementById("live-stat-score");
+  const streakEl = document.getElementById("live-stat-streak");
+  const roundEl = document.getElementById("live-stat-round");
+  const levelEl = document.getElementById("live-stat-level");
+  const moduleEl = document.getElementById("live-stat-module");
+  const historyEl = document.getElementById("live-round-history");
+
+  if (scoreEl) scoreEl.textContent = String(sessionScore).padStart(5, "0");
+  if (streakEl) streakEl.textContent = streak;
+  if (roundEl) roundEl.textContent = `${sessionRound}/${sessionLength}`;
+  if (levelEl) levelEl.textContent = `LVL ${level}`;
+  if (moduleEl) moduleEl.textContent = activeModule ? activeModule.toUpperCase() : "—";
+
+  if (historyEl) {
+    historyEl.innerHTML = "";
+    const recentRounds = roundByRoundHistory.slice(-5);
+    recentRounds.forEach(r => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;justify-content:space-between;align-items:center;font-size:0.65rem;padding:4px 0;border-bottom:1px solid var(--border-subtle);";
+      const gradeColor = r.grade === "perfect" || r.grade === "good" ? "var(--success-emerald)" : r.grade === "partial" ? "var(--accent-amber)" : "var(--error-rose)";
+      row.innerHTML = `<span style="color:var(--text-muted)">R${String(r.round).padStart(2,"0")} ${r.module.toUpperCase()}</span><span style="font-weight:700;color:${gradeColor}">${r.accuracy}%</span>`;
+      historyEl.appendChild(row);
+    });
+    if (recentRounds.length === 0) {
+      historyEl.innerHTML = `<div style="font-size:0.6rem;color:var(--text-muted)">No rounds completed yet</div>`;
+    }
+  }
 }
 
 // Start Round
@@ -601,7 +651,7 @@ function setupStudyScreen(module) {
     });
   } 
   else if (module === "instruments") {
-    titleEl.textContent = "SCAN INSTRUMENT telemetry";
+    titleEl.textContent = "SCAN INSTRUMENT TELEMETRY";
     document.getElementById("briefing-instruments").style.display = "block";
     
     const gridBrief = document.getElementById("instruments-grid-brief");
@@ -647,30 +697,29 @@ function setupStudyScreen(module) {
   }
   
   briefingStartTime = Date.now();
+  pausedAccum = 0;
+  pauseStart = 0;
   studyDurationRemaining = studySecs;
-  
+
   const timerBar = document.getElementById("study-timer-bar");
   const timerDisplay = document.getElementById("study-timer-display");
   timerBar.style.width = "100%";
   timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
-  
+
   if (studyTimer) clearInterval(studyTimer);
-  
-  const intervalTime = 50; // update every 50ms for buttery-smooth swept scale
-  const totalTicks = (studySecs * 1000) / intervalTime;
-  let tick = 0;
-  
+
+  const intervalTime = 50; // update every 50ms for smooth animation
+
   const speedBonusBadge = document.getElementById("study-speed-bonus");
   if (speedBonusBadge) speedBonusBadge.style.display = "inline-flex";
 
   let lowTimeWarned = false;
   studyTimer = setInterval(() => {
     if (isTimerPaused) return;
-    tick++;
-    studyDurationRemaining = Math.max(studySecs - (tick * intervalTime) / 1000, 0);
-    timerBar.style.width = `${(studyDurationRemaining / studySecs) * 1000 / 10}%`;
+    studyDurationRemaining = Math.max(studySecs - (Date.now() - briefingStartTime - pausedAccum) / 1000, 0);
+    timerBar.style.width = `${(studyDurationRemaining / studySecs) * 100}%`;
     timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
-    if (speedBonusBadge) speedBonusBadge.textContent = `+${Math.round(studyDurationRemaining * 50)} SPD`;
+    if (speedBonusBadge) speedBonusBadge.textContent = `+${Math.round(studyDurationRemaining * 50)} EARLY`;
 
     // Low-time warning: turn bar amber and pulse tag when ≤ 3 s remain
     if (studyDurationRemaining <= 3 && !lowTimeWarned) {
@@ -767,7 +816,7 @@ function commenceTest() {
     renderATCTestLayout();
   } 
   else if (activeModule === "fault") {
-    labelEl.textContent = "Mitigate Diagnostic Chain";
+    labelEl.textContent = "MITIGATE DIAGNOSTIC CHAIN";
     document.getElementById("test-fault").style.display = "block";
     
     currentRndInput = ["", ""]; // Slot 1: system, Slot 2: action
@@ -807,25 +856,30 @@ function renderChecklistPool() {
       visibleIndex++;
       const el = document.createElement("div");
       el.className = "sortable-item";
+      el.setAttribute("role", "button");
+      el.setAttribute("tabindex", "0");
+      el.setAttribute("aria-label", item);
       el.innerHTML = `
         <span>${item}</span>
         <span class="shortcut-badge" style="font-size: 0.6rem; opacity: 0.4; font-weight: 700; border: 1px solid var(--border-subtle); padding: 1px 4px; border-radius: 4px; margin-left: 8px;">${visibleIndex}</span>
       `;
       const currentVal = item;
-      el.addEventListener("click", () => {
+      const handleChecklistItemClick = () => {
         playSound("click");
         // Add to input array
         currentRndInput.push(currentVal);
-        
+
         // Update slots
         const slotIdx = currentRndInput.length - 1;
         const slotText = document.getElementById(`checklist-slot-text-${slotIdx}`);
         slotText.textContent = currentVal;
         slotText.style.color = "var(--text-white)";
-        
+
         // Re-render remaining pool
         renderChecklistPool();
-      });
+      };
+      el.addEventListener("click", handleChecklistItemClick);
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleChecklistItemClick(); } });
       poolContainer.appendChild(el);
     }
   });
@@ -1041,22 +1095,25 @@ function renderFaultPool() {
       visibleIndex++;
       const btn = document.createElement("div");
       btn.className = "sortable-item";
+      btn.setAttribute("role", "button");
+      btn.setAttribute("tabindex", "0");
+      btn.setAttribute("aria-label", item);
       btn.innerHTML = `
         <span>${item}</span>
         <span class="shortcut-badge" style="font-size: 0.6rem; opacity: 0.4; font-weight: 700; border: 1px solid var(--border-subtle); padding: 1px 4px; border-radius: 4px; margin-left: 8px;">${visibleIndex}</span>
       `;
       const currentVal = item;
-      btn.addEventListener("click", () => {
+      const handleFaultItemClick = () => {
         playSound("click");
-        
+
         // Write choice
         currentRndInput[focusedInputId] = currentVal;
-        
+
         // Update slot text
         const textEl = document.getElementById(`fault-slot-text-${focusedInputId}`);
         textEl.textContent = currentVal;
         textEl.style.color = "var(--text-white)";
-        
+
         // Advance focus if slot 0 is filled
         if (focusedInputId === 0 && currentRndInput[1] === "") {
           document.querySelectorAll(".fault-step-node").forEach(n => n.classList.remove("active-step"));
@@ -1064,9 +1121,11 @@ function renderFaultPool() {
           slot1.classList.add("active-step");
           focusedInputId = 1;
         }
-        
+
         renderFaultPool();
-      });
+      };
+      btn.addEventListener("click", handleFaultItemClick);
+      btn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleFaultItemClick(); } });
       poolContainer.appendChild(btn);
     }
   });
@@ -1077,7 +1136,7 @@ function renderFaultPool() {
     clearBtn.className = "btn btn-danger btn-block";
     clearBtn.style.minHeight = "36px";
     clearBtn.style.marginTop = "8px";
-    clearBtn.textContent = "⌫ CLEAR Diagnostic";
+    clearBtn.textContent = "⌫ CLEAR DIAGNOSTIC";
     clearBtn.addEventListener("click", () => {
       playSound("click");
       currentRndInput = ["", ""];
@@ -1132,10 +1191,10 @@ document.getElementById("keypad-clear").addEventListener("click", () => {
   updateFocusedInputWithValue("");
 });
 
-document.getElementById("keypad-enter").addEventListener("click", () => {
+function handleKeypadConfirm() {
   if (focusedInputId === null) return;
   playSound("click");
-  
+
   // Cupertino-Style Auto-Advance logic
   if (activeModule === "instruments") {
     const cards = Array.from(document.querySelectorAll("#instruments-grid-test .gauge-card"));
@@ -1152,33 +1211,36 @@ document.getElementById("keypad-enter").addEventListener("click", () => {
           break;
         }
       }
-      
+
       if (nextBlankCard) {
-        setTimeout(() => {
-          nextBlankCard.click();
-        }, 150);
-        return; // Advance focus, do NOT hide keypad or clear active classes
+        setTimeout(() => { nextBlankCard.click(); }, 150);
+        return;
       }
+
+      // All gauges filled — pulse the submit button
+      const submitBtn = document.getElementById("btn-submit-test");
+      submitBtn.classList.add("submit-ready");
+      setTimeout(() => submitBtn.classList.remove("submit-ready"), 700);
     }
   } else if (activeModule === "atc") {
     if (focusedInputId === "freq") {
       const nextEl = document.getElementById("atc-input-squawk");
       if (nextEl) {
-        setTimeout(() => {
-          nextEl.click();
-        }, 150);
-        return; // Advance focus to Squawk, do NOT hide keypad or clear active classes
+        setTimeout(() => { nextEl.click(); }, 150);
+        return;
       }
     }
   }
-  
-  // Submit active focused field and hide keypad (default/fallback when no further auto-advance is possible)
+
+  // Hide keypad and clear selection indicators
   document.getElementById("custom-keypad").style.display = "none";
   document.querySelectorAll(".gauge-card").forEach(c => c.classList.remove("active-step"));
   document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
-  
+
   focusedInputId = null;
-});
+}
+
+document.getElementById("keypad-enter").addEventListener("click", handleKeypadConfirm);
 
 function updateFocusedInputWithValue(val) {
   document.getElementById("keypad-preview-value").textContent = val || "---";
@@ -1460,6 +1522,7 @@ document.getElementById("btn-submit-test").addEventListener("click", submitTelem
 // ==========================================
 
 function finishSession() {
+  if (roundByRoundHistory.length === 0) return;
   const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / roundByRoundHistory.length);
   
   // Tier designations mapping
@@ -2163,24 +2226,41 @@ function initThemeSystem() {
     });
   });
 
-  // Bind clear history button
+  // Bind clear history button (2-step inline confirmation, no native dialog)
   const btnClearHistory = document.getElementById("btn-clear-history");
-  if (btnClearHistory) {
+  const purgeConfirmRow = document.getElementById("purge-confirm-row");
+  const btnPurgeCancel = document.getElementById("btn-purge-cancel");
+  const btnPurgeConfirm = document.getElementById("btn-purge-confirm");
+
+  if (btnClearHistory && purgeConfirmRow) {
     btnClearHistory.addEventListener("click", () => {
       playSound("click");
-      if (confirm("Are you sure you want to purge all telemetry history? This action is irreversible.")) {
-        globalHistory = [];
-        localStorage.removeItem("flightcore_history");
-        playSound("error");
-        
-        // Refresh home stats in real-time
-        loadHomeStats();
-        
-        // Hide theme selector overlay
-        if (overlay) {
-          overlay.style.display = "none";
-        }
-      }
+      purgeConfirmRow.style.display = "flex";
+      purgeConfirmRow.style.flexDirection = "column";
+      btnClearHistory.style.display = "none";
+    });
+  }
+
+  if (btnPurgeCancel && purgeConfirmRow) {
+    btnPurgeCancel.addEventListener("click", () => {
+      playSound("click");
+      purgeConfirmRow.style.display = "none";
+      if (btnClearHistory) btnClearHistory.style.display = "";
+    });
+  }
+
+  if (btnPurgeConfirm) {
+    btnPurgeConfirm.addEventListener("click", () => {
+      globalHistory = [];
+      localStorage.removeItem("flightcore_history");
+      localStorage.removeItem("flightcore_daily_streak");
+      localStorage.removeItem("flightcore_last_trained");
+      dailyStreak = 0;
+      playSound("error");
+      loadHomeStats();
+      if (purgeConfirmRow) purgeConfirmRow.style.display = "none";
+      if (btnClearHistory) btnClearHistory.style.display = "";
+      if (overlay) overlay.style.display = "none";
     });
   }
 }
@@ -2256,12 +2336,7 @@ window.addEventListener("keydown", (e) => {
         focusedInputId = null;
       } else if (key === "Enter") {
         e.preventDefault();
-        playSound("click");
-        // Close keypad & clear selection indicators
-        document.getElementById("custom-keypad").style.display = "none";
-        document.querySelectorAll(".gauge-card").forEach(c => c.classList.remove("active-step"));
-        document.querySelectorAll(".input-terminal").forEach(i => i.classList.remove("active-input"));
-        focusedInputId = null;
+        handleKeypadConfirm();
       }
     } else {
       // Text quick-select options are active for ATC Callsign / Facility
@@ -2453,7 +2528,7 @@ function initDifficultySelector() {
 }
 
 function initSessionLengthSelector() {
-  const buttons = document.querySelectorAll(".session-len-btn");
+  const buttons = document.querySelectorAll("#session-length-selector .session-len-btn");
   const label = document.getElementById("session-length-label");
 
   // Restore saved selection
@@ -2564,8 +2639,9 @@ function toggleStudyPause() {
     isTimerPaused = !isTimerPaused;
     const pauseIcon = document.getElementById("study-pause-icon");
     const pausedOverlay = document.getElementById("paused-overlay");
-    
+
     if (isTimerPaused) {
+      pauseStart = Date.now();
       playSound("click");
       if (pauseIcon) {
         pauseIcon.innerHTML = `<polygon points="6,4 20,12 6,20" />`;
@@ -2574,6 +2650,10 @@ function toggleStudyPause() {
         pausedOverlay.style.display = "flex";
       }
     } else {
+      if (pauseStart > 0) {
+        pausedAccum += Date.now() - pauseStart;
+        pauseStart = 0;
+      }
       playSound("click");
       if (pauseIcon) {
         pauseIcon.innerHTML = `

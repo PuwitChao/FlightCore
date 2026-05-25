@@ -838,6 +838,16 @@ body[data-theme="mono"] .btn-success {
   color: var(--text-primary);
 }
 
+@keyframes submit-ready-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.55); }
+  50%  { box-shadow: 0 0 0 8px rgba(52, 199, 89, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+}
+
+.btn.submit-ready {
+  animation: submit-ready-pulse 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .btn-danger {
   background-color: var(--error-rose);
   border-color: transparent;
