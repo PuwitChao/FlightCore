@@ -134,6 +134,7 @@ let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repe
 let selectedModules = ["checklist", "instruments", "atc", "fault"];
 let sessionLength = parseInt(localStorage.getItem("flightcore_session_length") || "8", 10);
 let startingStreak = parseInt(localStorage.getItem("flightcore_starting_streak") || "4", 10);
+let timerMultiplier = parseFloat(localStorage.getItem("flightcore_timer_multiplier") || "1");
 
 let currentRndExpected = null;
 let currentRndInput = null;
@@ -684,7 +685,7 @@ function setupStudyScreen(module) {
     }
   }
   
-  // Study timer dynamic setup (shorter as levels scale up)
+  // Study timer dynamic setup (shorter as levels scale up, scaled by user's timer duration setting)
   let studySecs = 10;
   if (module === "checklist") {
     studySecs = Math.max(12 - level, 6);
@@ -695,6 +696,7 @@ function setupStudyScreen(module) {
   } else if (module === "fault") {
     studySecs = Math.max(10 - (level * 0.8), 4.5);
   }
+  studySecs = studySecs * timerMultiplier;
   
   briefingStartTime = Date.now();
   pausedAccum = 0;
@@ -2527,6 +2529,30 @@ function initDifficultySelector() {
   });
 }
 
+function initTimerDurationSelector() {
+  const buttons = document.querySelectorAll("#timer-duration-selector .session-len-btn");
+  const label = document.getElementById("timer-duration-label");
+  const names = { 1: "Standard", 1.5: "Relaxed", 2: "Extended" };
+
+  buttons.forEach(btn => {
+    const val = parseFloat(btn.getAttribute("data-multiplier"));
+    btn.classList.toggle("active", val === timerMultiplier);
+  });
+  if (label) label.textContent = names[timerMultiplier] || "Standard";
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      const val = parseFloat(btn.getAttribute("data-multiplier"));
+      timerMultiplier = val;
+      localStorage.setItem("flightcore_timer_multiplier", val);
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (label) label.textContent = names[val] || "Standard";
+    });
+  });
+}
+
 function initSessionLengthSelector() {
   const buttons = document.querySelectorAll("#session-length-selector .session-len-btn");
   const label = document.getElementById("session-length-label");
@@ -2676,6 +2702,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initModuleSelection();
   initSessionLengthSelector();
   initDifficultySelector();
+  initTimerDurationSelector();
   initHistoryTabs();
   initAbortSystem();
   initHelpSystem();

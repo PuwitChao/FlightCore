@@ -215,6 +215,21 @@
           </p>
         </div>
 
+        <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card-header">
+            <span>Study Timer</span>
+            <span class="type-tag" id="timer-duration-label">Standard</span>
+          </div>
+          <div class="session-length-selector" id="timer-duration-selector">
+            <button class="session-len-btn active" data-multiplier="1">Standard</button>
+            <button class="session-len-btn" data-multiplier="1.5">Relaxed</button>
+            <button class="session-len-btn" data-multiplier="2">Extended</button>
+          </div>
+          <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+            How long to study each briefing before the test begins. Relaxed = 1.5×, Extended = 2× the default duration.
+          </p>
+        </div>
+
         <button class="btn btn-primary btn-block" id="btn-engage-session">
           START TRAINING SESSION
         </button>
