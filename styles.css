@@ -254,7 +254,7 @@ body {
 /* --- FIXED HEADER --- */
 .dashboard-header {
   flex-shrink: 0;
-  padding: 24px 20px 16px 20px;
+  padding: 16px 20px 12px 20px;
   background-color: var(--bg-dark);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
@@ -538,13 +538,14 @@ body[data-theme="warm"] .theme-opt-btn.active {
 /* --- VIEWPORT ENGINE --- */
 .viewport-content {
   flex-grow: 1;
+  flex-shrink: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 20px;
   display: flex;
   flex-direction: column;
   position: relative;
-  height: 60%;
   transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1130,6 +1131,7 @@ body[data-theme="mono"] .fault-step-title {
 
 /* --- APPLE STYLE KEYPAD --- */
 .custom-keypad-panel {
+  flex-shrink: 0;
   background-color: var(--keypad-panel-bg);
   border-top: 1px solid var(--border-subtle);
   padding: 16px 20px;
@@ -1507,13 +1509,16 @@ body[data-theme="light"] .viewport-content::-webkit-scrollbar-thumb {
 @media (min-width: 680px) {
   body {
     padding: 20px;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
   }
-  
+
   .terminal-frame {
     max-width: 900px;
-    height: 680px; /* increased from 640px for perfect desktop card spacing */
+    height: clamp(580px, calc(100vh - 40px), 680px);
     display: grid;
     grid-template-columns: 1.35fr 0.82fr;
     grid-template-rows: auto 1fr;
@@ -1535,6 +1540,8 @@ body[data-theme="light"] .viewport-content::-webkit-scrollbar-thumb {
     grid-area: viewport;
     border-right: 1px solid var(--border-subtle);
     overflow-y: auto;
+    height: auto;
+    min-height: 0;
   }
   
   .desktop-sidebar {
