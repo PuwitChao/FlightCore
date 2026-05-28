@@ -851,10 +851,14 @@ function renderChecklistPool() {
   const poolContainer = document.getElementById("checklist-pool");
   poolContainer.innerHTML = "";
   
+  // Once every slot is filled, stop offering pool items — selecting more than
+  // the slot count would index a non-existent slot element and throw.
+  const slotsFull = currentRndInput.length >= currentRndExpected.expected.length;
+
   let visibleIndex = 0;
   // Load remaining steps that haven't been selected yet
   currentRndExpected.pool.forEach(item => {
-    if (!currentRndInput.includes(item)) {
+    if (!slotsFull && !currentRndInput.includes(item)) {
       visibleIndex++;
       const el = document.createElement("div");
       el.className = "sortable-item";
@@ -2302,7 +2306,9 @@ window.addEventListener("keydown", (e) => {
   }
   
   // Case 1: Active keypad/select input session
-  if (focusedInputId !== null) {
+  // Fault uses focusedInputId to track the active slot (0/1) but shows no keypad,
+  // so it must fall through to the test-screen shortcut handler in Case 2.
+  if (focusedInputId !== null && activeModule !== "fault") {
     // Check if numeric field is currently focused
     const isNumericField = activeModule === "instruments" || 
       (activeModule === "atc" && (focusedInputId === "freq" || focusedInputId === "squawk"));
@@ -2366,7 +2372,7 @@ window.addEventListener("keydown", (e) => {
   if (!activeScreen) return;
   
   // Custom Keyboard playability for each module in the Test screen
-  if (activeScreen.id === "screen-test" && focusedInputId === null) {
+  if (activeScreen.id === "screen-test" && (focusedInputId === null || activeModule === "fault")) {
     if (activeModule === "checklist") {
       if (/^[1-9]$/.test(key)) {
         e.preventDefault();
