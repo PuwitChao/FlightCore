@@ -46,6 +46,9 @@ body {
   --keypad-btn-active-bg: rgba(255, 255, 255, 0.12);
   --keypad-btn-action-bg: rgba(255, 255, 255, 0.02);
   --keypad-btn-shadow: none;
+
+  /* Active selected-theme tint (border always uses --accent-blue) */
+  --select-active-bg: rgba(0, 122, 255, 0.08);
 }
 
 body[data-theme="light"] {
@@ -88,6 +91,8 @@ body[data-theme="light"] {
   --keypad-btn-active-bg: #E5E5EA;
   --keypad-btn-action-bg: #D1D1D6;
   --keypad-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0.5px 0.5px rgba(0, 0, 0, 0.04);
+
+  --select-active-bg: rgba(0, 122, 255, 0.06);
 }
 
 body[data-theme="mono"] {
@@ -128,6 +133,8 @@ body[data-theme="mono"] {
   --keypad-btn-bg: rgba(255, 255, 255, 0.05);
   --keypad-btn-active-bg: rgba(255, 255, 255, 0.12);
   --keypad-btn-action-bg: rgba(255, 255, 255, 0.02);
+
+  --select-active-bg: rgba(255, 255, 255, 0.06);
 }
 
 body[data-theme="sage"] {
@@ -169,6 +176,8 @@ body[data-theme="sage"] {
   --keypad-btn-bg: rgba(24, 32, 28, 0.6);
   --keypad-btn-active-bg: rgba(255, 255, 255, 0.1);
   --keypad-btn-action-bg: rgba(24, 32, 28, 0.3);
+
+  --select-active-bg: rgba(48, 209, 88, 0.08);
 }
 
 body[data-theme="warm"] {
@@ -211,6 +220,8 @@ body[data-theme="warm"] {
   --keypad-btn-active-bg: #EFE9DE;
   --keypad-btn-action-bg: #E5DEC9;
   --keypad-btn-shadow: 0 1px 2px rgba(140, 115, 95, 0.08), 0 0.5px 0.5px rgba(140, 115, 95, 0.04);
+
+  --select-active-bg: rgba(217, 119, 6, 0.06);
 }
 
 /* --- RESET & TRANSITIONS --- */
@@ -495,7 +506,8 @@ body[data-theme="light"] .theme-toggle-btn:active {
   transition: all var(--transition-fast);
 }
 
-body[data-theme="light"] .theme-opt-btn {
+body[data-theme="light"] .theme-opt-btn,
+body[data-theme="warm"] .theme-opt-btn {
   background-color: rgba(0, 0, 0, 0.015);
 }
 
@@ -503,24 +515,25 @@ body[data-theme="light"] .theme-opt-btn {
   transform: scale(0.98);
 }
 
+/* Unified active selected-theme state — accent border + per-theme tint for all themes */
 .theme-opt-btn.active {
   border-color: var(--accent-blue);
-  background-color: rgba(0, 122, 255, 0.05);
+  background-color: var(--select-active-bg);
 }
 
-body[data-theme="mono"] .theme-opt-btn.active {
-  border-color: var(--text-primary);
-  background-color: rgba(255, 255, 255, 0.06);
+/* Clear, unambiguous selected affordance on the active theme */
+.theme-opt-btn.active .theme-opt-label::after {
+  content: "✓";
+  margin-left: 8px;
+  font-weight: 800;
+  color: var(--accent-blue);
 }
 
-body[data-theme="sage"] .theme-opt-btn.active {
-  border-color: var(--accent-blue);
-  background-color: rgba(48, 209, 88, 0.06);
-}
-
-body[data-theme="warm"] .theme-opt-btn.active {
-  border-color: var(--accent-blue);
-  background-color: rgba(217, 119, 6, 0.05);
+/* Keyboard focus visibility (consistent across all interactive controls in the selector) */
+.theme-opt-btn:focus-visible,
+.theme-close-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
 }
 
 .theme-opt-indicator {
@@ -528,6 +541,7 @@ body[data-theme="warm"] .theme-opt-btn.active {
   height: 18px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .theme-opt-label {

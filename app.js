@@ -851,10 +851,14 @@ function renderChecklistPool() {
   const poolContainer = document.getElementById("checklist-pool");
   poolContainer.innerHTML = "";
   
+  // Once every slot is filled, stop offering pool items — selecting more than
+  // the slot count would index a non-existent slot element and throw.
+  const slotsFull = currentRndInput.length >= currentRndExpected.expected.length;
+
   let visibleIndex = 0;
   // Load remaining steps that haven't been selected yet
   currentRndExpected.pool.forEach(item => {
-    if (!currentRndInput.includes(item)) {
+    if (!slotsFull && !currentRndInput.includes(item)) {
       visibleIndex++;
       const el = document.createElement("div");
       el.className = "sortable-item";
@@ -1869,7 +1873,8 @@ function renderHistoryChart() {
     // X goes from 20 to 280 across a 300px viewBox
     // Y goes from 12 (100% accuracy) to 58 (0% accuracy)
     const points = recent.map((h, idx) => {
-      const x = 20 + idx * (260 / (recent.length - 1 || 1));
+      // Center a lone data point instead of pinning it to the left edge
+      const x = recent.length === 1 ? 150 : 20 + idx * (260 / (recent.length - 1));
       const y = 58 - (h.percentage / 100) * 46;
       return { x, y, percentage: h.percentage, date: new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), score: h.score };
     });
@@ -2272,13 +2277,11 @@ function setTheme(themeVal) {
   localStorage.setItem("flightcore_theme", themeVal);
   
   // Update active class in options
-  const optButtons = document.querySelectorAll(".theme-opt-btn");
+  const optButtons = document.querySelectorAll(".theme-opt-btn[data-theme-val]");
   optButtons.forEach(btn => {
-    if (btn.getAttribute("data-theme-val") === themeVal) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
+    const isActive = btn.getAttribute("data-theme-val") === themeVal;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 }
 
@@ -2302,7 +2305,9 @@ window.addEventListener("keydown", (e) => {
   }
   
   // Case 1: Active keypad/select input session
-  if (focusedInputId !== null) {
+  // Fault uses focusedInputId to track the active slot (0/1) but shows no keypad,
+  // so it must fall through to the test-screen shortcut handler in Case 2.
+  if (focusedInputId !== null && activeModule !== "fault") {
     // Check if numeric field is currently focused
     const isNumericField = activeModule === "instruments" || 
       (activeModule === "atc" && (focusedInputId === "freq" || focusedInputId === "squawk"));
@@ -2366,7 +2371,7 @@ window.addEventListener("keydown", (e) => {
   if (!activeScreen) return;
   
   // Custom Keyboard playability for each module in the Test screen
-  if (activeScreen.id === "screen-test" && focusedInputId === null) {
+  if (activeScreen.id === "screen-test" && (focusedInputId === null || activeModule === "fault")) {
     if (activeModule === "checklist") {
       if (/^[1-9]$/.test(key)) {
         e.preventDefault();
@@ -2694,6 +2699,69 @@ function toggleStudyPause() {
   }
 }
 
+// ==========================================
+// 15. MODAL ACCESSIBILITY (focus trap + restore)
+// ==========================================
+// Centralised so the many existing `style.display` toggles need no changes:
+// a MutationObserver detects each dialog showing/hiding and manages focus.
+function initModalA11y() {
+  const MODAL_IDS = [
+    "theme-selector-overlay",
+    "help-modal-overlay",
+    "abort-confirm-overlay",
+    "onboarding-overlay"
+  ];
+  const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  let lastFocused = null;
+
+  const isVisible = (el) => el && el.style.display !== "none" && el.style.display !== "";
+  const focusablesIn = (modal) =>
+    Array.from(modal.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null);
+
+  MODAL_IDS.forEach(id => {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+
+    const observer = new MutationObserver(() => {
+      const visible = isVisible(modal);
+      if (visible && !modal.dataset.trapActive) {
+        modal.dataset.trapActive = "1";
+        lastFocused = document.activeElement;
+        const focusables = focusablesIn(modal);
+        if (focusables.length) focusables[0].focus();
+      } else if (!visible && modal.dataset.trapActive) {
+        delete modal.dataset.trapActive;
+        if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
+        lastFocused = null;
+      }
+    });
+    observer.observe(modal, { attributes: true, attributeFilter: ["style"] });
+  });
+
+  // Keep Tab focus cycling within the currently open dialog
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const modal = MODAL_IDS.map(id => document.getElementById(id)).find(isVisible);
+    if (!modal) return;
+    const focusables = focusablesIn(modal);
+    if (!focusables.length) { e.preventDefault(); return; }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (!modal.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+}
+
 // Bootstrap application on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
   initThemeSystem();
@@ -2707,6 +2775,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initAbortSystem();
   initHelpSystem();
   initStudyPauseSystem();
+  initModalA11y();
   initOnboarding();
 
   if ("serviceWorker" in navigator) {
