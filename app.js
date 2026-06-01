@@ -89,132 +89,15 @@ let roundByRoundHistory = []; // Session history
 let globalHistory = JSON.parse(localStorage.getItem("flightcore_history") || "[]");
 
 // ==========================================
-// 3. AUDIO SYNTH (Organic Low-Latency Web Audio API)
+// 3. AUDIO SYNTH (Muted)
 // ==========================================
 
-let isSoundEnabled = localStorage.getItem("flightcore_sound") === "true";
-let audioCtx = null;
-
-function getAudioContext() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  return audioCtx;
-}
-
 function playSound(type) {
-  if (!isSoundEnabled) return;
-  try {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    
-    if (type === "click") {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      osc.type = "sine";
-      const now = ctx.currentTime;
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(120, now + 0.04);
-      gainNode.gain.setValueAtTime(0.08, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-      osc.start(now);
-      osc.stop(now + 0.04);
-    } 
-    else if (type === "success") {
-      const now = ctx.currentTime;
-      
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.type = "sine";
-      osc1.frequency.setValueAtTime(523.25, now); // C5
-      gain1.gain.setValueAtTime(0.06, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc1.start(now);
-      osc1.stop(now + 0.25);
-      
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.type = "sine";
-      osc2.frequency.setValueAtTime(659.25, now + 0.08); // E5
-      gain2.gain.setValueAtTime(0.08, now + 0.08);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc2.start(now + 0.08);
-      osc2.stop(now + 0.35);
-    } 
-    else if (type === "error") {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      osc.type = "triangle";
-      const now = ctx.currentTime;
-      osc.frequency.setValueAtTime(140, now);
-      osc.frequency.linearRampToValueAtTime(90, now + 0.22);
-      gainNode.gain.setValueAtTime(0.12, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      osc.start(now);
-      osc.stop(now + 0.22);
-    }
-  } catch (e) {
-    console.warn("Web Audio API not allowed or supported on this device.", e);
-  }
+  // Silent no-op
 }
 
-function updateSoundToggleUI() {
-  const icon = document.getElementById("sound-icon");
-  if (!icon) return;
-  if (isSoundEnabled) {
-    icon.innerHTML = `<path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
-    icon.closest("button").setAttribute("title", "Mute Sound");
-  } else {
-    icon.innerHTML = `<path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
-    icon.closest("button").setAttribute("title", "Unmute Sound");
-  }
-}
-
-function initSoundSystem() {
-  updateSoundToggleUI();
-  
-  const btnSound = document.getElementById("btn-sound-toggle");
-  if (btnSound) {
-    btnSound.addEventListener("click", () => {
-      isSoundEnabled = !isSoundEnabled;
-      localStorage.setItem("flightcore_sound", isSoundEnabled);
-      updateSoundToggleUI();
-      
-      // Try to initialize or resume context on interaction
-      if (isSoundEnabled) {
-        try {
-          const ctx = getAudioContext();
-          playSound("click");
-        } catch (e) {}
-      }
-    });
-  }
-}
-
-// Simulates tactile feedback
 function triggerHaptic(type) {
-  if ("vibrate" in navigator) {
-    if (type === "success") {
-      navigator.vibrate(80);
-    } else if (type === "error") {
-      navigator.vibrate([100, 50, 100]);
-    } else if (type === "warning") {
-      navigator.vibrate([60, 40, 60]);
-    } else {
-      navigator.vibrate(20);
-    }
-  }
+  // Silent no-op
 }
 
 // ==========================================
@@ -591,6 +474,26 @@ function createGaugeHTML(g, isBlanked = false) {
     container.setAttribute("data-label", g.label);
   }
   
+  const range = g.max - g.min;
+  const percent = Math.min(Math.max(((g.val - g.min) / range) * 100, 0), 100);
+  
+  let rangeBarHTML = "";
+  if (!isBlanked) {
+    let indicatorClass = "normal";
+    if (percent <= 10 || percent >= 90) {
+      indicatorClass = "warning";
+    }
+    rangeBarHTML = `
+      <div class="gauge-range-bar">
+        <div class="gauge-range-indicator ${indicatorClass}" style="left: ${percent}%;"></div>
+      </div>
+    `;
+  } else {
+    rangeBarHTML = `
+      <div class="gauge-range-bar" style="background: rgba(255,255,255,0.02);"></div>
+    `;
+  }
+  
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.65rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
       <span style="color: ${g.color || 'var(--accent-blue)'};">${g.label}</span>
@@ -599,9 +502,10 @@ function createGaugeHTML(g, isBlanked = false) {
     <div class="gauge-value-display" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 6px 0; letter-spacing: -0.5px;">
       ${isBlanked ? "???" : g.val}
     </div>
-    <div class="gauge-name" style="font-size: 0.58rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; text-align: center;">
+    <div class="gauge-name" style="font-size: 0.58rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; text-align: center; margin-bottom: 4px;">
       ${g.name}
     </div>
+    ${rangeBarHTML}
   `;
   
   return container;
@@ -1419,6 +1323,24 @@ function finishSession() {
     blindspotCard.style.display = "none";
   }
   
+  // Calculate module-specific competencies for the Pilot Logbook
+  const checklistRounds = roundByRoundHistory.filter(r => r.module === "checklist");
+  const instrumentsRounds = roundByRoundHistory.filter(r => r.module === "instruments");
+  const atcRounds = roundByRoundHistory.filter(r => r.module === "atc");
+  const faultRounds = roundByRoundHistory.filter(r => r.module === "fault");
+  
+  const getAvgAcc = (rounds, defVal) => {
+    if (rounds.length === 0) return defVal;
+    return Math.round(rounds.reduce((sum, r) => sum + r.accuracy, 0) / rounds.length);
+  };
+  
+  const compsData = {
+    checklist: getAvgAcc(checklistRounds, percentage),
+    instruments: getAvgAcc(instrumentsRounds, percentage),
+    atc: getAvgAcc(atcRounds, percentage),
+    fault: getAvgAcc(faultRounds, percentage)
+  };
+  
   // Save session record to global history in localStorage
   const sessionRecord = {
     date: new Date().toISOString(),
@@ -1426,7 +1348,8 @@ function finishSession() {
     percentage: percentage,
     tier: tier,
     maxLevel: level,
-    maxStreak: sessionMaxStreak
+    maxStreak: sessionMaxStreak,
+    competencies: compsData
   };
   globalHistory.push(sessionRecord);
   // Cap history at 30 items
@@ -2154,10 +2077,172 @@ function toggleStudyPause() {
 // Bootstrap application on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
   initThemeSystem();
-  initSoundSystem();
+  initSegmentControl();
   loadHomeStats();
   initModuleSelection();
   initAbortSystem();
   initHelpSystem();
   initStudyPauseSystem();
 });
+
+function initSegmentControl() {
+  const btnDeck = document.getElementById("segment-btn-deck");
+  const btnLogbook = document.getElementById("segment-btn-logbook");
+  const contentDeck = document.getElementById("segment-content-deck");
+  const contentLogbook = document.getElementById("segment-content-logbook");
+  
+  if (btnDeck && btnLogbook) {
+    btnDeck.addEventListener("click", () => {
+      playSound("click");
+      btnDeck.classList.add("active");
+      btnLogbook.classList.remove("active");
+      
+      contentDeck.style.display = "flex";
+      contentLogbook.style.display = "none";
+    });
+    
+    btnLogbook.addEventListener("click", () => {
+      playSound("click");
+      btnLogbook.classList.add("active");
+      btnDeck.classList.remove("active");
+      
+      contentDeck.style.display = "none";
+      contentLogbook.style.display = "flex";
+      renderPilotLogbook();
+    });
+  }
+}
+
+function renderPilotLogbook() {
+  const totalFlights = globalHistory.length;
+  
+  // Log summary elements
+  document.getElementById("log-stat-flights").textContent = totalFlights;
+  
+  if (totalFlights === 0) {
+    document.getElementById("log-stat-high").textContent = "0";
+    document.getElementById("log-stat-avg").textContent = "0%";
+    document.getElementById("log-stat-streak").textContent = "0";
+    
+    document.getElementById("competency-val-checklist").textContent = "0%";
+    document.getElementById("competency-fill-checklist").style.width = "0%";
+    
+    document.getElementById("competency-val-instruments").textContent = "0%";
+    document.getElementById("competency-fill-instruments").style.width = "0%";
+    
+    document.getElementById("competency-val-atc").textContent = "0%";
+    document.getElementById("competency-fill-atc").style.width = "0%";
+    
+    document.getElementById("competency-val-fault").textContent = "0%";
+    document.getElementById("competency-fill-fault").style.width = "0%";
+    
+    document.getElementById("log-blindspot-card").style.display = "none";
+    document.getElementById("log-entries-count").textContent = "0 Flights";
+    document.getElementById("logbook-scroll-list").innerHTML = `
+      <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 12px; width:100%;">NO PILOT LOGS AVAILABLE</div>
+    `;
+    return;
+  }
+  
+  const scores = globalHistory.map(h => h.score);
+  const maxScore = Math.max(...scores);
+  const averageGrade = Math.round(globalHistory.reduce((sum, h) => sum + h.percentage, 0) / totalFlights);
+  const maxStreak = Math.max(...globalHistory.map(h => h.maxStreak || 0));
+  
+  document.getElementById("log-stat-high").textContent = maxScore.toLocaleString();
+  document.getElementById("log-stat-avg").textContent = `${averageGrade}%`;
+  document.getElementById("log-stat-streak").textContent = maxStreak;
+  
+  // Dynamic competency metrics
+  let checklistScores = [];
+  let instrumentsScores = [];
+  let atcScores = [];
+  let faultScores = [];
+  
+  globalHistory.forEach(h => {
+    if (h.competencies) {
+      checklistScores.push(h.competencies.checklist);
+      instrumentsScores.push(h.competencies.instruments);
+      atcScores.push(h.competencies.atc);
+      faultScores.push(h.competencies.fault);
+    } else {
+      checklistScores.push(h.percentage);
+      instrumentsScores.push(h.percentage);
+      atcScores.push(h.percentage);
+      faultScores.push(h.percentage);
+    }
+  });
+  
+  const calcAvg = arr => Math.round(arr.reduce((a,b)=>a+b, 0) / arr.length);
+  const checklistAvg = calcAvg(checklistScores);
+  const instrumentsAvg = calcAvg(instrumentsScores);
+  const atcAvg = calcAvg(atcScores);
+  const faultAvg = calcAvg(faultScores);
+  
+  // Render competency matrices
+  const setComp = (id, val) => {
+    document.getElementById(`competency-val-${id}`).textContent = `${val}%`;
+    document.getElementById(`competency-fill-${id}`).style.width = `${val}%`;
+  };
+  setComp("checklist", checklistAvg);
+  setComp("instruments", instrumentsAvg);
+  setComp("atc", atcAvg);
+  setComp("fault", faultAvg);
+  
+  // Diagnosing cognitive blindspots
+  const comps = [
+    { label: "Checklist Sequencing", value: checklistAvg, code: "checklist" },
+    { label: "Instrument Scanning", value: instrumentsAvg, code: "instruments" },
+    { label: "Radio Retention (ATC)", value: atcAvg, code: "atc" },
+    { label: "Emergency Diagnostics", value: faultAvg, code: "fault" }
+  ];
+  comps.sort((a,b) => a.value - b.value);
+  
+  const blindspot = comps[0]; // The lowest module score
+  const blindspotCard = document.getElementById("log-blindspot-card");
+  const blindspotMsg = document.getElementById("log-blindspot-msg");
+  
+  if (blindspot.value < 85) {
+    blindspotCard.style.display = "block";
+    let advice = "";
+    if (blindspot.code === "checklist") {
+      advice = "🎯 PROCEDURAL FOCUS REQUIRED: You are experiencing cognitive friction when ordering checklists under stress. Dedicate next session to 'Checklist' mode to practice procedural isolation.";
+    } else if (blindspot.code === "instruments") {
+      advice = "🎯 INSTRUMENT SCAN AUDIT: Numerical scanning and gauge recall is currently your weakest area. Slow down during the study window and practice sweep scanning from top-left to bottom-right.";
+    } else if (blindspot.code === "atc") {
+      advice = "🎯 RADIO AUDIT CLEARANCE: Auditory clearances and Squawk digits are slip-sliding in memory. Pay extra close visual attention during the transmission briefing.";
+    } else if (blindspot.code === "fault") {
+      advice = "🎯 CRISIS PROTOCOL DIAGNOSTIC: Association between emergency symptoms and isolations needs work. Study symptom protocols carefully during emergency briefings.";
+    }
+    blindspotMsg.textContent = advice;
+  } else {
+    blindspotCard.style.display = "none";
+  }
+  
+  // Render flight entries scroll
+  const logList = document.getElementById("logbook-scroll-list");
+  logList.innerHTML = "";
+  
+  document.getElementById("log-entries-count").textContent = `${totalFlights} Flights`;
+  
+  // Show recent entries first
+  const chronologicalLog = [...globalHistory].reverse();
+  chronologicalLog.forEach(h => {
+    const dateFormatted = new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const ratingClass = h.tier ? h.tier.toLowerCase() : "proficient";
+    
+    const row = document.createElement("div");
+    row.className = "log-entry-row";
+    row.innerHTML = `
+      <div class="log-entry-meta">
+        <span class="log-entry-title">FLIGHT DECK RUN</span>
+        <span class="log-entry-date">${dateFormatted}</span>
+      </div>
+      <div class="log-entry-score-details">
+        <span class="log-entry-score">${h.score.toLocaleString()} pts</span>
+        <span class="log-entry-badge ${ratingClass}">${h.tier || 'PROFICIENT'}</span>
+      </div>
+    `;
+    logList.appendChild(row);
+  });
+}

@@ -1,27 +1,28 @@
-# Flight Core - Audit and Enhancements Checklist
+# Flight Core - Silent Immersive Training & Pilot Logbook Sprint Checklist
 
 ## Phase 1: Planning & Setup
-- `[x]` Perform full audit of code, layout, security, and usability
-- `[x]` Write and obtain approval for the implementation plan
+- `[x]` Propose sprint plan to user and get approval
 - `[x]` Establish tasks in `task.md`
+- `[x]` Handle audio removal constraint (entirely purge sound engines and toggles)
 
-## Phase 2: Production Security & Performance Hardening
-- `[x]` Harden Content-Security-Policy (CSP) inside `_headers` (remove `'unsafe-inline'` from `script-src`)
-- `[x]` Parallelize font loading in `index.html` (replace CSS `@import` with header `<link>` elements)
+## Phase 2: Visual Linear Gauge Indicators
+- `[ ]` Add linear range tracking progress bar under the gauges in `styles.css`
+- `[ ]` Calculate percentage value of gauge inside `createGaugeHTML()` and position the glowing sapphire indicator dynamically
+- `[ ]` Add warning states (amber/rose) and hide indicators for blanked gauges
 
-## Phase 3: Dashboard Real-Time Progress Tracker
-- `[x]` Add `#hud-round-dots` container below fixed dashboard header in `index.html`
-- `[x]` Style `.round-step-tracker` and `.round-dot` states (success, warning, error, active, upcoming) in `styles.css`
-- `[x]` Implement real-time dot rendering logic in `app.js` (`updateLevelAndHUD` and `finishSession`)
+## Phase 3: Pilot Logbook & Competency Analytics Tab
+- `[ ]` Add Cupertino segment control switch in `index.html` to toggle Deck/Logbook
+- `[ ]` Style the segment controls, competency meters, and log table rows in `styles.css`
+- `[ ]` Implement matrix stats and cognitive blindspot advice calculations in `app.js`
+- `[ ]` Test log entries recording and backwards-compatibility
 
-## Phase 4: Cupertino-Style Intelligent UX Auto-Advance
-- `[x]` Implement smart ATC field auto-advance chain (Callsign $\rightarrow$ Facility $\rightarrow$ Frequency $\rightarrow$ Squawk) in `app.js`
-- `[x]` Implement smart Instruments dial card auto-advance chain in `app.js`
+## Phase 4: Audio Purge & Silence Implementation
+- `[ ]` Remove `#btn-sound-toggle` button from header in `index.html`
+- `[ ]` Delete sound-related oscillators, engine hums, Speech Synthesis, and local sound preferences in `app.js`
+- `[ ]` Replace `playSound()` with a robust no-op `function playSound() {}` in `app.js` to prevent any runtime exceptions
+- `[ ]` Verify application is completely silent and clean
 
-## Phase 5: Verification & Walkthrough
-- `[x]` Verify CSP status & console behavior
-- `[x]` Verify parallel network font loading in developer tools
-- `[x]` Verify ATC auto-advance flow on quick-select and numeric input
-- `[x]` Verify Instruments card auto-advance flow on numeric keypad confirmation
-- `[x]` Verify real-time progress dot updates and pulses across 8 rounds
-- `[x]` Document all accomplishments in `walkthrough.md`
+## Phase 5: Verification & Git Integration
+- `[ ]` Commit changes on D drive and pull to C workspace
+- `[ ]` Run manual verification checks for visual gauges and logbook analytics
+- `[ ]` Update `walkthrough.md` with achievements and details
