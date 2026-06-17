@@ -80,7 +80,13 @@ Because Flight Core is built entirely on standard Web specs (Vanilla HTML5, mode
 ## 📂 Project File Structure
 * [`index.html`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) - Structural framework, markup screens, tactile keypads, and Cupertino-style module selection interfaces.
 * [`styles.css`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css) - Premium minimalist design tokens, responsive typography rules, glassmorphism overlays, custom animations (e.g., passcode-style shake), and iOS tactile button styles.
-* [`app.js`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js) - RNG data engines, difficulty loop controllers, visual haptic glows, module randomization filters, and pure text session history lists.
+* [`core.js`](core.js) - **Pure engine core**: side-effect-free game logic (RNG data generators, difficulty scaling, per-module accuracy scoring, "No 3x Repeat" module selection, competency analytics) with built-in fallbacks and safeguards. Exposed as `window.FlightCore` and unit-tested in isolation.
+* [`app.js`](app.js) - DOM glue and session controller: wires `core.js` into the live UI (screens, keypads, HUD, timers, debrief, pilot logbook) and persists state via a fail-safe `localStorage` wrapper.
+
+### 🧪 Testing
+The pure engine is covered by a **zero-dependency** test suite (no npm, no build):
+* [`tests.html`](tests.html) - open in any browser to see a green/red pass report.
+* [`tests.js`](tests.js) - the assertions; also runnable in a terminal with `node tests.js`.
 
 ---
 
