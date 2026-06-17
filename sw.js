@@ -1,11 +1,12 @@
 // bump version string to bust cache on new deployments
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const CACHE_NAME = `flightcore-${CACHE_VERSION}`;
 const FONT_CACHE = `flightcore-fonts-${CACHE_VERSION}`;
 
 const ASSETS = [
   "./",
   "./index.html",
+  "./core.js",
   "./app.js",
   "./styles.css",
   "./manifest.json"

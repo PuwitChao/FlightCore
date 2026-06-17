@@ -132,9 +132,9 @@ let sessionMaxStreak = 0;
 let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
 let selectedModules = ["checklist", "instruments", "atc", "fault"];
-let sessionLength = parseInt(localStorage.getItem("flightcore_session_length") || "8", 10);
-let startingStreak = parseInt(localStorage.getItem("flightcore_starting_streak") || "4", 10);
-let timerMultiplier = parseFloat(localStorage.getItem("flightcore_timer_multiplier") || "1");
+let sessionLength = FlightCore.safeNumber(localStorage.getItem("flightcore_session_length"), 8, { min: 1, max: 50 });
+let startingStreak = FlightCore.safeNumber(localStorage.getItem("flightcore_starting_streak"), 4, { min: 0, max: 100 });
+let timerMultiplier = FlightCore.safeNumber(localStorage.getItem("flightcore_timer_multiplier"), 1, { min: 0.1, max: 10 });
 
 let currentRndExpected = null;
 let currentRndInput = null;
@@ -149,8 +149,9 @@ let focusedInputId = null;
 let activeKeypadBuffer = "";
 
 let roundByRoundHistory = []; // Session history
-let globalHistory = JSON.parse(localStorage.getItem("flightcore_history") || "[]");
-let dailyStreak = parseInt(localStorage.getItem("flightcore_daily_streak") || "0", 10);
+// Corrupt or tampered storage must never crash boot — safeParse guarantees an array.
+let globalHistory = FlightCore.safeParse(localStorage.getItem("flightcore_history"), []);
+let dailyStreak = FlightCore.safeNumber(localStorage.getItem("flightcore_daily_streak"), 0, { min: 0 });
 
 // Tracks pool indices used this session to prevent within-session repeats
 let usedFaultIndices = [];
@@ -169,12 +170,24 @@ function triggerHaptic(type) {
   // Silent no-op
 }
 
+// Persist to localStorage without ever throwing. Private mode / quota-exceeded
+// must not crash the session — we warn once and continue.
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    console.warn(`Flight Core: unable to persist "${key}" (storage blocked or full).`, e);
+    return false;
+  }
+}
+
 // ==========================================
 // 4. LEVEL & MODULE CONTROLS
 // ==========================================
 
 function updateLevelAndHUD() {
-  level = 1 + Math.floor(streak / 2);
+  level = FlightCore.computeLevel(streak);
   document.getElementById("hud-level").textContent = `LVL: ${String(level).padStart(2, "0")}`;
   document.getElementById("hud-round").textContent = `${String(sessionRound).padStart(2, "0")}/${String(sessionLength).padStart(2, "0")}`;
   document.getElementById("hud-score").textContent = String(sessionScore).padStart(5, "0");
@@ -234,17 +247,11 @@ function renderRoundStepTracker() {
 }
 
 function selectNextModule() {
-  // Pull from active user selection
-  let allowed = [...selectedModules];
-  
-  // Apply "No 3x Repeat" filtering logic ONLY if there are multiple modules active
-  if (allowed.length >= 2 && recentlyPlayedModules.length >= 2 && recentlyPlayedModules[0] === recentlyPlayedModules[1]) {
-    allowed = allowed.filter(m => m !== recentlyPlayedModules[0]);
-  }
-  
-  // Pick one randomly
-  const selected = allowed[Math.floor(Math.random() * allowed.length)];
-  
+  // Pure "No 3x Repeat" selection with empty-pool safeguard (never undefined).
+  let selected = FlightCore.selectModule(selectedModules, recentlyPlayedModules);
+  // Absolute last-resort fallback if the active selection is somehow empty.
+  if (!selected) selected = "checklist";
+
   // Track recently played
   recentlyPlayedModules.push(selected);
   if (recentlyPlayedModules.length > 2) {
@@ -260,155 +267,34 @@ function selectNextModule() {
 // 5. DATA GENERATION FOR MODULES
 // ==========================================
 
+// The pure generation, scoring and selection logic lives in core.js
+// (window.FlightCore). These thin wrappers bind it to the live session state
+// (current `level`, the within-session "used pool" trackers, and the HUD).
 function generateChecklistData() {
-  const availableIdx = CHECKLIST_POOLS.map((_, i) => i).filter(i => !usedChecklistIndices.includes(i));
-  const pickFrom = availableIdx.length > 0 ? availableIdx : CHECKLIST_POOLS.map((_, i) => i);
-  const chosenIdx = pickFrom[Math.floor(Math.random() * pickFrom.length)];
-  usedChecklistIndices.push(chosenIdx);
-  const checklist = CHECKLIST_POOLS[chosenIdx];
-  const numSteps = Math.min(3 + level, checklist.steps.length); // Scales 3 up to all steps
-  const expectedSteps = checklist.steps.slice(0, numSteps);
-  
-  // Find distractors from other checklists
-  let allOtherSteps = [];
-  CHECKLIST_POOLS.forEach(c => {
-    if (c.name !== checklist.name) {
-      allOtherSteps = allOtherSteps.concat(c.steps);
-    }
-  });
-  
-  // Take 1 to 3 distractors based on level
-  const numDistractors = Math.min(1 + Math.floor(level / 2), 3);
-  let distractors = [];
-  while (distractors.length < numDistractors && allOtherSteps.length > 0) {
-    const idx = Math.floor(Math.random() * allOtherSteps.length);
-    const item = allOtherSteps[idx];
-    if (!expectedSteps.includes(item) && !distractors.includes(item)) {
-      distractors.push(item);
-    }
-  }
-  
-  return {
-    title: checklist.name,
-    expected: expectedSteps,
-    pool: shuffle([...expectedSteps, ...distractors])
-  };
+  const data = FlightCore.generateChecklist(CHECKLIST_POOLS, level, usedChecklistIndices);
+  usedChecklistIndices.push(data.chosenIdx);
+  return { title: data.title, expected: data.expected, pool: data.pool };
 }
 
 function generateInstrumentsData() {
-  // Number of gauges scales: Level 1-2 = 4, Level 3-4 = 6, Level 5+ = 8
-  const count = level <= 2 ? 4 : (level <= 4 ? 6 : 8);
-  const selectedGauges = shuffle([...INSTRUMENT_METRIC_POOLS]).slice(0, count);
-  
-  const expected = selectedGauges.map(g => {
-    let rawVal = Math.random() * (g.max - g.min) + g.min;
-    // Format appropriately
-    let finalVal = 0;
-    if (g.label === "IAS" || g.label === "ALT" || g.label === "FF") {
-      finalVal = Math.round(rawVal / 5) * 5; // Rounds to nearest 5
-    } else if (g.label === "N1" || g.label === "EGT" || g.label === "OIL") {
-      finalVal = Math.round(rawVal);
-    } else {
-      finalVal = Math.round(rawVal * 10) / 10; // 1 decimal place (VIB, BAT)
-    }
-    return {
-      label: g.label,
-      name: g.name,
-      val: finalVal,
-      unit: g.unit,
-      min: g.min,
-      max: g.max,
-      color: g.color
-    };
-  });
-  
-  return { expected };
-}
-
-function pickUnused(pool, usedSet) {
-  const candidates = pool.reduce((acc, v, i) => {
-    if (!usedSet.has(i)) acc.push({ v, i });
-    return acc;
-  }, []);
-  const source = candidates.length > 0 ? candidates : pool.map((v, i) => ({ v, i }));
-  const picked = source[Math.floor(Math.random() * source.length)];
-  usedSet.add(picked.i);
-  return picked.v;
+  return FlightCore.generateInstruments(INSTRUMENT_METRIC_POOLS, level);
 }
 
 function generateATCData() {
-  if (!usedATCIndices.callsigns) {
-    usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
-  }
-  const callsign = pickUnused(ATC_POOLS.callsigns, usedATCIndices.callsigns);
-  const facility = pickUnused(ATC_POOLS.facilities, usedATCIndices.facilities);
-  const freq = pickUnused(ATC_POOLS.frequencies, usedATCIndices.frequencies);
-  const squawk = pickUnused(ATC_POOLS.squawks, usedATCIndices.squawks);
-  
-  const windH = Math.floor(Math.random() * 36) * 10;
-  const windS = Math.floor(Math.random() * 20) + 5;
-  const windText = `WIND ${windH} AT ${windS} KNOTS`;
-
-  // Multiple transmission templates — varied phrasing at different levels
-  const templates = level < 3 ? [
-    `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}."`,
-    `"${facility}, ${callsign}, RADAR CONTACT, SQUAWK ${squawk}, MONITOR ${freq}."`,
-    `"${callsign}, IDENT AND SQUAWK ${squawk}, CONTACT ${facility} ON ${freq}."`
-  ] : [
-    `"${callsign}, ${facility}, CONTACT DEPARTURE ON ${freq}, SQUAWK ${squawk}. ${windText}."`,
-    `"${callsign}, CLEARED DIRECT, SQUAWK ${squawk}, ${windText}, CONTACT ${facility} ${freq}."`,
-    `"${facility}, ${callsign}, SQUAWK ${squawk}, ${windText}, MONITOR ${freq}."`,
-    `"${callsign}, ${facility}, ${windText}, IDENT SQUAWK ${squawk} ON ${freq}."`
-  ];
-  const displayText = templates[Math.floor(Math.random() * templates.length)];
-
-  return {
-    expected: { callsign, facility, freq, squawk },
-    displayText
-  };
+  const data = FlightCore.generateATC(ATC_POOLS, level, usedATCIndices);
+  usedATCIndices = data.usedState; // capture the (possibly freshly-created) tracker
+  return { expected: data.expected, displayText: data.displayText };
 }
 
 function generateFaultData() {
-  const availableIndices = FAULT_POOLS.map((_, i) => i).filter(i => !usedFaultIndices.includes(i));
-  const pickFrom = availableIndices.length > 0 ? availableIndices : FAULT_POOLS.map((_, i) => i);
-  const chosenIdx = pickFrom[Math.floor(Math.random() * pickFrom.length)];
-  usedFaultIndices.push(chosenIdx);
-  const fault = FAULT_POOLS[chosenIdx];
-  const expectedChain = [fault.symptom, fault.system, fault.action];
-  
-  // Grab distractors from other diagnostic blocks
-  let otherItems = [];
-  FAULT_POOLS.forEach(f => {
-    if (f.symptom !== fault.symptom) {
-      otherItems.push(f.symptom);
-      otherItems.push(f.system);
-      otherItems.push(f.action);
-    }
-  });
-  
-  const distractorsCount = Math.min(level, 3);
-  let distractors = [];
-  while (distractors.length < distractorsCount) {
-    const item = otherItems[Math.floor(Math.random() * otherItems.length)];
-    if (!expectedChain.includes(item) && !distractors.includes(item)) {
-      distractors.push(item);
-    }
-  }
-  
-  return {
-    symptom: fault.symptom,
-    expected: expectedChain,
-    pool: shuffle([...expectedChain, ...distractors])
-  };
+  const data = FlightCore.generateFault(FAULT_POOLS, level, usedFaultIndices);
+  usedFaultIndices.push(data.chosenIdx);
+  return { symptom: data.symptom, expected: data.expected, pool: data.pool };
 }
 
-// Utility shuffler
+// Utility shuffler — delegates to the pure engine (returns a new array).
 function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
+  return FlightCore.shuffle(array);
 }
 
 // ==========================================
@@ -602,7 +488,8 @@ function setupStudyScreen(module) {
   studyTimer = setInterval(() => {
     if (isTimerPaused) return;
     studyDurationRemaining = Math.max(studySecs - (Date.now() - briefingStartTime - pausedAccum) / 1000, 0);
-    timerBar.style.width = `${(studyDurationRemaining / studySecs) * 100}%`;
+    const widthPct = studySecs > 0 ? Math.min(Math.max((studyDurationRemaining / studySecs) * 100, 0), 100) : 0;
+    timerBar.style.width = `${widthPct}%`;
     timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
     if (speedBonusBadge) speedBonusBadge.textContent = `+${Math.round(studyDurationRemaining * 50)} EARLY`;
 
@@ -635,8 +522,7 @@ function createGaugeHTML(g, isBlanked = false) {
     container.setAttribute("data-label", g.label);
   }
   
-  const range = g.max - g.min;
-  const percent = Math.min(Math.max(((g.val - g.min) / range) * 100, 0), 100);
+  const percent = FlightCore.gaugePercent(g.val, g.min, g.max);
   
   let rangeBarHTML = "";
   if (!isBlanked) {
@@ -782,8 +668,10 @@ function renderChecklistPool() {
         // Update slots
         const slotIdx = currentRndInput.length - 1;
         const slotText = document.getElementById(`checklist-slot-text-${slotIdx}`);
-        slotText.textContent = currentVal;
-        slotText.style.color = "var(--text-white)";
+        if (slotText) {
+          slotText.textContent = currentVal;
+          slotText.style.color = "var(--text-white)";
+        }
 
         // Re-render remaining pool
         renderChecklistPool();
@@ -806,8 +694,10 @@ function renderChecklistPool() {
       const removed = currentRndInput.pop();
       const slotIdx = currentRndInput.length;
       const slotText = document.getElementById(`checklist-slot-text-${slotIdx}`);
-      slotText.textContent = "[VACANT]";
-      slotText.style.color = "var(--text-muted)";
+      if (slotText) {
+        slotText.textContent = "[VACANT]";
+        slotText.style.color = "var(--text-muted)";
+      }
       renderChecklistPool();
     });
     poolContainer.appendChild(undo);
@@ -950,6 +840,11 @@ function renderATCQuickSelectOptions(field, inputEl) {
         } else if (field === "facility") {
           const nextEl = document.getElementById("atc-input-freq");
           if (nextEl) nextEl.click();
+        } else if (field === "freq") {
+          // freq normally advances via the numeric keypad, but keep the
+          // quick-select path consistent so squawk is never skipped.
+          const nextEl = document.getElementById("atc-input-squawk");
+          if (nextEl) nextEl.click();
         }
       }, 150);
     });
@@ -1021,8 +916,10 @@ function renderFaultPool() {
 
         // Update slot text
         const textEl = document.getElementById(`fault-slot-text-${focusedInputId}`);
-        textEl.textContent = currentVal;
-        textEl.style.color = "var(--text-white)";
+        if (textEl) {
+          textEl.textContent = currentVal;
+          textEl.style.color = "var(--text-white)";
+        }
 
         // Advance focus if slot 0 is filled
         if (focusedInputId === 0 && currentRndInput[1] === "") {
@@ -1112,7 +1009,7 @@ function handleKeypadConfirm() {
     if (activeCard) {
       const activeIdx = cards.indexOf(activeCard);
       let nextBlankCard = null;
-      for (let i = 1; i <= cards.length; i++) {
+      for (let i = 1; i < cards.length; i++) {
         const nextIdx = (activeIdx + i) % cards.length;
         const card = cards[nextIdx];
         const label = card.getAttribute("data-label");
@@ -1202,9 +1099,7 @@ function submitTelemetry() {
     });
     
     const extraInputs = Math.max(0, inputs.length - expected.length);
-    const totalChecklistItems = expected.length + extraInputs;
-    const correctSteps = expected.length - checklistErrors;
-    accuracy = Math.round((correctSteps / totalChecklistItems) * 100);
+    accuracy = FlightCore.checklistAccuracy(expected, inputs);
     discrepancyLogItem = checklistErrors > 0 || extraInputs > 0 ? `Checklist mismatch in ${currentRndExpected.title}` : null;
   } 
   else if (activeModule === "instruments") {
@@ -1225,8 +1120,7 @@ function submitTelemetry() {
       });
     });
     
-    const correctDials = expected.length - gaugeErrors;
-    accuracy = Math.round((correctDials / expected.length) * 100);
+    accuracy = FlightCore.instrumentsAccuracy(expected, currentRndInput);
     discrepancyLogItem = gaugeErrors > 0 ? `Precision scanning recall mismatch` : null;
   } 
   else if (activeModule === "atc") {
@@ -1250,8 +1144,7 @@ function submitTelemetry() {
       });
     });
     
-    const correctFields = 4 - atcErrors;
-    accuracy = Math.round((correctFields / 4) * 100);
+    accuracy = FlightCore.atcAccuracy(exp, inp);
     discrepancyLogItem = atcErrors > 0 ? `ATC retention discrepancy` : null;
   } 
   else if (activeModule === "fault") {
@@ -1278,8 +1171,7 @@ function submitTelemetry() {
       correct: actionMatch
     });
     
-    const correctMatches = (systemMatch ? 1 : 0) + (actionMatch ? 1 : 0);
-    accuracy = Math.round((correctMatches / 2) * 100);
+    accuracy = FlightCore.faultAccuracy(exp, currentRndInput);
     discrepancyLogItem = accuracy < 100 ? `Diagnostic chain protocol failure` : null;
   }
   
@@ -1433,7 +1325,7 @@ document.getElementById("btn-submit-test").addEventListener("click", submitTelem
 
 function finishSession() {
   if (roundByRoundHistory.length === 0) return;
-  const percentage = Math.round(roundByRoundHistory.reduce((sum, r) => sum + r.accuracy, 0) / roundByRoundHistory.length);
+  const percentage = FlightCore.sessionGrade(roundByRoundHistory);
   
   // Tier designations mapping
   let tier = "UNACCEPTABLE";
@@ -1561,8 +1453,8 @@ function finishSession() {
       dailyStreak = 1;
     }
   }
-  localStorage.setItem("flightcore_last_trained", todayStr);
-  localStorage.setItem("flightcore_daily_streak", dailyStreak);
+  safeStorageSet("flightcore_last_trained", todayStr);
+  safeStorageSet("flightcore_daily_streak", dailyStreak);
 
   // Save session record to global history in localStorage
   const sessionRecord = {
@@ -1583,7 +1475,7 @@ function finishSession() {
   globalHistory.push(sessionRecord);
   // Cap history at 30 items
   if (globalHistory.length > 30) globalHistory.shift();
-  localStorage.setItem("flightcore_history", JSON.stringify(globalHistory));
+  safeStorageSet("flightcore_history", JSON.stringify(globalHistory));
 
   showScreen("screen-debrief");
 
@@ -1722,7 +1614,7 @@ function initSession() {
   sessionRound = 0;
   sessionScore = 0;
   streak = startingStreak;
-  level = 1 + Math.floor(streak / 2);
+  level = FlightCore.computeLevel(streak);
   sessionMaxStreak = 0;
   activeModule = null;
   recentlyPlayedModules = [];
@@ -2197,7 +2089,7 @@ function initThemeSystem() {
 
 function setTheme(themeVal) {
   document.body.setAttribute("data-theme", themeVal);
-  localStorage.setItem("flightcore_theme", themeVal);
+  safeStorageSet("flightcore_theme", themeVal);
   
   // Update active class in options
   const optButtons = document.querySelectorAll(".theme-opt-btn[data-theme-val]");
@@ -2421,14 +2313,14 @@ function initOnboarding() {
   btn.addEventListener("click", () => {
     playSound("click");
     overlay.style.display = "none";
-    localStorage.setItem("flightcore_onboarded", "true");
+    safeStorageSet("flightcore_onboarded", "true");
   });
 
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) {
       playSound("click");
       overlay.style.display = "none";
-      localStorage.setItem("flightcore_onboarded", "true");
+      safeStorageSet("flightcore_onboarded", "true");
     }
   });
 }
@@ -2449,7 +2341,7 @@ function initDifficultySelector() {
       playSound("click");
       const val = parseInt(btn.getAttribute("data-streak"), 10);
       startingStreak = val;
-      localStorage.setItem("flightcore_starting_streak", val);
+      safeStorageSet("flightcore_starting_streak", val);
       buttons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (label) label.textContent = names[val] || "Standard";
@@ -2473,7 +2365,7 @@ function initTimerDurationSelector() {
       playSound("click");
       const val = parseFloat(btn.getAttribute("data-multiplier"));
       timerMultiplier = val;
-      localStorage.setItem("flightcore_timer_multiplier", val);
+      safeStorageSet("flightcore_timer_multiplier", val);
       buttons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (label) label.textContent = names[val] || "Standard";
@@ -2497,7 +2389,7 @@ function initSessionLengthSelector() {
       playSound("click");
       const len = parseInt(btn.getAttribute("data-len"), 10);
       sessionLength = len;
-      localStorage.setItem("flightcore_session_length", len);
+      safeStorageSet("flightcore_session_length", len);
       buttons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       if (label) label.textContent = `${len} Rounds`;
@@ -2712,7 +2604,7 @@ function initSegmentControl() {
   const contentDeck = document.getElementById("segment-content-deck");
   const contentLogbook = document.getElementById("segment-content-logbook");
   
-  if (btnDeck && btnLogbook) {
+  if (btnDeck && btnLogbook && contentDeck && contentLogbook) {
     btnDeck.addEventListener("click", () => {
       playSound("click");
       btnDeck.classList.add("active");
@@ -2774,31 +2666,13 @@ function renderPilotLogbook() {
   document.getElementById("log-stat-avg").textContent = `${averageGrade}%`;
   document.getElementById("log-stat-streak").textContent = maxStreak;
   
-  // Dynamic competency metrics
-  let checklistScores = [];
-  let instrumentsScores = [];
-  let atcScores = [];
-  let faultScores = [];
-  
-  globalHistory.forEach(h => {
-    if (h.competencies) {
-      checklistScores.push(h.competencies.checklist);
-      instrumentsScores.push(h.competencies.instruments);
-      atcScores.push(h.competencies.atc);
-      faultScores.push(h.competencies.fault);
-    } else {
-      checklistScores.push(h.percentage);
-      instrumentsScores.push(h.percentage);
-      atcScores.push(h.percentage);
-      faultScores.push(h.percentage);
-    }
-  });
-  
-  const calcAvg = arr => Math.round(arr.reduce((a,b)=>a+b, 0) / arr.length);
-  const checklistAvg = calcAvg(checklistScores);
-  const instrumentsAvg = calcAvg(instrumentsScores);
-  const atcAvg = calcAvg(atcScores);
-  const faultAvg = calcAvg(faultScores);
+  // Dynamic competency metrics — averaged across saved sessions with safe
+  // fallbacks for legacy records (see FlightCore.competencyAverages).
+  const compAvgs = FlightCore.competencyAverages(globalHistory);
+  const checklistAvg = compAvgs.checklist;
+  const instrumentsAvg = compAvgs.instruments;
+  const atcAvg = compAvgs.atc;
+  const faultAvg = compAvgs.fault;
   
   // Render competency matrices
   const setComp = (id, val) => {

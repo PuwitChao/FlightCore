@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flight Core — Engine Tests</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #000;
+      color: #e8e8ea;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    h1 { font-size: 16px; font-weight: 700; margin: 0 0 16px; letter-spacing: 0.5px; }
+    .summary {
+      font-weight: 800;
+      font-size: 15px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .summary.ok { background: rgba(74, 124, 89, 0.2); color: #70e000; border: 1px solid rgba(112, 224, 0, 0.4); }
+    .summary.fail { background: rgba(165, 70, 87, 0.2); color: #ff5d73; border: 1px solid rgba(255, 93, 115, 0.4); }
+    .row {
+      padding: 5px 12px;
+      border-radius: 8px;
+      margin-bottom: 3px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+    .row.pass { color: #8fe388; }
+    .row.failrow { color: #ff8a9b; background: rgba(165, 70, 87, 0.15); }
+  </style>
+</head>
+<body>
+  <h1>✈️ Flight Core — Pure Engine Test Suite</h1>
+  <div id="results"></div>
+
+  <script src="core.js"></script>
+  <script src="tests.js"></script>
+</body>
+</html>
