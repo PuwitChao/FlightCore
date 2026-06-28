@@ -115,7 +115,7 @@
             Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation.
           </p>
 
-          <div class="home-stats-summary">
+          <div class="home-stats-summary" id="home-stats-summary-viewport">
             <div class="home-stat-box">
               <span class="home-stat-num" id="stat-high-score">0000</span>
               <span class="home-stat-label">High Score</span>
@@ -139,7 +139,7 @@
           </div>
 
           <!-- History card with Calendar/Trend tabs -->
-          <div class="terminal-card" style="margin-bottom: 16px;">
+          <div class="terminal-card" style="margin-bottom: 16px;" id="home-history-card">
             <div class="terminal-card-header">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span>History</span>
@@ -174,78 +174,81 @@
             </div>
           </div>
 
-          <!-- Select Challenge Modules Card -->
-          <div class="terminal-card" style="margin-bottom: 16px;" id="game-selection-card">
-            <div class="terminal-card-header">
-              <span>Select Challenge Modules</span>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <button id="btn-select-all-modules" style="font-size: 0.58rem; font-weight: 700; color: var(--accent-blue); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-sans);">ALL</button>
-                <span class="type-tag" id="modules-selected-count">4 Active</span>
+          <!-- Wrapper container for challenge configuration cards -->
+          <div class="home-config-grid">
+            <!-- Select Challenge Modules Card -->
+            <div class="terminal-card" style="margin-bottom: 16px;" id="game-selection-card">
+              <div class="terminal-card-header">
+                <span>Select Challenge Modules</span>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button id="btn-select-all-modules" style="font-size: 0.58rem; font-weight: 700; color: var(--accent-blue); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-sans);">ALL</button>
+                  <span class="type-tag" id="modules-selected-count">4 Active</span>
+                </div>
+              </div>
+              <div class="module-selection-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div class="module-select-card active" data-module="checklist" id="select-checklist">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Checklist</span>
+                </div>
+                <div class="module-select-card active" data-module="instruments" id="select-instruments">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Instruments</span>
+                </div>
+                <div class="module-select-card active" data-module="atc" id="select-atc">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">ATC</span>
+                </div>
+                <div class="module-select-card active" data-module="fault" id="select-fault">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Fault</span>
+                </div>
               </div>
             </div>
-            <div class="module-selection-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-              <div class="module-select-card active" data-module="checklist" id="select-checklist">
-                <span class="select-indicator"></span>
-                <span style="font-size: 0.78rem; font-weight: 600;">Checklist</span>
-              </div>
-              <div class="module-select-card active" data-module="instruments" id="select-instruments">
-                <span class="select-indicator"></span>
-                <span style="font-size: 0.78rem; font-weight: 600;">Instruments</span>
-              </div>
-              <div class="module-select-card active" data-module="atc" id="select-atc">
-                <span class="select-indicator"></span>
-                <span style="font-size: 0.78rem; font-weight: 600;">ATC</span>
-              </div>
-              <div class="module-select-card active" data-module="fault" id="select-fault">
-                <span class="select-indicator"></span>
-                <span style="font-size: 0.78rem; font-weight: 600;">Fault</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- Session Length selector -->
-          <div class="terminal-card" style="margin-bottom: 16px;">
-            <div class="terminal-card-header">
-              <span>Session Length</span>
-              <span class="type-tag" id="session-length-label">8 Rounds</span>
+            <!-- Session Length selector -->
+            <div class="terminal-card" style="margin-bottom: 16px;">
+              <div class="terminal-card-header">
+                <span>Session Length</span>
+                <span class="type-tag" id="session-length-label">8 Rounds</span>
+              </div>
+              <div class="session-length-selector" id="session-length-selector">
+                <button class="session-len-btn" data-len="4">4</button>
+                <button class="session-len-btn active" data-len="8">8</button>
+                <button class="session-len-btn" data-len="12">12</button>
+              </div>
             </div>
-            <div class="session-length-selector" id="session-length-selector">
-              <button class="session-len-btn" data-len="4">4</button>
-              <button class="session-len-btn active" data-len="8">8</button>
-              <button class="session-len-btn" data-len="12">12</button>
-            </div>
-          </div>
 
-          <!-- Difficulty Preset selector -->
-          <div class="terminal-card" style="margin-bottom: 16px;">
-            <div class="terminal-card-header">
-              <span>Difficulty Preset</span>
-              <span class="type-tag" id="difficulty-label">Standard</span>
+            <!-- Difficulty Preset selector -->
+            <div class="terminal-card" style="margin-bottom: 16px;">
+              <div class="terminal-card-header">
+                <span>Difficulty Preset</span>
+                <span class="type-tag" id="difficulty-label">Standard</span>
+              </div>
+              <div class="session-length-selector" id="difficulty-selector">
+                <button class="session-len-btn" data-streak="0">Novice</button>
+                <button class="session-len-btn active" data-streak="4">Standard</button>
+                <button class="session-len-btn" data-streak="8">Advanced</button>
+              </div>
+              <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+                Sets starting streak to seed your initial difficulty level. Novice = Lvl 1, Standard = Lvl 3, Advanced = Lvl 5.
+              </p>
             </div>
-            <div class="session-length-selector" id="difficulty-selector">
-              <button class="session-len-btn" data-streak="0">Novice</button>
-              <button class="session-len-btn active" data-streak="4">Standard</button>
-              <button class="session-len-btn" data-streak="8">Advanced</button>
-            </div>
-            <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
-              Sets starting streak to seed your initial difficulty level. Novice = Lvl 1, Standard = Lvl 3, Advanced = Lvl 5.
-            </p>
-          </div>
 
-          <!-- Study Timer multiplier -->
-          <div class="terminal-card" style="margin-bottom: 16px;">
-            <div class="terminal-card-header">
-              <span>Study Timer</span>
-              <span class="type-tag" id="timer-duration-label">Standard</span>
+            <!-- Study Timer multiplier -->
+            <div class="terminal-card" style="margin-bottom: 16px;">
+              <div class="terminal-card-header">
+                <span>Study Timer</span>
+                <span class="type-tag" id="timer-duration-label">Standard</span>
+              </div>
+              <div class="session-length-selector" id="timer-duration-selector">
+                <button class="session-len-btn active" data-multiplier="1">Standard</button>
+                <button class="session-len-btn" data-multiplier="1.5">Relaxed</button>
+                <button class="session-len-btn" data-multiplier="2">Extended</button>
+              </div>
+              <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+                How long to study each briefing before the test begins. Relaxed = 1.5×, Extended = 2× the default duration.
+              </p>
             </div>
-            <div class="session-length-selector" id="timer-duration-selector">
-              <button class="session-len-btn active" data-multiplier="1">Standard</button>
-              <button class="session-len-btn" data-multiplier="1.5">Relaxed</button>
-              <button class="session-len-btn" data-multiplier="2">Extended</button>
-            </div>
-            <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
-              How long to study each briefing before the test begins. Relaxed = 1.5×, Extended = 2× the default duration.
-            </p>
           </div>
 
           <button class="btn btn-primary btn-block" id="btn-engage-session">
@@ -582,14 +585,26 @@
             <span>Telemetry Stats</span>
             <span class="type-tag">Live</span>
           </div>
-          <div class="home-stats-summary" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 0;">
-            <div class="home-stat-box">
+          <div class="home-stats-summary side-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 0;">
+            <div class="home-stat-box" style="grid-column: span 2;">
               <span class="home-stat-num" id="side-stat-high-score">0000</span>
               <span class="home-stat-label">High Score</span>
             </div>
             <div class="home-stat-box">
               <span class="home-stat-num" id="side-stat-avg-score">0.0%</span>
               <span class="home-stat-label">Avg Grade</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="side-stat-sessions">0</span>
+              <span class="home-stat-label">Sessions</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="side-stat-max-streak">0</span>
+              <span class="home-stat-label">Max Streak</span>
+            </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="side-stat-daily-streak">0</span>
+              <span class="home-stat-label">Day Streak</span>
             </div>
           </div>
         </div>

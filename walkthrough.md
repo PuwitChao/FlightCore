@@ -1,68 +1,48 @@
-# Flight Core Pre-Release, Security, & Error Boundary Alignment Sprint Walkthrough
+# Widescreen Multi-Device UI Support - Walkthrough
 
-We have successfully completed the sprint updates for **Flight Core — Operational Memory Challenge** on the **D: drive** repository. We aligned the application's user-facing copywriting with its game-centric positioning guidelines, implemented rigorous disclaimers to eliminate professional liability, and hardened the application with robust exception boundaries and security sanitization.
-
----
-
-## 🎨 Accomplishments & Implementation Details
-
-### 1. Game-Centric Lexicon Compliance & Positioning
-To emphasize that Flight Core is a cognitive challenge game for enthusiasts rather than a flight-school training utility:
-* **Manifest & Title Update**: Renamed the PWA to **Flight Core — Operational Memory Challenge** and updated the description to *"Cockpit-inspired cognitive recall and scanning challenge for aviation enthusiasts."*
-* **Label Rewrites (`index.html`)**: Converted all user-facing strings of `training`, `trainer`, and `drill` to `challenge`, `session`, `play`, and `puzzle` (e.g. `START TRAINING SESSION` $\rightarrow$ `START SESSION`, `Choose Training Modules` $\rightarrow$ `Select Challenge Modules`, `CONTINUE TRAINING` $\rightarrow$ `CONTINUE SESSION`).
-* **Onboarding Card Update**: Rewrote the welcome overlay intro paragraph to welcome simulators, enthusiasts, and puzzle solvers, avoiding professional certification training claims.
-
-### 2. Legal Disclaimers & Disclosures
-To protect against procedures liability, we styled and placed warnings across all core views:
-* **Home Page Hero Banner**: Rendered an italicized disclaimer warning directly beneath the main Flight Deck card: *"Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation."*
-* **Onboarding welcome overlay**: Injected the notice above the begin button: *"Disclaimer: For entertainment purposes only. Not real flight procedure."*
-* **Debrief footer**: Added a small disclaimer on the session debrief panel: *"For recreational play only. Not real flight operations."*
-* **Help Drawer section**: Appended a permanent `DISCLAIMER & TERMS` card explaining the stylized and randomized nature of all checklists, emergency faults, and ATC clearance communications.
-
-### 3. Client-Side XSS Hardening & Theme Validation
-* **XSS Sanitization Helper**: Implemented a robust `escapeHTML` helper in `app.js` that escapes special HTML entities (`&`, `<`, `>`, `"`, `'`).
-* **Render Escaping**: Wrapped dynamically rendered user-facing input text (feedback expected/input details, pilot logbook run logs) in `escapeHTML()` to block arbitrary script injections.
-* **Theme Lock**: Added validation checks to `initThemeSystem()` and `setTheme()` to confirm the theme value is inside the approved theme array (`["dark", "light", "mono", "sage", "warm"]`), defaulting to `"dark"` on invalid values.
-
-### 4. Global Exception Boundaries & State Guardrails
-To prevent crashes and handle corrupted state gracefully:
-* **Safe storage loaders**: Introduced `getSafeStorageInt()`, `getSafeStorageFloat()`, and `getSafeStorageHistory()` loading wrappers with fallbacks to safe defaults, protecting parameters against corrupted data or `NaN` outputs.
-* **Global Error Interceptors**: Added window handlers for `window.addEventListener("error")` and `unhandledrejection` events to capture unhandled scripting crashes.
-* **System Fault Overlay (`#error-boundary-overlay`)**: Designed a premium Cupertino-style modal that displays a **SYSTEM FAULT** alert with:
-  - An interactive monospace viewport containing the stack trace log.
-  - A **RELOAD SYSTEM (RETRY)** button to refresh the browser session.
-  - A **RESET APPLICATION STATE** button to wipe corrupted `localStorage` keys and reload the application safely.
-
-### 5. UI De-noising & Aesthetic Cleanup
-To make the UI feel cleaner and less "vibe-coded" / "AI-inspired":
-* **Glowing Dot Removal**: Deleted the `.system-title::before` pseudo-element rule in `styles.css`. This removes the glowing blue dot next to the "FLIGHT CORE" title in the dashboard header.
+We have successfully resolved the playability issues on PC/desktop devices by creating a premium, responsive multi-device console layout.
 
 ---
 
-## 📂 Codebase File Diff Summary
+## Changes Implemented
 
-### 1. [`manifest.json`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/manifest.json)
-* Updated the PWA's official name and description fields to align with the lexicon guidelines.
+### 1. HTML Layout Upgrades
+- Wrapped challenge setup widgets in `.home-config-grid` inside [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) to allow structured grid layouts on widescreen monitors.
+- Expanded the static sidebar stats panel inside [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) to display all 5 player statistics (High Score, Avg Grade, Total Sessions, Max Streak, and Day Streak) in a clean grid.
+- Assigned unique identifier IDs to the duplicate viewport statistics and history chart panels to target them for hiding on PC screens.
 
-### 2. [`index.html`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-* Rewrote all user-facing "training/drill" labels.
-* Injected the home screen hero disclaimer box, onboarding disclaimer modal line, debrief footer disclaimer, and help drawer disclaimer section.
-* Added the `#error-boundary-overlay` modal markup for global exception tracking.
+### 2. Stylesheet Layout Redesign
+- Set up a three-tiered media query system in [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css):
+  - **Mobile (< 680px)**: Retains the original single-column phone interface, centering the UI.
+  - **Tablet (680px - 1023px)**: Retains the original 2-column layout (Viewport + Sidebar) where the virtual keypad overlays the sidebar when active.
+  - **Widescreen Desktop (>= 1024px)**: Introduces a dynamic 3-column cockpit console. When an input keypad is shown (using CSS `:has()`), the frame width expands from 1100px to 1320px, displaying the Viewport, virtual Keypad, and Telemetry Sidebar side-by-side.
+- Hid duplicate viewport stats cards (`#home-stats-summary-viewport` and `#home-history-card`) on PC screens since the sidebar displays them.
+- Formatted home configuration cards into a clean 2x2 grid layout and expanded frame heights to prevent cramped scrolling.
 
-### 3. [`app.js`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-* Added global error listeners and the `handleGlobalError` renderer.
-* Prepended `escapeHTML` and safe storage parser wrappers.
-* Swapped out direct state `localStorage.getItem` queries with safe loaders.
-* Escaped expected/input details inside `setupFeedbackScreen` and logs in `renderPilotLogbook`.
-* Hardened `initThemeSystem` and `setTheme` with theme list boundaries.
-* Bound the error overlay reload and reset button event listeners.
-
-### 4. [`styles.css`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-* Removed the `.system-title::before` rule to eliminate the glowing dot next to the dashboard title.
+### 3. JavaScript Telemetry Synchronization
+- Modified `updateHomeStats()` in [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js) to set values for the new sidebar indicators (`#side-stat-sessions`, `#side-stat-max-streak`, `#side-stat-daily-streak`) during initialization and profile loads.
+- Added corresponding fallback resets to `0` in case telemetry history is purged.
 
 ---
 
-## 🚀 Verification & Health Status
-* **Syntax Compilation**: Ran Node CLI syntax compiler checking (`node --check app.js`) confirming zero syntax errors or parsing exceptions.
-* **JSON Integrity**: Validated that `manifest.json` parses as valid JSON via Node CLI checks.
-* **CSS Validation**: Checked styling changes and confirmed header layout aligns correctly without any offset from the removed pseudo-element.
+## Verification & Testing
+
+### 1. Automated Verification
+- Ran syntax checks on JavaScript files:
+  ```powershell
+  node --check app.js
+  ```
+  *Result: Syntax validation succeeded with no compilation warnings.*
+- Ran core engine tests:
+  ```powershell
+  node tests.js
+  ```
+  *Result: 69/69 passed successfully.*
+
+### 2. Manual Visual Verification
+- **Mobile View**: Verified layout is standard 440px wide, and stats are displayed inline.
+- **Tablet View**: Verified 2-column card layout with keypad overlay works as intended.
+- **PC Widescreen View**:
+  - The Home screen displays a clean 2x2 grid of configuration cards, and the duplicate stats panels are hidden.
+  - Telemetry sidebar displays High Score, Avg Grade, Sessions, Max Streak, and Day Streak.
+  - During a session, selecting a gauge or entering ATC details slides open the numeric/text keypad in the middle column while the live telemetry sidebar remains fully visible.

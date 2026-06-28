@@ -1946,6 +1946,11 @@ function loadHomeStats() {
     const sideAvgScore = document.getElementById("side-stat-avg-score");
     if (sideHighScore) sideHighScore.textContent = maxScore.toLocaleString();
     if (sideAvgScore) sideAvgScore.textContent = `${averageGrade}%`;
+
+    const sideSessions = document.getElementById("side-stat-sessions");
+    const sideMaxStreak = document.getElementById("side-stat-max-streak");
+    if (sideSessions) sideSessions.textContent = totalRuns;
+    if (sideMaxStreak) sideMaxStreak.textContent = maxStreakAchieved;
   } else {
     document.getElementById("stat-high-score").textContent = "0";
     document.getElementById("stat-avg-score").textContent = "0.0%";
@@ -1956,10 +1961,18 @@ function loadHomeStats() {
     const sideAvgScore = document.getElementById("side-stat-avg-score");
     if (sideHighScore) sideHighScore.textContent = "0";
     if (sideAvgScore) sideAvgScore.textContent = "0.0%";
+
+    const sideSessions = document.getElementById("side-stat-sessions");
+    const sideMaxStreak = document.getElementById("side-stat-max-streak");
+    if (sideSessions) sideSessions.textContent = "0";
+    if (sideMaxStreak) sideMaxStreak.textContent = "0";
   }
 
   const dailyStreakEl = document.getElementById("stat-daily-streak");
   if (dailyStreakEl) dailyStreakEl.textContent = dailyStreak;
+
+  const sideDailyStreakEl = document.getElementById("side-stat-daily-streak");
+  if (sideDailyStreakEl) sideDailyStreakEl.textContent = dailyStreak;
 
   renderHistoryChart();
   renderModuleStats();

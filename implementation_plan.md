@@ -1,103 +1,77 @@
-# Pre-Release, Security, & Error Boundary Alignment Plan
+# Widescreen Multi-Device UI Support & Desktop Dashboard Enhancement
 
-We will align Flight Core with its public release requirements by executing the positioning guidelines defined in `ROADMAP.md`, implementing robust client-side error guardrails, and hardening the security boundaries against cross-site scripting (XSS) and data corruption. 
-
-As requested, external privacy telemetry analytics have been postponed and will not be implemented in this sprint.
+This plan proposes an elegant solution to improve playability and visual balance on PC/desktop screens. We will transition the game from a cramped mobile emulator style to a premium, multi-device dashboard that adapts dynamically based on screen width and active gameplay states.
 
 ---
 
 ## User Review Required
 
-Document anything that requires user review or feedback.
-
 > [!IMPORTANT]
-> - **Copywriting Alignment**: We are removing words like "training", "drill", "proficiency", and "professional" from all user-facing strings to align with the game-not-training positioning.
-> - **Application Reset Option**: The new System Fault dialog features a "RESET APPLICATION STATE" button. Tapping this will clear the browser's `localStorage` for the site and reload the page. This is a load-bearing repair mechanism if the client data becomes unparseable.
+> - **Three-Column Gameplay Layout**: On widescreen PC/desktop layouts (width >= 1024px), the telemetry sidebar containing live score, streak, round, and level stats will remain visible at all times during active gameplay. Instead of the keypad covering these stats, the layout will dynamically slide open a middle column for the keypad/input panels, mimicking an authentic multi-panel aviation cockpit.
+> - **Redundancy Cleanup**: To avoid visual clutter, redundant stats summaries and historical charts in the left viewport column will be hidden on PC/desktop, since the sidebar already displays them. The sidebar will be expanded to display all 5 player statistics (High Score, Avg Grade, Sessions, Max Streak, and Day Streak).
 
 ---
 
 ## Open Questions
 
-None. The telemetry/analytics questions have been deferred per user instructions.
+None. The proposed styling changes are fully backward-compatible with the mobile viewport and preserve existing game rules and event-handling mechanisms.
 
 ---
 
 ## Proposed Changes
 
-### Component 1: Lexicon Alignment & Positioning
+### Component 1: HTML Structure Adjustments
 
-We will perform a complete audit and rewrite of user-facing copy to frame the app as a "flight-themed cognitive puzzle game" rather than a professional training tool.
-
-#### [MODIFY] [manifest.json](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/manifest.json)
-- Update description: `"description": "Cockpit-inspired cognitive recall and scanning challenge for aviation enthusiasts."` (replaces "training for pilots and professionals").
+We will adjust `index.html` to group the home setup cards, expand the sidebar stats, and set up grid placement tokens.
 
 #### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- Rewrite user-facing labels:
-  - `Choose Training Modules` $\rightarrow$ `Select Challenge Modules`
-  - `START TRAINING SESSION` $\rightarrow$ `START SESSION`
-  - `CONTINUE TRAINING` $\rightarrow$ `CONTINUE SESSION`
-  - `RESUME TRAINING` $\rightarrow$ `RESUME SESSION`
-- Update onboarding welcome modal copy:
-  - Replace *"A cognitive memory trainer built for pilots and flight deck professionals..."* with *"A cockpit-inspired cognitive recall game built for aviation simulators, flight enthusiasts, and puzzle solvers. Challenge your memory and visual scanning across 4 flight deck modules."*
-  - Re-label the button from `BEGIN TRAINING` to `BEGIN CHALLENGE`.
+- Wrap the four challenge configuration cards (Select Challenge Modules, Session Length, Difficulty Preset, and Study Timer) inside a container `<div class="home-config-grid">` so they can be styled as a 2x2 grid on PC screens.
+- Expand the sidebar `Telemetry Stats` card (`#sidebar-static-panel`) to display all 5 metrics in a clean grid, adding `#side-stat-sessions`, `#side-stat-max-streak`, and `#side-stat-daily-streak`.
+- Assign clear grid areas for layout mapping:
+  - Add `id="custom-keypad"` and `id="custom-text-keypad"` with responsive grid placements.
 
 ---
 
-### Component 2: Legal Disclaimers & Disclosures
+### Component 2: Responsive Stylesheet Overhaul
 
-To prevent regulatory liability and guarantee transparent product positioning, we will inject the non-negotiable disclaimers:
+We will update the desktop media query in `styles.css` to introduce the 3-column cockpit layout and clean up home screen scrollbars.
 
-#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- **Home Screen Hero**: Add a small, italicized, and high-legibility disclaimer box directly under the main card: *"Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation."*
-- **Onboarding Modal**: Insert the warning line: *"Disclaimer: For entertainment purposes only. Not real flight procedure."*
-- **Debrief / Results Screen**: Append a small footer at the bottom of the session summary: *"For recreational play only. Not real flight operations."*
-- **About/Help Drawer**: Add a permanent Disclaimer section.
+#### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
+- **Viewport Config Grid**: Style `.home-config-grid` to stack on mobile/tablet but display as `display: grid; grid-template-columns: 1fr 1fr; gap: 16px;` on screens >= 1024px.
+- **De-duplication**: On screens >= 1024px, apply `display: none` to the duplicate `.home-stats-summary` and `History` card inside `#screen-home` to prevent visual redundancy.
+- **Sidebar Grid Stats**: Style `.home-stats-summary` within the sidebar as a 2-column grid to look cohesive.
+- **Dynamic 3-Column Layout**:
+  - Update `@media (min-width: 1024px)` to expand the terminal frame size to `max-width: 1100px` and taller height.
+  - Use the CSS `:has()` parent selector: if either virtual keypad is visible (`display: block`), expand `.terminal-frame` max-width to `1280px` and change columns to `1.3fr 320px 0.8fr` with areas `"viewport keypad sidebar"`.
+  - This keeps the sidebar visible on the right while displaying the active keypad in the middle.
 
 ---
 
-### Component 3: Security Hardening (XSS Prevention & Input Validation)
+### Component 3: Telemetry Synchronization
 
-To ensure the application remains safe, we will scrutinize and harden the inputs and dynamic rendering code:
+We will update `app.js` to ensure the new sidebar stats are synchronized with the user's historical profile data.
 
 #### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-- **HTML Escaping Helper**: Implement a robust `escapeHTML(str)` utility function:
-  ```javascript
-  function escapeHTML(str) {
-    if (typeof str !== "string") return str;
-    return str.replace(/[&<>"']/g, (m) => {
-      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-      return map[m];
-    });
-  }
-  ```
-- **Escape Dynamic Content**: Wrap all variable injections inside `innerHTML` templates (such as expected/input values in `setupFeedbackScreen` and dynamic logbook rows) with `escapeHTML()` to neutralize potential XSS payloads.
-- **Theme Validation**: Restrict loaded theme values to the approved set: `VALID_THEMES = ["dark", "light", "mono", "sage", "warm"]`. If `flightcore_theme` is modified to a non-existent value, default to `"dark"`.
-
----
-
-### Component 4: Robust Error Boundaries & Guardrails
-
-We will protect the application from client-side crashes, data corruption, and infinite loops:
-
-#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- **System Fault Modal Overlay**: Add a custom-styled, cockpit-grade overlay `#error-boundary-overlay` that displays a `SYSTEM FAULT` warning panel with:
-  - An interactive stack trace viewport `#error-boundary-log`.
-  - A **RELOAD SYSTEM** button.
-  - A **RESET APPLICATION STATE** button (clears localStorage and reloads).
-
-#### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-- **Safe Storage Loaders**: Replace direct `localStorage` parsing with safe wrapper functions `getSafeStorageInt(key, defaultValue)`, `getSafeStorageFloat(key, defaultValue)`, and `getSafeStorageHistory()` that validate types, handle parse failures gracefully, and protect against NaN value propagation.
-- **Global Error Interceptors**: Bind window-level error handlers `window.addEventListener("error")` and `window.addEventListener("unhandledrejection")` to capture unexpected scripting failures and render the `SYSTEM FAULT` boundary UI.
+- Update `updateHomeStats()` to set `textContent` for the new sidebar indicators:
+  - `#side-stat-sessions`
+  - `#side-stat-max-streak`
+  - `#side-stat-daily-streak`
+- Make sure they are reset to `0` in the `else` block if profile history is purged.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- Run browser console syntax validations on script modifications.
+- Run `node tests.js` to ensure the core game engine assertions (69/69) remain 100% green.
+- Validate JavaScript syntax health:
+  ```powershell
+  node --check app.js
+  ```
 
 ### Manual Verification
-- **Copy & Lexicon Verification**: Confirm "training" is absent from user-facing strings.
-- **XSS Payload Testing**: Temporarily mock an input containing HTML/Script tags (e.g. `"<script>alert(1)</script>"`) and verify it renders escaped as text in the feedback screen without executing.
-- **LocalStorage Corruption Simulation**: Inject invalid JSON or non-numeric values into `localStorage` keys and verify the app defaults safely.
-- **System Fault Verification**: Trigger a deliberate JS error in the console (e.g. `throw new Error("Simulated Flight Deck Error")`) and verify the System Fault overlay pops up with the correct details and functional reload/reset buttons.
+- **Mobile Check**: Shrink the browser window below 680px and verify the mobile layout is unchanged (thin column, keypad is at the bottom, stats are in the scrollable view).
+- **Tablet Check**: Resize between 680px and 1023px, verifying the 2-column layout is preserved and keypad overlays the sidebar.
+- **PC Widescreen Check**: Resize to >= 1024px.
+  - On the Home Screen: Verify stats are only in the sidebar, and setup cards form a neat 2x2 grid with no scrollbars.
+  - During Active Session: Start a session, advance to the test screen, click an input, and verify the keypad slides open in a middle column while the right sidebar remains fully visible showing live score/streak stats.
