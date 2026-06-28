@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Flight Core - Operational Memory Trainer</title>
+  <title>Flight Core - Operational Memory Challenge</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,18 +97,23 @@
 
         <!-- Segment Content: FLIGHT DECK (Simulator dashboard) -->
         <div id="segment-content-deck" style="display: flex; flex-direction: column; width: 100%;">
-          <div class="terminal-card">
+          <div class="terminal-card" style="margin-bottom: 12px;">
             <div class="terminal-card-header">
               <span>Flight Deck Briefing</span>
               <span class="type-tag">Info</span>
             </div>
             <p style="font-size: 0.82rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px;">
-              Welcome to <strong style="font-weight: 700; color: var(--accent-blue);">Flight Core</strong>. This cognitive trainer simulates the high-pressure operational environment of a commercial flight deck to build robust sequence memory and scanning precision.
+              Welcome to <strong style="font-weight: 700; color: var(--accent-blue);">Flight Core</strong>. This cockpit-inspired cognitive game challenges your visual memory and scanning precision under simulated pressure.
             </p>
             <p style="font-size: 0.75rem; line-height: 1.5; color: var(--text-secondary);">
-              Master checklists, instrument readouts, complex ATC instructions, and emergency diagnostics across 8-round cycles. Difficulty scales dynamically with your recall streak.
+              Solve checklists, recall instrument readings, process radio clearances, and diagnose emergency faults across 8-round cycles. Difficulty scales dynamically based on your correct streak.
             </p>
           </div>
+
+          <!-- Home Screen Disclaimer -->
+          <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; font-style: italic; margin-top: -6px; margin-bottom: 16px; text-align: center; border-left: 2px solid var(--border-subtle); padding-left: 8px;">
+            Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation.
+          </p>
 
           <div class="home-stats-summary">
             <div class="home-stat-box">
@@ -169,10 +174,10 @@
             </div>
           </div>
 
-          <!-- Choose Training Modules Card -->
+          <!-- Select Challenge Modules Card -->
           <div class="terminal-card" style="margin-bottom: 16px;" id="game-selection-card">
             <div class="terminal-card-header">
-              <span>Choose Training Modules</span>
+              <span>Select Challenge Modules</span>
               <div style="display: flex; gap: 6px; align-items: center;">
                 <button id="btn-select-all-modules" style="font-size: 0.58rem; font-weight: 700; color: var(--accent-blue); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-sans);">ALL</button>
                 <span class="type-tag" id="modules-selected-count">4 Active</span>
@@ -244,7 +249,7 @@
           </div>
 
           <button class="btn btn-primary btn-block" id="btn-engage-session">
-            START TRAINING SESSION
+            START SESSION
           </button>
         </div>
 
@@ -326,7 +331,7 @@
               <span style="color: var(--accent-amber); display: flex; align-items: center; gap: 6px;">⚠️ COGNITIVE BLINDSPOT DIAGNOSTIC</span>
             </div>
             <p id="log-blindspot-msg" style="font-size: 0.75rem; line-height: 1.4; color: var(--text-primary);">
-              No significant blindspots diagnosed. Maintain active training across all modules.
+              No significant blindspots diagnosed. Maintain active play across all modules.
             </p>
           </div>
 
@@ -511,7 +516,7 @@
         </div>
 
         <button class="btn btn-primary btn-block" id="btn-next-round" style="margin-top: 12px;">
-          CONTINUE TRAINING
+          CONTINUE SESSION
         </button>
       </section>
 
@@ -559,6 +564,11 @@
             RESTART
           </button>
         </div>
+
+        <!-- Debrief Screen Disclaimer -->
+        <p style="font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 12px; margin-bottom: 0; font-style: italic;">
+          For recreational play only. Not real flight operations.
+        </p>
       </section>
 
     </main>
@@ -726,7 +736,7 @@
     <div class="theme-selector-overlay" id="help-modal-overlay" style="display: none; z-index: 1200;">
       <div class="theme-selector-card" style="max-width: 380px;">
         <div class="theme-selector-header">
-          <span>Simulator Help & Keymap</span>
+          <span>Flight Core Help & Keymap</span>
           <button class="theme-close-btn" id="btn-help-close">&times;</button>
         </div>
         <div style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.5; max-height: 280px; overflow-y: auto; padding-right: 4px;">
@@ -750,7 +760,7 @@
               <span class="shortcut-badge" style="margin: 0 !important;">Enter</span>
             </div>
             <div class="help-key-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">
-              <span>Abort Training Session Overlay</span>
+              <span>Abort Session Overlay</span>
               <span class="shortcut-badge" style="margin: 0 !important;">Escape</span>
             </div>
           </div>
@@ -762,6 +772,13 @@
             <li><strong>ATC</strong>: Hold Callsign, Facility, Freq, wind and Squawk.</li>
             <li><strong>Fault</strong>: Connect compound symptoms directly to mitigation paths.</li>
           </ul>
+
+          <div style="margin-top: 16px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <p style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px; font-size: 0.72rem;">DISCLAIMER & TERMS</p>
+            <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0;">
+              Flight Core is a recreational cognitive recall game. It is for entertainment and brain-puzzle purposes only. The clearances, checklist procedures, and emergency diagnostics contained herein are stylized/randomized and are NOT accurate to any real aircraft type or FAA regulation. Do not use or reference in real aviation.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -783,12 +800,35 @@
             ABORT & EXIT TO HOME
           </button>
           <button class="btn btn-block" id="btn-abort-cancel" style="min-height: 44px; padding: 10px 16px; background: var(--btn-neutral-bg); border-color: var(--btn-neutral-border);">
-            RESUME TRAINING
+            RESUME SESSION
           </button>
         </div>
       </div>
     </div>
 
+  </div>
+
+  <!-- Global System Error Boundary Overlay -->
+  <div class="theme-selector-overlay" id="error-boundary-overlay" style="display: none; z-index: 2000;">
+    <div class="theme-selector-card" style="max-width: 340px; border-color: var(--error-border);">
+      <div class="theme-selector-header" style="border-bottom: none; margin-bottom: 8px;">
+        <span style="color: var(--error-rose); font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">SYSTEM FAULT</span>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px;">
+        An unexpected application fault has been intercepted. The panel session state could not be resolved.
+      </p>
+      <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 8px; font-family: monospace; font-size: 0.6rem; color: var(--error-rose); margin-bottom: 20px; max-height: 120px; overflow-y: auto; text-align: left; white-space: pre-wrap;" id="error-boundary-log">
+        Unknown exception.
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button class="btn btn-primary btn-block" id="btn-error-reload" style="min-height: 44px; padding: 10px 16px; background: var(--accent-blue); border-color: var(--accent-blue); color: #FFFFFF;">
+          RELOAD SYSTEM (RETRY)
+        </button>
+        <button class="btn btn-danger btn-block" id="btn-error-reset" style="min-height: 44px; padding: 10px 16px; background: var(--error-rose); border-color: var(--error-border); color: #FFFFFF;">
+          RESET APPLICATION STATE
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Onboarding Welcome Modal (shown once on first visit) -->
@@ -798,9 +838,9 @@
         <span style="font-size: 1rem; font-weight: 800; color: var(--accent-blue);">Welcome to Flight Core</span>
       </div>
       <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
-        A cognitive memory trainer built for pilots and flight deck professionals. Each session runs through rapid-fire drills across 4 modules.
+        A cockpit-inspired cognitive recall game built for aviation simulators, flight enthusiasts, and puzzle solvers. Challenge your memory and visual scanning across 4 flight deck modules.
       </p>
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
         <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
           <span style="font-size: 1rem; line-height: 1;">📋</span>
           <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Checklist Sequencing</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Memorize and recall procedure steps in exact order.</span></div>
@@ -818,8 +858,11 @@
           <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Emergency Diagnostics</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Connect fault symptoms to isolation and mitigation actions.</span></div>
         </div>
       </div>
+      <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.45; text-align: center; margin-top: 8px; margin-bottom: 16px; font-style: italic;">
+        Disclaimer: For entertainment purposes only. Not real flight procedure.
+      </p>
       <button class="btn btn-primary btn-block" id="btn-onboarding-dismiss" style="min-height: 48px;">
-        BEGIN TRAINING
+        BEGIN CHALLENGE
       </button>
     </div>
   </div>

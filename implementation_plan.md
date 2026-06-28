@@ -1,75 +1,103 @@
-# Flight Core Full Audit & Micro-Interaction Enhancements Plan
+# Pre-Release, Security, & Error Boundary Alignment Plan
 
-We have performed a full, comprehensive codebase, layout, security, and usability audit of the **Flight Core Memory Trainer**. 
+We will align Flight Core with its public release requirements by executing the positioning guidelines defined in `ROADMAP.md`, implementing robust client-side error guardrails, and hardening the security boundaries against cross-site scripting (XSS) and data corruption. 
 
-Based on this audit, we have identified several high-impact, professional enhancements that align with modern **Cupertino UI guidelines**, harden security against edge threats, optimize rendering performance, and establish premium micro-interactions.
+As requested, external privacy telemetry analytics have been postponed and will not be implemented in this sprint.
+
+---
+
+## User Review Required
+
+Document anything that requires user review or feedback.
+
+> [!IMPORTANT]
+> - **Copywriting Alignment**: We are removing words like "training", "drill", "proficiency", and "professional" from all user-facing strings to align with the game-not-training positioning.
+> - **Application Reset Option**: The new System Fault dialog features a "RESET APPLICATION STATE" button. Tapping this will clear the browser's `localStorage` for the site and reload the page. This is a load-bearing repair mechanism if the client data becomes unparseable.
+
+---
+
+## Open Questions
+
+None. The telemetry/analytics questions have been deferred per user instructions.
 
 ---
 
 ## Proposed Changes
 
-### Component 1: Production Security & Performance Hardening
+### Component 1: Lexicon Alignment & Positioning
 
-We will decouple font loading to optimize parallel resource discovery and harden the browser's sandbox against cross-site scripting (XSS) threats.
+We will perform a complete audit and rewrite of user-facing copy to frame the app as a "flight-themed cognitive puzzle game" rather than a professional training tool.
+
+#### [MODIFY] [manifest.json](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/manifest.json)
+- Update description: `"description": "Cockpit-inspired cognitive recall and scanning challenge for aviation enthusiasts."` (replaces "training for pilots and professionals").
 
 #### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- Move font retrieval from CSS `@import` blocking to parallelized header `<link>` preconnects in the `<head>` of `index.html`.
-- This ensures the browser begins fetching the premium **Inter** font family simultaneously with `styles.css`, preventing Flash of Unstyled Text (FOUT).
-- Add a new visual step-tracker container `<div class="round-step-tracker" id="hud-round-dots"></div>` directly inside or below the dashboard header to visually track the 8-round session in real time.
-
-#### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-- Remove the blocking `@import url(...)` at line 1.
-- Style the new progress step-tracker `.round-step-tracker` as a flex layout containing 8 sleek horizontal micro-capsule pill indicators (`.round-dot`).
-- Implement AAA contrast transitions and specialized styles for:
-  - `.round-dot.completed-success` (emerald-green backing)
-  - `.round-dot.completed-warning` (amber-orange backing)
-  - `.round-dot.completed-error` (ruby-red backing)
-  - `.round-dot.active` (pulsing sapphire-blue state with keyframe animation)
-  - `.round-dot.upcoming` (semi-transparent border capsule)
-
-#### [MODIFY] [_headers](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/_headers)
-- Remove `'unsafe-inline'` from the `script-src` directive in the Content-Security-Policy (CSP) header.
-- Since all logic and event handlers are loaded programmatically in `app.js` with zero inline scripting inside `index.html`, this completes a major security hardening step to immunize the application against cross-site scripting (XSS).
+- Rewrite user-facing labels:
+  - `Choose Training Modules` $\rightarrow$ `Select Challenge Modules`
+  - `START TRAINING SESSION` $\rightarrow$ `START SESSION`
+  - `CONTINUE TRAINING` $\rightarrow$ `CONTINUE SESSION`
+  - `RESUME TRAINING` $\rightarrow$ `RESUME SESSION`
+- Update onboarding welcome modal copy:
+  - Replace *"A cognitive memory trainer built for pilots and flight deck professionals..."* with *"A cockpit-inspired cognitive recall game built for aviation simulators, flight enthusiasts, and puzzle solvers. Challenge your memory and visual scanning across 4 flight deck modules."*
+  - Re-label the button from `BEGIN TRAINING` to `BEGIN CHALLENGE`.
 
 ---
 
-### Component 2: Cupertino-Style Intelligent UX Auto-Advance
+### Component 2: Legal Disclaimers & Disclosures
 
-To minimize user taps and make gameplay feel extremely fluid on both mobile touch devices and physical keyboards, we will implement smart auto-advance chains.
+To prevent regulatory liability and guarantee transparent product positioning, we will inject the non-negotiable disclaimers:
+
+#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
+- **Home Screen Hero**: Add a small, italicized, and high-legibility disclaimer box directly under the main card: *"Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation."*
+- **Onboarding Modal**: Insert the warning line: *"Disclaimer: For entertainment purposes only. Not real flight procedure."*
+- **Debrief / Results Screen**: Append a small footer at the bottom of the session summary: *"For recreational play only. Not real flight operations."*
+- **About/Help Drawer**: Add a permanent Disclaimer section.
+
+---
+
+### Component 3: Security Hardening (XSS Prevention & Input Validation)
+
+To ensure the application remains safe, we will scrutinize and harden the inputs and dynamic rendering code:
 
 #### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-- **ATC Field Auto-Advance**:
-  - When the user selects an ATC **Callsign** quick-select button, automatically advance active focus to **Facility** (if vacant).
-  - When the user selects a **Facility** option, automatically advance focus to **Frequency** (which instantly slides the numeric keypad into view).
-  - When confirming **Frequency** via the keypad `CONFIRM` or physical `Enter`, automatically advance focus to **Squawk** (if vacant).
-  - If all ATC inputs are filled, cleanly close the keypad overlay.
-- **Instruments Gauge Auto-Advance**:
-  - In the Instruments module, when a user enters a value for a blanked gauge and taps `CONFIRM` on the keypad (or hits physical `Enter`), automatically scan for the next vacant blanked gauge in sequence.
-  - If found, immediately trigger active focus and select it, keeping the keypad open with the active preview buffer.
-  - If all blanked gauges are filled, close the keypad interface automatically.
-- **Visual Step Tracker Logic**:
-  - Update `updateLevelAndHUD()` and `finishSession()` to dynamically render the 8 horizontal progress capsule dots.
-  - Compute states using completed elements inside `roundByRoundHistory` in real time, updating dot colors dynamically between rounds.
+- **HTML Escaping Helper**: Implement a robust `escapeHTML(str)` utility function:
+  ```javascript
+  function escapeHTML(str) {
+    if (typeof str !== "string") return str;
+    return str.replace(/[&<>"']/g, (m) => {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return map[m];
+    });
+  }
+  ```
+- **Escape Dynamic Content**: Wrap all variable injections inside `innerHTML` templates (such as expected/input values in `setupFeedbackScreen` and dynamic logbook rows) with `escapeHTML()` to neutralize potential XSS payloads.
+- **Theme Validation**: Restrict loaded theme values to the approved set: `VALID_THEMES = ["dark", "light", "mono", "sage", "warm"]`. If `flightcore_theme` is modified to a non-existent value, default to `"dark"`.
+
+---
+
+### Component 4: Robust Error Boundaries & Guardrails
+
+We will protect the application from client-side crashes, data corruption, and infinite loops:
+
+#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
+- **System Fault Modal Overlay**: Add a custom-styled, cockpit-grade overlay `#error-boundary-overlay` that displays a `SYSTEM FAULT` warning panel with:
+  - An interactive stack trace viewport `#error-boundary-log`.
+  - A **RELOAD SYSTEM** button.
+  - A **RESET APPLICATION STATE** button (clears localStorage and reloads).
+
+#### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
+- **Safe Storage Loaders**: Replace direct `localStorage` parsing with safe wrapper functions `getSafeStorageInt(key, defaultValue)`, `getSafeStorageFloat(key, defaultValue)`, and `getSafeStorageHistory()` that validate types, handle parse failures gracefully, and protect against NaN value propagation.
+- **Global Error Interceptors**: Bind window-level error handlers `window.addEventListener("error")` and `window.addEventListener("unhandledrejection")` to capture unexpected scripting failures and render the `SYSTEM FAULT` boundary UI.
 
 ---
 
 ## Verification Plan
 
-### Automated & Manual Verification
-1. **CSP Hardness Audit**:
-   - Deploy/run the app and verify the console remains clean of CSP violation reports.
-   - Confirm that inline `<script>` injections are blocked completely.
-2. **Parallel Font Loading**:
-   - Check network waterfall charts via Chrome Developer Tools to ensure `Inter` font assets download in parallel with `styles.css`, speeding up layout stabilization.
-3. **ATC Auto-Advance Flow**:
-   - Start an ATC round. Click Callsign option $\rightarrow$ verify focus shifts to Facility automatically.
-   - Click Facility option $\rightarrow$ verify focus shifts to Frequency and the numeric keypad pops open instantly.
-   - Enter Frequency and click `CONFIRM` $\rightarrow$ verify focus shifts to Squawk automatically.
-4. **Instruments Auto-Advance Flow**:
-   - Start an Instruments round. Click the first blanked gauge card $\rightarrow$ enter a number $\rightarrow$ click `CONFIRM` (or hit physical `Enter`).
-   - Verify that focus automatically shifts to the second blanked gauge, highlighting it and updating the keypad indicator.
-   - Enter the last value and click `CONFIRM` $\rightarrow$ verify the keypad closes smoothly.
-5. **Horizontal Progress Step Tracker**:
-   - Verify that 8 horizontal pill capsules render below the dashboard header.
-   - Confirm the active round dot pulses sapphire-blue.
-   - Complete rounds with different accuracies (Perfect/Great, Partial, Failed) and verify dots turn emerald-green, amber-orange, and ruby-red in real time.
+### Automated Tests
+- Run browser console syntax validations on script modifications.
+
+### Manual Verification
+- **Copy & Lexicon Verification**: Confirm "training" is absent from user-facing strings.
+- **XSS Payload Testing**: Temporarily mock an input containing HTML/Script tags (e.g. `"<script>alert(1)</script>"`) and verify it renders escaped as text in the feedback screen without executing.
+- **LocalStorage Corruption Simulation**: Inject invalid JSON or non-numeric values into `localStorage` keys and verify the app defaults safely.
+- **System Fault Verification**: Trigger a deliberate JS error in the console (e.g. `throw new Error("Simulated Flight Deck Error")`) and verify the System Fault overlay pops up with the correct details and functional reload/reset buttons.

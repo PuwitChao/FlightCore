@@ -1,7 +1,7 @@
 {
-  "name": "Flight Core — Operational Memory Trainer",
+  "name": "Flight Core — Operational Memory Challenge",
   "short_name": "Flight Core",
-  "description": "High-fidelity cognitive training for pilots and flight deck professionals.",
+  "description": "Cockpit-inspired cognitive recall and scanning challenge for aviation enthusiasts.",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait-primary",

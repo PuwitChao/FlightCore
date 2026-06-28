@@ -1,63 +1,60 @@
-# Flight Core Silent Immersive Training & Pilot Logbook Sprint Walkthrough
+# Flight Core Pre-Release, Security, & Error Boundary Alignment Sprint Walkthrough
 
-We have successfully completed today's Sprint updates for the **Flight Core Memory Trainer** user interface. We shifted the training console to a fully silent, focus-first operation and integrated advanced visual telemetry alongside a persistent **Pilot Logbook** dashboard.
+We have successfully completed the sprint updates for **Flight Core — Operational Memory Challenge** on the **D: drive** repository. We aligned the application's user-facing copywriting with its game-centric positioning guidelines, implemented rigorous disclaimers to eliminate professional liability, and hardened the application with robust exception boundaries and security sanitization.
 
 ---
 
-## 🎨 Aesthetic & Feature Accomplishments
+## 🎨 Accomplishments & Implementation Details
 
-### 1. Visual Gauge Linear Range Indicators
-We introduced a highly responsive iOS-style spatial layout beneath the numerical gauges in the **Instruments Scanning** module:
-* **Micro Linear Groove Tracker (`styles.css` & `app.js`)**: Designed a sleek horizontal bar under the dials showing exactly where the current value lies between its `[min, max]` bounds.
-* **Glowing Sapphire Indicator Capsule**: Computes percent dynamically:
-  $$\text{Percent} = \frac{\text{Value} - \text{Min}}{\text{Max} - \text{Min}} \times 100$$
-  and positions the glowing pill capsule at `left: ${percent}%`.
-* **Warning & Cheat Protection Gating**: The indicator dots automatically turn warning-amber or caution-rose if values fall into warning thresholds (top 10% or bottom 10%). During recall blanking stages, the bars are cleanly faded out to guarantee zero cheating.
+### 1. Game-Centric Lexicon Compliance & Positioning
+To emphasize that Flight Core is a cognitive challenge game for enthusiasts rather than a flight-school training utility:
+* **Manifest & Title Update**: Renamed the PWA to **Flight Core — Operational Memory Challenge** and updated the description to *"Cockpit-inspired cognitive recall and scanning challenge for aviation enthusiasts."*
+* **Label Rewrites (`index.html`)**: Converted all user-facing strings of `training`, `trainer`, and `drill` to `challenge`, `session`, `play`, and `puzzle` (e.g. `START TRAINING SESSION` $\rightarrow$ `START SESSION`, `Choose Training Modules` $\rightarrow$ `Select Challenge Modules`, `CONTINUE TRAINING` $\rightarrow$ `CONTINUE SESSION`).
+* **Onboarding Card Update**: Rewrote the welcome overlay intro paragraph to welcome simulators, enthusiasts, and puzzle solvers, avoiding professional certification training claims.
 
-### 2. Cupertino Segment Control Switch (flight Deck vs Pilot Logbook)
-We divided the home console interface into two distinct, high-end dashboard panels:
-* **Translucent Overlapping Segments (`index.html` & `styles.css`)**: Switched Home layouts using standard Apple segment controls (`#dashboard-segments`) that transition smoothly on tap.
-* **Deck Section**: Hosts active training modules selection, session history charts, and onboarding launchers.
-* **Pilot Logbook Section**: A gorgeous diagnostic summary report panel containing statistics, skill proficiencies, cognitive logs, and flight deck logs.
+### 2. Legal Disclaimers & Disclosures
+To protect against procedures liability, we styled and placed warnings across all core views:
+* **Home Page Hero Banner**: Rendered an italicized disclaimer warning directly beneath the main Flight Deck card: *"Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation."*
+* **Onboarding welcome overlay**: Injected the notice above the begin button: *"Disclaimer: For entertainment purposes only. Not real flight procedure."*
+* **Debrief footer**: Added a small disclaimer on the session debrief panel: *"For recreational play only. Not real flight operations."*
+* **Help Drawer section**: Appended a permanent `DISCLAIMER & TERMS` card explaining the stylized and randomized nature of all checklists, emergency faults, and ATC clearance communications.
 
-### 3. Skill Competency Matrix & Diagnostics
-We built a real-time statistics processor inside `app.js` mapping user capabilities:
-* **Logbook Stats**: Computes Total flights, average session grade, maximum streak, peak difficulty level achieved, and high score.
-* **Linear Skill Proficiency Meters**: Analyzes all saved localStorage runs and displays a gorgeous competency matrix for Checklist, Instruments, ATC, and Fault isolation modules.
-* **Cognitive Blindspot Diagnostic Banner**: Injects an warnings block highlighting the pilot's lowest proficiency category and providing tailored training instructions (e.g. *"🎯 PROCEDURAL FOCUS REQUIRED: You are experiencing cognitive friction when ordering checklists under stress..."*).
-* **Scrollable Flight Logbook entries**: Lists past runs with customized circular percentage status badges matching iOS grading chimes (perfect, proficient, satisfactory, remedial, unacceptable).
+### 3. Client-Side XSS Hardening & Theme Validation
+* **XSS Sanitization Helper**: Implemented a robust `escapeHTML` helper in `app.js` that escapes special HTML entities (`&`, `<`, `>`, `"`, `'`).
+* **Render Escaping**: Wrapped dynamically rendered user-facing input text (feedback expected/input details, pilot logbook run logs) in `escapeHTML()` to block arbitrary script injections.
+* **Theme Lock**: Added validation checks to `initThemeSystem()` and `setTheme()` to confirm the theme value is inside the approved theme array (`["dark", "light", "mono", "sage", "warm"]`), defaulting to `"dark"` on invalid values.
 
-### 4. Audio Purge & Silence Implementation
-To fit silent training requirements in public, professional, or low-distraction environments:
-* **Toggle Removal**: Purged the `#btn-sound-toggle` speaker toggle completely from the system headers, keeping controls tidy and functional.
-* **Oscillator Deletion**: Stripped all Web Audio API oscillators, soundscape engines, Speech Synthesis clearance vocalizations, and local sound preferences from the codebase.
-* **Robust No-Op Binders**: Mapped `playSound()` and `triggerHaptic()` to lightweight, silent no-op wrappers, ensuring 100% security against runtime crashes and unhandled exceptions.
+### 4. Global Exception Boundaries & State Guardrails
+To prevent crashes and handle corrupted state gracefully:
+* **Safe storage loaders**: Introduced `getSafeStorageInt()`, `getSafeStorageFloat()`, and `getSafeStorageHistory()` loading wrappers with fallbacks to safe defaults, protecting parameters against corrupted data or `NaN` outputs.
+* **Global Error Interceptors**: Added window handlers for `window.addEventListener("error")` and `unhandledrejection` events to capture unhandled scripting crashes.
+* **System Fault Overlay (`#error-boundary-overlay`)**: Designed a premium Cupertino-style modal that displays a **SYSTEM FAULT** alert with:
+  - An interactive monospace viewport containing the stack trace log.
+  - A **RELOAD SYSTEM (RETRY)** button to refresh the browser session.
+  - A **RESET APPLICATION STATE** button to wipe corrupted `localStorage` keys and reload the application safely.
 
 ---
 
 ## 📂 Codebase File Diff Summary
 
-### 1. [`index.html`](file:///C:/Users/khune/Documents/antigravity/delightful-bose/index.html)
-- Wrapped the Home screen content in `#segment-content-deck`.
-- Added the `#dashboard-segments` controls at the top of the Home layout.
-- Appended the `#segment-content-logbook` container and structured the stats grid, linear competency bars, diagnostic banners, and scrollable log rows.
-- Deleted the sound toggle buttons from the system header dashboard-row.
+### 1. [`manifest.json`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/manifest.json)
+* Updated the PWA's official name and description fields to align with the lexicon guidelines.
 
-### 2. [`styles.css`](file:///C:/Users/khune/Documents/antigravity/delightful-bose/styles.css)
-- Styled the Cupertino overlapping segment button switches with translucent active states.
-- Styled linear range indicators (`.gauge-range-bar`, `.gauge-range-indicator`) and warned threshold highlights.
-- Styled the pilot logbook entries (`.log-entry-row`) and progress bars (`.competency-bar-track`, `.competency-bar-fill`) with iOS gradients.
+### 2. [`index.html`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
+* Rewrote all user-facing "training/drill" labels.
+* Injected the home screen hero disclaimer box, onboarding disclaimer modal line, debrief footer disclaimer, and help drawer disclaimer section.
+* Added the `#error-boundary-overlay` modal markup for global exception tracking.
 
-### 3. [`app.js`](file:///C:/Users/khune/Documents/antigravity/delightful-bose/app.js)
-- Purged Web Audio context, sound toggles, Speech Synthesis, static noises, and local preferences.
-- Defined robust silent no-op function wrappers for sound and haptics to prevent exceptions.
-- Upgraded `createGaugeHTML()` to calculate linear ranges and indicators.
-- Hooked segment listeners and computed statistics, module competency bars, diagnostic advices, and logbook entries inside `DOMContentLoaded` and `finishSession()`.
-- Enhanced `sessionRecord` to log module accuracies under a `competencies` sub-object with robust backwards-compatible fallbacks.
+### 3. [`app.js`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
+* Added global error listeners and the `handleGlobalError` renderer.
+* Prepended `escapeHTML` and safe storage parser wrappers.
+* Swapped out direct state `localStorage.getItem` queries with safe loaders.
+* Escaped expected/input details inside `setupFeedbackScreen` and logs in `renderPilotLogbook`.
+* Hardened `initThemeSystem` and `setTheme` with theme list boundaries.
+* Bound the error overlay reload and reset button event listeners.
 
 ---
 
-## 🚀 Git Operations & Verification Status
-1. **D Drive Local Commits**: All changes were successfully staged, verified, and committed on the D drive repository `D:\Documents\Personal_Project\Google_AG\FlightCore` on the `main` branch.
-2. **C Workspace Integration**: Ran `git pull local-origin main` inside the active workspace `C:\Users\khune\Documents\antigravity\delightful-bose` to pull and merge commits seamlessly.
-3. **Workspace Integrity**: Verified git merge resolved with zero conflicts and working directory is completely clean and operational.
+## 🚀 Verification & Health Status
+* **Syntax Compilation**: Ran Node CLI syntax compiler checking (`node --check app.js`) confirming zero syntax errors or parsing exceptions.
+* **JSON Integrity**: Validated that `manifest.json` parses as valid JSON via Node CLI checks.

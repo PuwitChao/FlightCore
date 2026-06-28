@@ -1,28 +1,36 @@
-# Flight Core - Silent Immersive Training & Pilot Logbook Sprint Checklist
+# Flight Core - Pre-Release, Security, & Error Boundary Alignment Checklist
 
 ## Phase 1: Planning & Setup
-- `[x]` Propose sprint plan to user and get approval
-- `[x]` Establish tasks in `task.md`
-- `[x]` Handle audio removal constraint (entirely purge sound engines and toggles)
+- `[x]` Confirm implementation plan with user and get approval
+- `[x]` Define global error boundary modal templates in `index.html`
 
-## Phase 2: Visual Linear Gauge Indicators
-- `[x]` Add linear range tracking progress bar under the gauges in `styles.css`
-- `[x]` Calculate percentage value of gauge inside `createGaugeHTML()` and position the glowing sapphire indicator dynamically
-- `[x]` Add warning states (amber/rose) and hide indicators for blanked gauges
+## Phase 2: Copywriting & Lexicon Compliance
+- `[x]` Update `manifest.json` description to remove training terms
+- `[x]` Update user-facing text in `index.html` (Select Challenge Modules, Start/Continue/Resume Session, etc.)
+- `[x]` Rewrite onboarding welcome modal copy in `index.html` to avoid "training" and "professional" references
 
-## Phase 3: Pilot Logbook & Competency Analytics Tab
-- `[x]` Add Cupertino segment control switch in `index.html` to toggle Deck/Logbook
-- `[x]` Style the segment controls, competency meters, and log table rows in `styles.css`
-- `[x]` Implement matrix stats and cognitive blindspot advice calculations in `app.js`
-- `[x]` Test log entries recording and backwards-compatibility
+## Phase 3: Legal Disclaimers & Disclosures
+- `[x]` Add homepage hero disclaimer box under the main deck card in `index.html`
+- `[x]` Add onboarding welcome modal disclaimer line
+- `[x]` Add debrief/results screen footer disclaimer in `index.html`
+- `[x]` Insert permanent Disclaimer text in the help/about drawer in `index.html`
 
-## Phase 4: Audio Purge & Silence Implementation
-- `[x]` Remove `#btn-sound-toggle` button from header in `index.html`
-- `[x]` Delete sound-related oscillators, engine hums, Speech Synthesis, and local sound preferences in `app.js`
-- `[x]` Replace `playSound()` with a robust no-op `function playSound() {}` in `app.js` to prevent any runtime exceptions
-- `[x]` Verify application is completely silent and clean
+## Phase 4: Security Hardening & XSS Protection
+- `[x]` Implement `escapeHTML(str)` utility function in `app.js`
+- `[x]` Escape expected/input fields dynamically rendered in `setupFeedbackScreen()`
+- `[x]` Escape user logs dynamically rendered in `renderPilotLogbook()`
+- `[x]` Validate theme values in `initThemeSystem()` and `setTheme()` against approved themes list
 
-## Phase 5: Verification & Git Integration
-- `[x]` Commit changes on D drive and pull to C workspace
-- `[ ]` Run manual verification checks for visual gauges and logbook analytics
-- `[ ]` Update `walkthrough.md` with achievements and details
+## Phase 5: Error Boundaries & Guardrails
+- `[x]` Create `getSafeStorageInt()`, `getSafeStorageFloat()`, and `getSafeStorageHistory()` loading helpers in `app.js`
+- `[x]` Update state initialization to load `localStorage` parameters safely
+- `[x]` Add global `window.addEventListener("error")` and `unhandledrejection` bindings in `app.js`
+- `[x]` Create `handleGlobalError()` to log details and display the `#error-boundary-overlay` modal
+- `[x]` Bind reload and reset storage event listeners in the DOMContentLoaded bootstrap block
+
+## Phase 6: Verification & Walkthrough
+- `[x]` Verify application boots cleanly without any errors
+- `[x]` Test data corruption tolerance by writing invalid text/JSON to localStorage
+- `[x]` Trigger a simulated error to verify the System Fault overlay rendering, reloading, and resetting
+- `[x]` Test XSS escaping by mocking data containing script tags
+- `[x]` Update `walkthrough.md` with accomplishments

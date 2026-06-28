@@ -1,4 +1,70 @@
-// Flight Core Operational Memory Trainer Logic
+// Flight Core Operational Memory Challenge Logic
+
+// Global System Error Boundary Handlers
+window.addEventListener("error", (e) => {
+  handleGlobalError(e.error || new Error(e.message));
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+  handleGlobalError(e.reason || new Error("Unhandled Promise rejection"));
+});
+
+function handleGlobalError(err) {
+  console.error("Global Fault Intercepted:", err);
+  const overlay = document.getElementById("error-boundary-overlay");
+  const logEl = document.getElementById("error-boundary-log");
+  if (overlay && logEl) {
+    logEl.textContent = `${err ? err.name : "Error"}: ${err ? err.message : "Unknown error"}\n\nStack:\n${err ? err.stack : "Not available"}`;
+    overlay.style.display = "flex";
+  }
+}
+
+// HTML Escaping Helper to Prevent XSS
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  const s = String(str);
+  return s.replace(/[&<>"']/g, (m) => {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return map[m];
+  });
+}
+
+// Safe LocalStorage Loading Utilities
+function getSafeStorageInt(key, defaultValue) {
+  try {
+    const val = localStorage.getItem(key);
+    if (val === null) return defaultValue;
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) ? defaultValue : parsed;
+  } catch (e) {
+    console.warn(`Error reading localStorage key "${key}":`, e);
+    return defaultValue;
+  }
+}
+
+function getSafeStorageFloat(key, defaultValue) {
+  try {
+    const val = localStorage.getItem(key);
+    if (val === null) return defaultValue;
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? defaultValue : parsed;
+  } catch (e) {
+    console.warn(`Error reading localStorage key "${key}":`, e);
+    return defaultValue;
+  }
+}
+
+function getSafeStorageHistory() {
+  try {
+    const raw = localStorage.getItem("flightcore_history");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error("Failed to parse flightcore_history from localStorage:", e);
+    return [];
+  }
+}
 
 // ==========================================
 // 1. DATA POOLS (RNG pools to minimize repetition)
@@ -1293,10 +1359,10 @@ function setupFeedbackScreen(res) {
     item.className = "feedback-row " + (row.correct ? "correct" : "incorrect");
     
     item.innerHTML = `
-      <span class="feedback-field">${row.field}</span>
+      <span class="feedback-field">${escapeHTML(row.field)}</span>
       <div class="feedback-values">
-        <span class="val-expected">EXP: ${row.expected}</span>
-        <span class="val-input ${row.correct ? '' : 'error'}">INP: ${row.input}</span>
+        <span class="val-expected">EXP: ${escapeHTML(row.expected)}</span>
+        <span class="val-input ${row.correct ? '' : 'error'}">INP: ${escapeHTML(row.input)}</span>
       </div>
     `;
     detailsList.appendChild(item);
@@ -2001,8 +2067,9 @@ function initAbortSystem() {
 // 13. MULTI-THEME SYSTEM (Apple Aesthetics)
 // ==========================================
 function initThemeSystem() {
+  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
   let savedTheme = localStorage.getItem("flightcore_theme");
-  if (!savedTheme) {
+  if (!savedTheme || !VALID_THEMES.includes(savedTheme)) {
     // Respect OS preference on first visit
     savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }
@@ -2088,6 +2155,8 @@ function initThemeSystem() {
 }
 
 function setTheme(themeVal) {
+  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
+  if (!VALID_THEMES.includes(themeVal)) themeVal = "dark";
   document.body.setAttribute("data-theme", themeVal);
   safeStorageSet("flightcore_theme", themeVal);
   
@@ -2579,6 +2648,25 @@ function initModalA11y() {
 
 // Bootstrap application on DOM ready
 window.addEventListener("DOMContentLoaded", () => {
+  // Bind error boundary recovery buttons
+  const btnReload = document.getElementById("btn-error-reload");
+  if (btnReload) {
+    btnReload.addEventListener("click", () => {
+      window.location.reload();
+    });
+  }
+  const btnReset = document.getElementById("btn-error-reset");
+  if (btnReset) {
+    btnReset.addEventListener("click", () => {
+      try {
+        localStorage.clear();
+        window.location.reload();
+      } catch (err) {
+        alert("Failed to clear local storage: " + err.message);
+      }
+    });
+  }
+
   initThemeSystem();
   initSegmentControl();
   loadHomeStats();
@@ -2731,11 +2819,11 @@ function renderPilotLogbook() {
     row.innerHTML = `
       <div class="log-entry-meta">
         <span class="log-entry-title">FLIGHT DECK RUN</span>
-        <span class="log-entry-date">${dateFormatted}</span>
+        <span class="log-entry-date">${escapeHTML(dateFormatted)}</span>
       </div>
       <div class="log-entry-score-details">
-        <span class="log-entry-score">${h.score.toLocaleString()} pts</span>
-        <span class="log-entry-badge ${ratingClass}">${h.tier || 'PROFICIENT'}</span>
+        <span class="log-entry-score">${escapeHTML(h.score.toLocaleString())} pts</span>
+        <span class="log-entry-badge ${escapeHTML(ratingClass)}">${escapeHTML(h.tier || 'PROFICIENT')}</span>
       </div>
     `;
     logList.appendChild(row);
