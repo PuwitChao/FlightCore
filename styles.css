@@ -291,16 +291,6 @@ body {
   gap: 8px;
 }
 
-.system-title::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--accent-blue);
-  box-shadow: 0 0 8px var(--accent-blue);
-  transition: background-color var(--transition-fast);
-}
 
 .telemetry-value.accent {
   color: var(--accent-blue);

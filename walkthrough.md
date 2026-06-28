@@ -33,6 +33,10 @@ To prevent crashes and handle corrupted state gracefully:
   - A **RELOAD SYSTEM (RETRY)** button to refresh the browser session.
   - A **RESET APPLICATION STATE** button to wipe corrupted `localStorage` keys and reload the application safely.
 
+### 5. UI De-noising & Aesthetic Cleanup
+To make the UI feel cleaner and less "vibe-coded" / "AI-inspired":
+* **Glowing Dot Removal**: Deleted the `.system-title::before` pseudo-element rule in `styles.css`. This removes the glowing blue dot next to the "FLIGHT CORE" title in the dashboard header.
+
 ---
 
 ## 📂 Codebase File Diff Summary
@@ -53,8 +57,12 @@ To prevent crashes and handle corrupted state gracefully:
 * Hardened `initThemeSystem` and `setTheme` with theme list boundaries.
 * Bound the error overlay reload and reset button event listeners.
 
+### 4. [`styles.css`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
+* Removed the `.system-title::before` rule to eliminate the glowing dot next to the dashboard title.
+
 ---
 
 ## 🚀 Verification & Health Status
 * **Syntax Compilation**: Ran Node CLI syntax compiler checking (`node --check app.js`) confirming zero syntax errors or parsing exceptions.
 * **JSON Integrity**: Validated that `manifest.json` parses as valid JSON via Node CLI checks.
+* **CSS Validation**: Checked styling changes and confirmed header layout aligns correctly without any offset from the removed pseudo-element.

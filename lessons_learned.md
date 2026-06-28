@@ -6,6 +6,7 @@
 * **Safe LocalStorage Wrappers**: Using `getSafeStorageInt()`, `getSafeStorageFloat()`, and `getSafeStorageHistory()` with fallbacks to defaults successfully guards variables from corrupt values or NaN propagation.
 * **XSS Hardening**: Implementing `escapeHTML` and wrapping variables dynamically rendered in `innerHTML` blocks (feedback details and logbook rows) ensures the client-side remains secure against potential text injection payloads.
 * **Lexicon & Disclaimer Compliance**: Removing "training/drill" text and styling visible disclaimers on the home, onboarding, and debrief screens successfully conforms to the game-only positioning guidelines of `ROADMAP.md`.
+* **Visual De-noise / Cleaning AI Vibe-Coding**: Removing the `.system-title::before` pseudo-element deleted the glowing blue dot beside the "FLIGHT CORE" title, cleaning up the header layout and ensuring the interface feels professional and less "AI-inspired".
 
 ## What Failed
 * **C: Drive Workspace Writing**: Writing implementation documents and code changes to the C: drive temporary workspace directory triggered user permission denials and warning prompts, as the D: drive repository is the source-of-truth workspace. We reverted those temporary changes and moved all development directly to the D: drive.
