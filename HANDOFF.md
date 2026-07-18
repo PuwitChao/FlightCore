@@ -1,86 +1,52 @@
-# Handoff: Widescreen Multi-Device UI Support
+# Handoff: Roadmap Foundation Pass
 
-**Generated**: 2026-06-28 18:50 in local time
+**Generated**: 2026-07-18 local time
 **Branch**: main
-**Status**: Ready for Review
-
-## Loop Telemetry
-- **Active Subtask**: Implementation completed
-- **Current Iteration**: 1/1
-- **Healing Actions Taken**: None required
+**Status**: Automated verification complete; ready for manual browser QA
 
 ## Goal
-Improve playability and layout spacing on PC/desktop devices by creating a responsive multi-device console layout that expands on widescreen monitors, deduplicates redundant viewport stats, and displays the input keypad alongside the telemetry stats in a 3-column console.
+
+Execute the five roadmap foundation steps: positioning cleanup, Phase 0 launch scaffold, core/app maintainability split, PWA/security hardening preparation, and accessibility/UI quality foundations.
 
 ## Completed
-- [x] Wrapped setup cards in `index.html` with a `.home-config-grid` container.
-- [x] Expanded the static sidebar stats panel in `index.html` to display all 5 player statistics (High Score, Avg Grade, Total Sessions, Max Streak, and Day Streak) in a clean grid.
-- [x] Synchronized stats variables in `updateHomeStats()` inside `app.js` to update the new sidebar stat elements.
-- [x] Restructured media queries in `styles.css` to support tablet (`680px-1023px`) and widescreen desktop (`>= 1024px`).
-- [x] Implemented the dynamic 3-column widescreen cockpit grid using CSS `:has()` parent selector.
-- [x] Hid duplicate viewport stats cards (`#home-stats-summary-viewport` and `#home-history-card`) on PC screens.
-- [x] Formatted home configuration cards into a clean 2x2 grid layout and expanded frame heights to prevent cramped scrolling.
-- [x] Ran syntax checks on `app.js` and successfully verified all assertions (`69/69 passed`) in `node tests.js`.
 
-## Not Yet Done
-- None (Widescreen multi-device UI support has been fully implemented, verified, and documented).
+- [x] Reframed user-facing copy around a cockpit-inspired challenge game rather than training/proficiency/logbook language.
+- [x] Rewrote `README.md` and refreshed `manifest.json` with game/entertainment positioning.
+- [x] Added `landing/index.html` and `landing/styles.css` as a static Phase 0 waitlist scaffold.
+- [x] Added `config.example.js`, ignored real `config.js`, and wired runtime config into `app.js`.
+- [x] Added a no-op-by-default `Telemetry` wrapper with opt-out-aware emits for session start, module completion, streak extension, session finish, and theme changes.
+- [x] Extracted pure session tier, per-session module summaries, and daily streak logic into `core.js`.
+- [x] Updated `app.js` to consume the extracted `FlightCore` helpers.
+- [x] Added focused unit tests for the new pure helpers; engine suite is now 73 assertions.
+- [x] Bumped service worker cache to `v4` and bypassed future config/API/Supabase/Stripe/Plausible/PostHog requests.
+- [x] Added focus-visible, reduced-motion, environment badge, and tab ARIA state support.
+- [x] Updated `implementation_plan.md` and `task.md` with the orchestrated roadmap execution state.
 
-## Failed Approaches (Don't Repeat These)
-* *Writing Artifacts to C Drive*: Attempted to write implementation artifacts (`implementation_plan.md`, `task.md`, `walkthrough.md`) with system metadata to the C: drive brain folder. Reverted this and wrote all documents directly to the source-of-truth project repository on the D: drive to comply with project-scoped restrictions.
+## Verification
 
-## Key Decisions
-| Decision | Rationale |
-|---|---|
-| CSS `:has()` Selector for Widescreen Layout | Dynamically expands the layout from a 2-column setup to a 3-column cockpit console when the virtual keypad is active. This keeps live telemetry stats visible side-by-side with the keypad on PC monitors instead of covering them up. |
-| Deduplication of Viewport Stats | Hiding the duplicate viewport stats on PC since they are already displayed in the sidebar prevents layout clutter and simplifies the layout. |
+- `node --check app.js` passed.
+- `node --check core.js` passed.
+- `node --check sw.js` passed.
+- `node tests.js` passed: 73/73.
+- Word-boundary positioning scan for avoid-list terms returned no matches.
+- Telemetry hook scan confirms `session_started`, `module_completed`, `streak_extended`, `session_finished`, and `settings_changed` emits are present.
+- Browser-control QA could not run in this Codex session because the local Windows sandbox helper failed with `apply deny-read ACLs`.
 
-## Current State
-- **Working**: Widescreen layout, tablet layout, mobile layout, sidebar stats synchronizations, virtual keypad inputs, and keyboard hotkeys.
-- **Broken**: None.
-- **Uncommitted Changes**: Added/modified `index.html`, `styles.css`, `app.js`, `implementation_plan.md`, `task.md`, `walkthrough.md`, `lessons_learned.md`, and `HANDOFF.md`.
+## Notes / Follow-Up
+
+- `config.js` is intentionally ignored and may be generated/copied from `config.example.js` for real environments. Without it, the committed `config.example.js` keeps the app in local/no-telemetry mode.
+- The landing waitlist still uses placeholder `mailto:hello@example.com`; replace the action after choosing Buttondown, Resend, or another provider. The visible helper copy is now visitor-safe.
+- Manual browser QA is still required for responsive layout, service-worker update behavior, and the new landing page because automated browser control was unavailable in this session.
+- No backend, Supabase project, Stripe account, production telemetry endpoint, or legal policy text was created in this pass.
 
 ## Files to Know
+
 | File | Why It Matters |
 |---|---|
-| [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) | Main HTML document structuring the viewport screens, sidebars, and keypads. |
-| [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css) | Layout, styling, and media query controls for responsiveness. |
-| [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js) | Main application logic synchronizing statistics and UI interactions. |
-
-## Code Context
-### CSS Widescreen Cockpit Selection
-```css
-/* Default 2-column widescreen layout (Viewport + Sidebar) */
-.terminal-frame {
-  max-width: 1100px;
-  grid-template-columns: 1.55fr 1fr;
-  grid-template-areas:
-    "header header"
-    "viewport sidebar";
-  ...
-}
-
-/* Expand to 3-column cockpit console when the input keypad is visible */
-.terminal-frame:has(#custom-keypad:not([style*="display: none"]):not([style*="display:none"])),
-.terminal-frame:has(#custom-text-keypad:not([style*="display: none"]):not([style*="display:none"])) {
-  max-width: 1320px;
-  grid-template-columns: 1.4fr 320px 0.85fr;
-  grid-template-areas:
-    "header header header"
-    "viewport keypad sidebar";
-}
-```
-
-### JS Sidebar Stats Sync
-```javascript
-const sideSessions = document.getElementById("side-stat-sessions");
-const sideMaxStreak = document.getElementById("side-stat-max-streak");
-if (sideSessions) sideSessions.textContent = totalRuns;
-if (sideMaxStreak) sideMaxStreak.textContent = maxStreakAchieved;
-...
-const sideDailyStreakEl = document.getElementById("side-stat-daily-streak");
-if (sideDailyStreakEl) sideDailyStreakEl.textContent = dailyStreak;
-```
-
-## Resume Instructions
-1. Load the web application on a PC browser and test window resizing across mobile, tablet, and widescreen breakpoints to verify visual presentation.
-2. Engage in a game session to confirm the keypad appears in the middle column on PC while the sidebar remains visible on the right.
+| `core.js` | Pure engine helpers now include tiers, session competencies, module accuracy, and daily streak calculation. |
+| `app.js` | Runtime config, telemetry wrapper, session finish flow, and tab accessibility live here. |
+| `index.html` | Updated app copy, run history labels, telemetry preference, config script loading, and ARIA markup. |
+| `styles.css` | Rating class rename, environment badge, focus-visible, and reduced-motion support. |
+| `landing/` | Static Phase 0 waitlist/launch scaffold. |
+| `config.example.js` | Safe local default config template; real `config.js` is ignored. |
+| `sw.js` | Cache v4 plus network bypasses for future dynamic endpoints. |

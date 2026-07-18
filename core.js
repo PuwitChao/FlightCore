@@ -75,7 +75,7 @@
 
   // ---- module selection ("No 3x Repeat") ----
 
-  // Pick the next training module from the active selection, filtering out a
+  // Pick the next challenge module from the active selection, filtering out a
   // module that was played the previous two rounds. Never returns undefined:
   // if filtering would empty the pool it keeps the unfiltered pool, and if the
   // selection itself is empty it returns null for the caller to handle.
@@ -172,6 +172,56 @@
     return result;
   }
 
+  // ---- session summaries / game-facing labels ----
+
+  function sessionTier(percentage) {
+    const pct = clampPct(Number(percentage));
+    if (pct >= 90) return { label: "ACE", className: "ace", celebration: "full" };
+    if (pct >= 75) return { label: "SHARP", className: "sharp", celebration: "mini" };
+    if (pct >= 50) return { label: "STEADY", className: "steady", celebration: "none" };
+    return { label: "MISSED", className: "missed", celebration: "none" };
+  }
+
+  function averageAccuracy(rounds, fallback) {
+    const rs = Array.isArray(rounds) ? rounds : [];
+    if (rs.length === 0) return clampPct(Number(fallback) || 0);
+    const sum = rs.reduce((acc, r) => acc + (Number(r && r.accuracy) || 0), 0);
+    return clampPct(Math.round(sum / rs.length));
+  }
+
+  function sessionCompetencies(rounds, fallback) {
+    const rs = Array.isArray(rounds) ? rounds : [];
+    const result = {};
+    ["checklist", "instruments", "atc", "fault"].forEach(key => {
+      result[key] = averageAccuracy(rs.filter(r => r && r.module === key), fallback);
+    });
+    return result;
+  }
+
+  function sessionModuleAccuracy(rounds) {
+    const rs = Array.isArray(rounds) ? rounds : [];
+    const result = {};
+    ["checklist", "instruments", "atc", "fault"].forEach(key => {
+      const modRounds = rs.filter(r => r && r.module === key);
+      if (modRounds.length > 0) result[key] = averageAccuracy(modRounds, 0);
+    });
+    return result;
+  }
+
+  function nextDailyStreak(lastPlayedDate, currentStreak, today) {
+    const current = Math.max(0, Math.floor(Number(currentStreak) || 0));
+    const todayDate = today ? new Date(today) : new Date();
+    if (!Number.isFinite(todayDate.getTime())) return Math.max(1, current);
+    const todayOnly = new Date(todayDate.toDateString());
+    if (!lastPlayedDate) return 1;
+    const lastDate = new Date(lastPlayedDate);
+    if (!Number.isFinite(lastDate.getTime())) return 1;
+    const lastOnly = new Date(lastDate.toDateString());
+    const diffDays = Math.round((todayOnly - lastOnly) / 86400000);
+    if (diffDays === 0) return Math.max(1, current);
+    if (diffDays === 1) return current + 1;
+    return 1;
+  }
   // ---- randomness / data generation ----
 
   // Pure Fisher–Yates: returns a new shuffled array, leaving the input intact.
@@ -323,6 +373,11 @@
     faultAccuracy,
     sessionGrade,
     competencyAverages,
+    sessionTier,
+    averageAccuracy,
+    sessionCompetencies,
+    sessionModuleAccuracy,
+    nextDailyStreak,
     shuffle,
     pickUnused,
     generateChecklist,

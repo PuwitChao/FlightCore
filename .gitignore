@@ -15,3 +15,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Generated runtime config (copy config.example.js locally)
+config.js

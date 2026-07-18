@@ -1318,11 +1318,11 @@ body[data-theme="mono"] .keypad-btn.action.enter:active {
   letter-spacing: 0.8px;
 }
 
-.debrief-rating.proficient { color: var(--success-emerald); }
-.debrief-rating.satisfactory { color: var(--accent-blue); }
-.debrief-rating.remedial { color: var(--accent-amber); }
+.debrief-rating.ace { color: var(--success-emerald); }
+.debrief-rating.sharp { color: var(--accent-blue); }
+.debrief-rating.steady { color: var(--accent-amber); }
 .debrief-rating.warning { color: var(--accent-amber); }
-.debrief-rating.unacceptable { color: var(--error-rose); }
+.debrief-rating.missed { color: var(--error-rose); }
 
 .debrief-table-container {
   border: 1px solid var(--border-subtle);
@@ -2077,19 +2077,19 @@ body[data-theme="light"] .log-entry-row {
   text-transform: uppercase;
 }
 
-.log-entry-badge.perfect, .log-entry-badge.proficient {
+.log-entry-badge.perfect, .log-entry-badge.ace {
   background: var(--success-bg);
   color: var(--success-emerald);
   border: 1px solid var(--success-border);
 }
 
-.log-entry-badge.satisfactory, .log-entry-badge.warning {
+.log-entry-badge.sharp, .log-entry-badge.warning {
   background: var(--warning-bg);
   color: var(--accent-amber);
   border: 1px solid var(--warning-border);
 }
 
-.log-entry-badge.remedial, .log-entry-badge.unacceptable {
+.log-entry-badge.steady, .log-entry-badge.missed {
   background: var(--error-bg);
   color: var(--error-rose);
   border: 1px solid var(--error-border);
@@ -2166,10 +2166,10 @@ body[data-theme="light"] .calendar-cell {
   box-shadow: 0 0 0 1px var(--accent-blue);
 }
 
-.calendar-cell.cal-proficient   { background: var(--success-emerald); border-color: transparent; }
-.calendar-cell.cal-satisfactory { background: rgba(52, 199, 89, 0.35); border-color: transparent; }
-.calendar-cell.cal-remedial     { background: rgba(255, 149, 0, 0.45); border-color: transparent; }
-.calendar-cell.cal-unacceptable { background: rgba(255, 59, 48, 0.3); border-color: transparent; }
+.calendar-cell.cal-ace   { background: var(--success-emerald); border-color: transparent; }
+.calendar-cell.cal-sharp { background: rgba(52, 199, 89, 0.35); border-color: transparent; }
+.calendar-cell.cal-steady     { background: rgba(255, 149, 0, 0.45); border-color: transparent; }
+.calendar-cell.cal-missed { background: rgba(255, 59, 48, 0.3); border-color: transparent; }
 
 /* --- HISTORY TABS --- */
 .history-tab-row {
@@ -2199,4 +2199,52 @@ body[data-theme="light"] .calendar-cell {
   background: var(--bg-card);
   color: var(--accent-blue);
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* --- ACCESSIBILITY AND ENVIRONMENT AFFORDANCES --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.env-badge {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 3000;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--accent-amber);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+button:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .confetti-container {
+    display: none !important;
+  }
 }

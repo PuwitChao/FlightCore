@@ -1,5 +1,5 @@
 // bump version string to bust cache on new deployments
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const CACHE_NAME = `flightcore-${CACHE_VERSION}`;
 const FONT_CACHE = `flightcore-fonts-${CACHE_VERSION}`;
 
@@ -9,7 +9,8 @@ const ASSETS = [
   "./core.js",
   "./app.js",
   "./styles.css",
-  "./manifest.json"
+  "./manifest.json",
+  "./config.example.js"
 ];
 
 self.addEventListener("install", (e) => {
@@ -32,6 +33,11 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
 
   const url = new URL(e.request.url);
+
+  if (url.pathname.endsWith("/config.js") || url.pathname.includes("/api/") || url.hostname.includes("supabase.co") || url.hostname.includes("stripe.com") || url.hostname.includes("plausible.io") || url.hostname.includes("posthog.")) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
 
   // Stale-while-revalidate for Google Fonts (serves cached font instantly, updates in background)
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {

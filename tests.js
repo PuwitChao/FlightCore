@@ -207,6 +207,34 @@
     assertDeep(FC.competencyAverages(hist), { checklist: 50, instruments: 50, atc: 50, fault: 50 });
   });
 
+
+  test("sessionTier: maps score bands to game labels", () => {
+    assertDeep(FC.sessionTier(95), { label: "ACE", className: "ace", celebration: "full" });
+    assertDeep(FC.sessionTier(80), { label: "SHARP", className: "sharp", celebration: "mini" });
+    assertDeep(FC.sessionTier(60), { label: "STEADY", className: "steady", celebration: "none" });
+    assertDeep(FC.sessionTier(10), { label: "MISSED", className: "missed", celebration: "none" });
+  });
+
+  test("sessionCompetencies: per-module averages with fallback", () => {
+    const rounds = [
+      { module: "checklist", accuracy: 100 },
+      { module: "checklist", accuracy: 50 },
+      { module: "atc", accuracy: 25 }
+    ];
+    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80 });
+  });
+
+  test("sessionModuleAccuracy: only includes played modules", () => {
+    assertDeep(FC.sessionModuleAccuracy([{ module: "fault", accuracy: 100 }, { module: "fault", accuracy: 50 }]), { fault: 75 });
+  });
+
+  test("nextDailyStreak: same, next, and missed day behavior", () => {
+    assertEqual(FC.nextDailyStreak(null, 0, "2026-07-17"), 1);
+    assertEqual(FC.nextDailyStreak("2026-07-17", 3, "2026-07-17"), 3);
+    assertEqual(FC.nextDailyStreak("2026-07-16", 3, "2026-07-17"), 4);
+    assertEqual(FC.nextDailyStreak("2026-07-10", 3, "2026-07-17"), 1);
+  });
+
   // ==========================================
   // shuffle
   // ==========================================

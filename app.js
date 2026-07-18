@@ -248,6 +248,57 @@ function safeStorageSet(key, value) {
   }
 }
 
+
+const APP_CONFIG = Object.freeze(Object.assign({
+  APP_ENV: "local",
+  TELEMETRY_ENABLED: false,
+  TELEMETRY_ENDPOINT: ""
+}, window.FlightCoreConfig || {}));
+
+function validateRuntimeConfig() {
+  if (APP_CONFIG.APP_ENV === "production") {
+    const stripeKey = String(APP_CONFIG.STRIPE_PUBLISHABLE_KEY || "");
+    const supabaseUrl = String(APP_CONFIG.SUPABASE_URL || "");
+    if (stripeKey.startsWith("pk_test_") || /localhost|127\.0\.0\.1/i.test(supabaseUrl)) {
+      handleGlobalError(new Error("Production runtime config is using a non-production service key or URL."));
+      return false;
+    }
+  }
+  return true;
+}
+
+function updateEnvironmentBadge() {
+  const badge = document.getElementById("environment-badge");
+  if (!badge) return;
+  const env = APP_CONFIG.APP_ENV || "local";
+  if (env === "production") {
+    badge.hidden = true;
+    return;
+  }
+  badge.textContent = env.toUpperCase();
+  badge.hidden = false;
+}
+
+const Telemetry = {
+  isEnabled() {
+    return APP_CONFIG.TELEMETRY_ENABLED === true && localStorage.getItem("flightcore_telemetry_opt_out") !== "1";
+  },
+  setEnabled(enabled) {
+    safeStorageSet("flightcore_telemetry_opt_out", enabled ? "0" : "1");
+  },
+  emit(eventName, props = {}) {
+    if (!this.isEnabled() || !APP_CONFIG.TELEMETRY_ENDPOINT) return false;
+    const payload = JSON.stringify({ event: String(eventName || "unknown"), env: APP_CONFIG.APP_ENV || "local", ts: new Date().toISOString(), props });
+    try {
+      if (navigator.sendBeacon) return navigator.sendBeacon(APP_CONFIG.TELEMETRY_ENDPOINT, new Blob([payload], { type: "application/json" }));
+      fetch(APP_CONFIG.TELEMETRY_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch(() => {});
+      return true;
+    } catch (e) {
+      console.warn("Flight Core: telemetry emit failed.", e);
+      return false;
+    }
+  }
+};
 // ==========================================
 // 4. LEVEL & MODULE CONTROLS
 // ==========================================
@@ -1309,6 +1360,18 @@ function submitTelemetry() {
     blindspot: discrepancyLogItem
   };
   roundByRoundHistory.push(rndResult);
+  Telemetry.emit("module_completed", {
+    round: sessionRound,
+    module: activeModule,
+    grade,
+    accuracy,
+    score: addedPoints,
+    streak,
+    level
+  });
+  if (streak > 0 && streak === sessionMaxStreak) {
+    Telemetry.emit("streak_extended", { streak, round: sessionRound, module: activeModule });
+  }
   
   // Display immediate feedback screen
   setupFeedbackScreen(rndResult);
@@ -1326,13 +1389,13 @@ function setupFeedbackScreen(res) {
   
   if (res.grade === "perfect") {
     ratingEl.textContent = "PERFECT SUCCESS";
-    ratingEl.className = "debrief-rating proficient";
+    ratingEl.className = "debrief-rating ace";
     verdictCard.style.borderColor = "var(--success-border)";
     verdictCard.style.backgroundColor = "var(--success-bg)";
     scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK INCREMENTED)`;
   } else if (res.grade === "good") {
     ratingEl.textContent = `GREAT RECALL (${res.accuracy}%)`;
-    ratingEl.className = "debrief-rating proficient";
+    ratingEl.className = "debrief-rating ace";
     verdictCard.style.borderColor = "var(--success-border)";
     verdictCard.style.backgroundColor = "var(--success-bg)";
     scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK INCREMENTED!)`;
@@ -1344,7 +1407,7 @@ function setupFeedbackScreen(res) {
     scoreAdded.textContent = `+${res.score.toLocaleString()} PTS (STREAK SAVED!)`;
   } else {
     ratingEl.textContent = `FAILED (${res.accuracy}%)`;
-    ratingEl.className = "debrief-rating unacceptable";
+    ratingEl.className = "debrief-rating missed";
     verdictCard.style.borderColor = "var(--error-border)";
     verdictCard.style.backgroundColor = "var(--error-bg)";
     scoreAdded.textContent = "+0 PTS (STREAK RESET)";
@@ -1392,40 +1455,25 @@ document.getElementById("btn-submit-test").addEventListener("click", submitTelem
 function finishSession() {
   if (roundByRoundHistory.length === 0) return;
   const percentage = FlightCore.sessionGrade(roundByRoundHistory);
-  
-  // Tier designations mapping
-  let tier = "UNACCEPTABLE";
-  let tierClass = "unacceptable";
-  if (percentage >= 90) {
-    tier = "PROFICIENT";
-    tierClass = "proficient";
-    launchConfetti();
-  } else if (percentage >= 75) {
-    tier = "SATISFACTORY";
-    tierClass = "satisfactory";
-    launchMiniConfetti();
-  } else if (percentage >= 50) {
-    tier = "REMEDIAL";
-    tierClass = "remedial";
-  }
-  
-  // Score display
+  const tierInfo = FlightCore.sessionTier(percentage);
+
+  if (tierInfo.celebration === "full") launchConfetti();
+  else if (tierInfo.celebration === "mini") launchMiniConfetti();
+
   document.getElementById("debrief-score").textContent = sessionScore.toLocaleString();
   document.getElementById("debrief-percentage").textContent = `${percentage}% ACCURACY`;
-  
+
   const ratingLabel = document.getElementById("debrief-rating-label");
-  ratingLabel.textContent = tier;
-  ratingLabel.className = "debrief-rating " + tierClass;
-  
-  // Construct breakdown table
+  ratingLabel.textContent = tierInfo.label;
+  ratingLabel.className = "debrief-rating " + tierInfo.className;
+
   const tbody = document.getElementById("debrief-table-rows");
   tbody.innerHTML = "";
-
   const bestScore = Math.max(...roundByRoundHistory.map(r => r.score));
 
   roundByRoundHistory.forEach(r => {
     const tr = document.createElement("tr");
-    let resultText = "FAIL";
+    let resultText = "MISS";
     let resultColor = "var(--error-rose)";
 
     if (r.grade === "perfect") {
@@ -1440,13 +1488,11 @@ function finishSession() {
       resultColor = "var(--accent-amber)";
     } else {
       tr.className = "incorrect-row";
-      resultText = `FAIL (${r.accuracy}%)`;
+      resultText = `MISS (${r.accuracy}%)`;
       resultColor = "var(--error-rose)";
     }
 
-    if (r.score === bestScore && bestScore > 0) {
-      tr.classList.add("best-round");
-    }
+    if (r.score === bestScore && bestScore > 0) tr.classList.add("best-round");
 
     tr.innerHTML = `
       <td>${String(r.round).padStart(2, "0")}</td>
@@ -1456,16 +1502,14 @@ function finishSession() {
     `;
     tbody.appendChild(tr);
   });
-  
-  // Collect blindspots
+
   const blindspots = roundByRoundHistory.filter(r => !r.correct && r.blindspot).map(r => r.blindspot);
   const blindspotCard = document.getElementById("debrief-blindspots");
   const blindspotList = document.getElementById("debrief-blindspot-list");
-  
+
   if (blindspots.length > 0) {
     blindspotCard.style.display = "block";
     blindspotList.innerHTML = "";
-    // Unique list
     [...new Set(blindspots)].forEach(b => {
       const li = document.createElement("li");
       li.textContent = b;
@@ -1474,80 +1518,35 @@ function finishSession() {
   } else {
     blindspotCard.style.display = "none";
   }
-  
-  // Calculate module-specific competencies for the Pilot Logbook
-  const checklistRounds = roundByRoundHistory.filter(r => r.module === "checklist");
-  const instrumentsRounds = roundByRoundHistory.filter(r => r.module === "instruments");
-  const atcRounds = roundByRoundHistory.filter(r => r.module === "atc");
-  const faultRounds = roundByRoundHistory.filter(r => r.module === "fault");
-  
-  const getAvgAcc = (rounds, defVal) => {
-    if (rounds.length === 0) return defVal;
-    return Math.round(rounds.reduce((sum, r) => sum + r.accuracy, 0) / rounds.length);
-  };
-  
-  const compsData = {
-    checklist: getAvgAcc(checklistRounds, percentage),
-    instruments: getAvgAcc(instrumentsRounds, percentage),
-    atc: getAvgAcc(atcRounds, percentage),
-    fault: getAvgAcc(faultRounds, percentage)
-  };
 
-  // Compute per-module accuracy for this session
-  const moduleAccuracy = {};
-  ["checklist", "instruments", "atc", "fault"].forEach(mod => {
-    const rounds = roundByRoundHistory.filter(r => r.module === mod);
-    if (rounds.length > 0) {
-      moduleAccuracy[mod] = Math.round(rounds.reduce((s, r) => s + r.accuracy, 0) / rounds.length);
-    }
-  });
+  const compsData = FlightCore.sessionCompetencies(roundByRoundHistory, percentage);
+  const moduleAccuracy = FlightCore.sessionModuleAccuracy(roundByRoundHistory);
 
-  // Update daily training streak
   const todayStr = new Date().toDateString();
-  const lastTrainedStr = localStorage.getItem("flightcore_last_trained");
-  if (!lastTrainedStr) {
-    dailyStreak = 1;
-  } else {
-    const lastDate = new Date(lastTrainedStr);
-    const today = new Date(todayStr);
-    const diffDays = Math.round((today - new Date(lastDate.toDateString())) / 86400000);
-    if (diffDays === 0) {
-      // Same day — streak unchanged
-    } else if (diffDays === 1) {
-      dailyStreak += 1;
-    } else {
-      dailyStreak = 1;
-    }
-  }
-  safeStorageSet("flightcore_last_trained", todayStr);
+  const lastPlayedStr = localStorage.getItem("flightcore_last_played") || localStorage.getItem("flightcore_last_trained");
+  dailyStreak = FlightCore.nextDailyStreak(lastPlayedStr, dailyStreak, todayStr);
+  safeStorageSet("flightcore_last_played", todayStr);
   safeStorageSet("flightcore_daily_streak", dailyStreak);
 
-  // Save session record to global history in localStorage
   const sessionRecord = {
     date: new Date().toISOString(),
     score: sessionScore,
     percentage: percentage,
-    tier: tier,
+    tier: tierInfo.label,
     maxLevel: level,
     maxStreak: sessionMaxStreak,
     competencies: compsData,
     moduleAccuracy: moduleAccuracy
   };
-  // Personal-best detection (compare against all previous sessions, not this one)
-  const previousBest = globalHistory.length > 0
-    ? Math.max(...globalHistory.map(h => h.percentage))
-    : -1;
 
+  const previousBest = globalHistory.length > 0 ? Math.max(...globalHistory.map(h => h.percentage)) : -1;
   globalHistory.push(sessionRecord);
-  // Cap history at 30 items
   if (globalHistory.length > 30) globalHistory.shift();
   safeStorageSet("flightcore_history", JSON.stringify(globalHistory));
 
+  Telemetry.emit("session_finished", { rounds: roundByRoundHistory.length, score: sessionScore, accuracy: percentage, tier: tierInfo.label, maxStreak: sessionMaxStreak });
   showScreen("screen-debrief");
-
-  if (percentage > previousBest && previousBest >= 0) {
-    showPersonalBestBanner();
-  }
+  if (percentage > previousBest && previousBest >= 0) showPersonalBestBanner();
 }
 
 function launchConfetti() {
@@ -1689,6 +1688,12 @@ function initSession() {
   usedChecklistIndices = [];
   usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
 
+  Telemetry.emit("session_started", {
+    sessionLength,
+    startingStreak,
+    timerMultiplier,
+    selectedModules: selectedModules.slice()
+  });
   startRound();
 }
 
@@ -1821,16 +1826,16 @@ function renderHistoryChart() {
 }
 
 // Initial Home Screen Stats Render
-function renderTrainingCalendar() {
-  const grid = document.getElementById("training-calendar");
+function renderPlayCalendar() {
+  const grid = document.getElementById("play-calendar");
   if (!grid) return;
 
-  const trainedDates = {};
+  const playedDates = {};
   globalHistory.forEach(h => {
     const d = h.date ? h.date.slice(0, 10) : null;
     if (!d) return;
-    if (!trainedDates[d] || h.percentage > trainedDates[d]) {
-      trainedDates[d] = h.percentage;
+    if (!playedDates[d] || h.percentage > playedDates[d]) {
+      playedDates[d] = h.percentage;
     }
   });
 
@@ -1841,7 +1846,7 @@ function renderTrainingCalendar() {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = d.toISOString().slice(0, 10);
-    const pct = trainedDates[key];
+    const pct = playedDates[key];
     const cell = document.createElement("div");
     cell.className = "calendar-cell";
     cell.title = `${key}${pct !== undefined ? `: ${pct}%` : ""}`;
@@ -1849,10 +1854,10 @@ function renderTrainingCalendar() {
     if (i === 0) cell.classList.add("today");
 
     if (pct !== undefined) {
-      if (pct >= 90) cell.classList.add("cal-proficient");
-      else if (pct >= 75) cell.classList.add("cal-satisfactory");
-      else if (pct >= 50) cell.classList.add("cal-remedial");
-      else cell.classList.add("cal-unacceptable");
+      if (pct >= 90) cell.classList.add("cal-ace");
+      else if (pct >= 75) cell.classList.add("cal-sharp");
+      else if (pct >= 50) cell.classList.add("cal-steady");
+      else cell.classList.add("cal-missed");
     }
     grid.appendChild(cell);
   }
@@ -1879,7 +1884,7 @@ function initHistoryTabs() {
         panelChart.style.display = "none";
         panelCal.style.display = "";
         if (label) label.textContent = "28 Days";
-        renderTrainingCalendar();
+        renderPlayCalendar();
       }
     });
   });
@@ -2157,6 +2162,7 @@ function initThemeSystem() {
       localStorage.removeItem("flightcore_history");
       localStorage.removeItem("flightcore_daily_streak");
       localStorage.removeItem("flightcore_last_trained");
+      localStorage.removeItem("flightcore_last_played");
       dailyStreak = 0;
       playSound("error");
       loadHomeStats();
@@ -2172,6 +2178,7 @@ function setTheme(themeVal) {
   if (!VALID_THEMES.includes(themeVal)) themeVal = "dark";
   document.body.setAttribute("data-theme", themeVal);
   safeStorageSet("flightcore_theme", themeVal);
+  Telemetry.emit("settings_changed", { setting: "theme", value: themeVal });
   
   // Update active class in options
   const optButtons = document.querySelectorAll(".theme-opt-btn[data-theme-val]");
@@ -2554,6 +2561,19 @@ function initHelpSystem() {
   }
 }
 
+function initTelemetryPreference() {
+  const toggle = document.getElementById("toggle-telemetry");
+  const status = document.getElementById("telemetry-status");
+  if (!toggle) return;
+  const configured = APP_CONFIG.TELEMETRY_ENABLED === true && Boolean(APP_CONFIG.TELEMETRY_ENDPOINT);
+  toggle.disabled = !configured;
+  toggle.checked = configured && Telemetry.isEnabled();
+  if (status) status.textContent = configured ? "Anonymous events enabled when checked." : "Telemetry endpoint is not configured.";
+  toggle.addEventListener("change", () => {
+    Telemetry.setEnabled(toggle.checked);
+    if (status) status.textContent = toggle.checked ? "Anonymous events enabled." : "Anonymous events disabled.";
+  });
+}
 function initStudyPauseSystem() {
   const btnStudyPause = document.getElementById("btn-study-pause");
   if (btnStudyPause) {
@@ -2706,34 +2726,35 @@ function initSegmentControl() {
   const contentLogbook = document.getElementById("segment-content-logbook");
   
   if (btnDeck && btnLogbook && contentDeck && contentLogbook) {
+    const setActivePanel = (showHistory) => {
+      btnDeck.classList.toggle("active", !showHistory);
+      btnLogbook.classList.toggle("active", showHistory);
+      btnDeck.setAttribute("aria-selected", showHistory ? "false" : "true");
+      btnLogbook.setAttribute("aria-selected", showHistory ? "true" : "false");
+      contentDeck.style.display = showHistory ? "none" : "flex";
+      contentLogbook.style.display = showHistory ? "flex" : "none";
+    };
+
     btnDeck.addEventListener("click", () => {
       playSound("click");
-      btnDeck.classList.add("active");
-      btnLogbook.classList.remove("active");
-      
-      contentDeck.style.display = "flex";
-      contentLogbook.style.display = "none";
+      setActivePanel(false);
     });
     
     btnLogbook.addEventListener("click", () => {
       playSound("click");
-      btnLogbook.classList.add("active");
-      btnDeck.classList.remove("active");
-      
-      contentDeck.style.display = "none";
-      contentLogbook.style.display = "flex";
-      renderPilotLogbook();
+      setActivePanel(true);
+      renderRunHistory();
     });
   }
 }
 
-function renderPilotLogbook() {
-  const totalFlights = globalHistory.length;
+function renderRunHistory() {
+  const totalRuns = globalHistory.length;
   
   // Log summary elements
-  document.getElementById("log-stat-flights").textContent = totalFlights;
+  document.getElementById("log-stat-runs").textContent = totalRuns;
   
-  if (totalFlights === 0) {
+  if (totalRuns === 0) {
     document.getElementById("log-stat-high").textContent = "0";
     document.getElementById("log-stat-avg").textContent = "0%";
     document.getElementById("log-stat-streak").textContent = "0";
@@ -2751,16 +2772,16 @@ function renderPilotLogbook() {
     document.getElementById("competency-fill-fault").style.width = "0%";
     
     document.getElementById("log-blindspot-card").style.display = "none";
-    document.getElementById("log-entries-count").textContent = "0 Flights";
+    document.getElementById("log-entries-count").textContent = "0 Runs";
     document.getElementById("logbook-scroll-list").innerHTML = `
-      <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 12px; width:100%;">NO PILOT LOGS AVAILABLE</div>
+      <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 12px; width:100%;">NO RUN HISTORY YET</div>
     `;
     return;
   }
   
   const scores = globalHistory.map(h => h.score);
   const maxScore = Math.max(...scores);
-  const averageGrade = Math.round(globalHistory.reduce((sum, h) => sum + h.percentage, 0) / totalFlights);
+  const averageGrade = Math.round(globalHistory.reduce((sum, h) => sum + h.percentage, 0) / totalRuns);
   const maxStreak = Math.max(...globalHistory.map(h => h.maxStreak || 0));
   
   document.getElementById("log-stat-high").textContent = maxScore.toLocaleString();
@@ -2802,13 +2823,13 @@ function renderPilotLogbook() {
     blindspotCard.style.display = "block";
     let advice = "";
     if (blindspot.code === "checklist") {
-      advice = "🎯 PROCEDURAL FOCUS REQUIRED: You are experiencing cognitive friction when ordering checklists under stress. Dedicate next session to 'Checklist' mode to practice procedural isolation.";
+      advice = "🎯 SEQUENCE FOCUS: You are experiencing cognitive friction when ordering checklists under stress. Try Checklist mode next and focus on ordering the sequence cleanly.";
     } else if (blindspot.code === "instruments") {
-      advice = "🎯 INSTRUMENT SCAN AUDIT: Numerical scanning and gauge recall is currently your weakest area. Slow down during the study window and practice sweep scanning from top-left to bottom-right.";
+      advice = "🎯 INSTRUMENT SCAN FOCUS: Numerical scanning and gauge recall is currently your weakest area. Slow down during the study window and practice sweep scanning from top-left to bottom-right.";
     } else if (blindspot.code === "atc") {
-      advice = "🎯 RADIO AUDIT CLEARANCE: Auditory clearances and Squawk digits are slip-sliding in memory. Pay extra close visual attention during the transmission briefing.";
+      advice = "🎯 RADIO MEMORY FOCUS: Auditory clearances and Squawk digits are slip-sliding in memory. Pay extra close visual attention during the transmission briefing.";
     } else if (blindspot.code === "fault") {
-      advice = "🎯 CRISIS PROTOCOL DIAGNOSTIC: Association between emergency symptoms and isolations needs work. Study symptom protocols carefully during emergency briefings.";
+      advice = "🎯 SYSTEMS PUZZLE FOCUS: Matching symptoms to systems is currently your lowest area. Slow down during the next fault briefing and look for pattern cues.";
     }
     blindspotMsg.textContent = advice;
   } else {
@@ -2819,24 +2840,24 @@ function renderPilotLogbook() {
   const logList = document.getElementById("logbook-scroll-list");
   logList.innerHTML = "";
   
-  document.getElementById("log-entries-count").textContent = `${totalFlights} Flights`;
+  document.getElementById("log-entries-count").textContent = `${totalRuns} Runs`;
   
   // Show recent entries first
   const chronologicalLog = [...globalHistory].reverse();
   chronologicalLog.forEach(h => {
     const dateFormatted = new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const ratingClass = h.tier ? h.tier.toLowerCase() : "proficient";
+    const ratingClass = FlightCore.sessionTier(h.percentage).className;
     
     const row = document.createElement("div");
     row.className = "log-entry-row";
     row.innerHTML = `
       <div class="log-entry-meta">
-        <span class="log-entry-title">FLIGHT DECK RUN</span>
+        <span class="log-entry-title">COCKPIT CHALLENGE RUN</span>
         <span class="log-entry-date">${escapeHTML(dateFormatted)}</span>
       </div>
       <div class="log-entry-score-details">
         <span class="log-entry-score">${escapeHTML(h.score.toLocaleString())} pts</span>
-        <span class="log-entry-badge ${escapeHTML(ratingClass)}">${escapeHTML(h.tier || 'PROFICIENT')}</span>
+        <span class="log-entry-badge ${escapeHTML(ratingClass)}">${escapeHTML(h.tier || FlightCore.sessionTier(h.percentage).label)}</span>
       </div>
     `;
     logList.appendChild(row);

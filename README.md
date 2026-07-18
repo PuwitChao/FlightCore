@@ -1,94 +1,52 @@
-# ✈️ Flight Core — Operational Memory Trainer
+# Flight Core - Cockpit Challenge Game
 
-[![Web Application](https://img.shields.io/badge/Platform-Web-blue?style=flat-square)](#)
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-None-emerald?style=flat-square)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blueviolet?style=flat-square)](#)
-[![Responsive: Mobile First](https://img.shields.io/badge/Responsive-Mobile%20First-cyan?style=flat-square)](#)
+Flight Core is a zero-build, offline-first browser game built around cockpit-inspired memory and pattern-recognition challenges. It is designed for quick sessions on mobile or desktop, with a dark glass UI, tactile controls, local history, and four aviation-flavored puzzle modules.
 
-**Flight Core** is a high-fidelity, high-pressure cognitive training application designed to sharpen the operational recall and scan patterns of pilots, aerospace engineers, and flight deck enthusiasts. It provides an offline-first, zero-dependency, ultra-lightweight environment optimized for mobile touchscreens.
+Flight Core is for entertainment only. It is not real aviation instruction, not regulatory study material, and not for real-world aviation use.
 
-The user interface has been engineered with **premium minimalist dark-mode aesthetics** (inspired by modern iOS dashboard layouts, Apple Weather, and clean financial systems) featuring translucent glassmorphic components, high-legibility Inter typography, and precise tactile responses.
+## Current App
 
----
+- Static PWA: no build step, no npm install, no backend required.
+- Four challenge modules: Checklist, Instruments, ATC, and Fault.
+- Dynamic difficulty: level increases with correct streaks.
+- Module rotation: avoids playing the same module three times in a row when possible.
+- Local history: scores, accuracy, streaks, module trends, and recent run history stay in localStorage.
+- Responsive layout: mobile, tablet, and widescreen desktop cockpit layouts.
 
-## 🕹️ Live Demo
-Deployable with absolute **zero compilation or build steps**. Run it locally or host it globally on **GitHub Pages** or **Cloudflare Pages** in seconds by pointing to the root repository folder.
+## Run Locally
 
----
+Open `index.html` directly in a browser, or serve the folder with any static file server.
 
-## 🧠 Training Modules
+```powershell
+node tests.js
+node --check app.js
+```
 
-Flight Core challenges different aspects of aviation-specific cognitive throughput in exactly **8-Round Cycles**:
+The test suite exercises the pure engine in `core.js` and currently runs without external dependencies.
 
-1. **📋 Checklist Sequencing**: Masters ordered procedure recall under load. Features dynamic sizing (3 to 6 tasks depending on your streak) and injects procedural distractors to prevent mechanical clicking.
-2. **🎛️ Instrument Scanning**: Simulates an active panel of 4 to 8 active gauges (IAS, ALT, N1, EGT, Fuel Flow, Oil Pressure, VIB, BAT). Viewports are briefly visible during briefing and completely blanked during test phases, requiring highly accurate numerical recall.
-3. **🎙️ ATC Communications**: Exercises auditory/verbal data retention. Displays rapid, complex clearance transmissions consisting of Callsigns, Facilities, Freqs, and Squawks. Features a custom mobile-first numeric/text selector designed for high-speed touch interfaces.
-4. **⚠️ Emergency Diagnostics**: Sharpens crisis management. Simulates compound failure states requiring rapid association between Symptoms $\rightarrow$ Fault System Isolation $\rightarrow$ Action Response protocols.
+## Project Files
 
----
+- `index.html` - App markup, screens, modals, sidebars, and keypad panels.
+- `styles.css` - Theme tokens, responsive layout, animation, and accessibility affordances.
+- `core.js` - Pure game engine helpers: generation, scoring, streaks, summaries, and safe parsing.
+- `app.js` - DOM controller, session flow, localStorage persistence, telemetry stub, and UI events.
+- `sw.js` - Offline cache for local static assets with future API/config bypasses.
+- `tests.js` and `tests.html` - Zero-dependency engine tests.
+- `config.example.js` - Runtime config template. Copy to ignored `config.js` for real env values.
+- `landing/` - Static Phase 0 landing/waitlist scaffold.
 
-## ⚙️ Core Architecture & Mechanics
+## Roadmap Posture
 
-### 1. Dynamic Difficulty Scaling
-To maintain a high-quality cognitive training slope, the game engine automatically calculates your active difficulty level dynamically based on your correct streak:
+The repo is intentionally static-first. Future accounts, sync, analytics, and payments should be additive and environment-scoped through runtime config, Supabase, and Stripe only when retention justifies them. Real secrets belong in host/CI configuration, never in this repository.
 
-$$\text{Level} = 1 + \lfloor \frac{\text{Streak}}{2} \rfloor$$
+## Verification
 
-* Higher levels scale checklists (up to 6 elements), spawn more active instruments (up to 8 detailed gauges), shorten briefing study windows, and inject complex speed, heading, and wind parameters into ATC strings.
+Before wrapping up changes, run:
 
-### 2. Diverse Module Distribution ("No 3x Repeat" Rule)
-To prevent fatigue and guarantee robust training across all modules, the system implements an internal tracking filter. If a module is chosen twice consecutively, the game engine guarantees it will be filtered out on the third draw, ensuring a highly diverse training session.
+```powershell
+node --check app.js
+node --check core.js
+node tests.js
+```
 
-### 3. High-Fidelity Cockpit Alarm Glows
-Employs an aesthetic visual-haptic alert layer using dynamic, translucent border glows (emerald green for correct answers, high-contrast ruby red for errors) with an extended 1200ms cockpit fade animation. Completely silent by design for low-distraction cognitive training in public/mobile environments.
-
----
-
-## 📱 Visual Philosophy & Mobile Design
-
-* **True Black OLED Backgrounds (`#000000`)** - Deep, high-contrast, premium mobile visual foundation that conserves battery power on modern smartphones.
-* **Sleek Glassmorphic Elements** - Translucent card overlays utilizing deep blurs (`backdrop-filter: blur(20px)`) and microscopic border highlights (`rgba(255, 255, 255, 0.08)`).
-* **Inter Typography** - Beautiful sans-serif visual hierarchy built on font weights and precise line-heights, completely free of glowing CRT shadows or monospace noise.
-* **Strict Tactile Focus** - Button sizes and touch targets are locked to $\ge 48\text{dp}$ heights with dynamic active scale effects (`transform: scale(0.97)`) for simulated haptic response.
-
----
-
-## 🚀 GitHub Pages & Cloudflare Pages Setup
-
-Because Flight Core is built entirely on standard Web specs (Vanilla HTML5, modern CSS3 variables, and ES6 JS), it can be deployed to static hosting providers for free in less than a minute.
-
-### 1. Deploying to GitHub Pages
-1. Go to your repository on GitHub (`https://github.com/PuwitChao/FlightCore`).
-2. Click **Settings** $\rightarrow$ **Pages** (under the Code and automation section).
-3. Under **Build and deployment**:
-   * **Source**: Deploy from a branch
-   * **Branch**: Select `main` and path `/ (root)`
-4. Click **Save**. Within 30 seconds, your site will be live at `https://<YOUR_USERNAME>.github.io/FlightCore/`!
-
-### 2. Deploying to Cloudflare Pages (The Zero-Config Model)
-1. Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com/) and head to **Workers & Pages**.
-2. Click **Create Application** $\rightarrow$ **Pages** $\rightarrow$ **Connect to Git**.
-3. Select your `FlightCore` repository.
-4. Set up the Build Configuration:
-   * **Framework Preset**: None (Static site)
-   * **Build Command**: *Leave blank* (No build steps required!)
-   * **Build Output Directory**: `./` (Root directory contains your code assets)
-5. Click **Save and Deploy**. Cloudflare compiles your global edge CDN distribution instantly!
-
----
-
-## 📂 Project File Structure
-* [`index.html`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) - Structural framework, markup screens, tactile keypads, and Cupertino-style module selection interfaces.
-* [`styles.css`](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css) - Premium minimalist design tokens, responsive typography rules, glassmorphism overlays, custom animations (e.g., passcode-style shake), and iOS tactile button styles.
-* [`core.js`](core.js) - **Pure engine core**: side-effect-free game logic (RNG data generators, difficulty scaling, per-module accuracy scoring, "No 3x Repeat" module selection, competency analytics) with built-in fallbacks and safeguards. Exposed as `window.FlightCore` and unit-tested in isolation.
-* [`app.js`](app.js) - DOM glue and session controller: wires `core.js` into the live UI (screens, keypads, HUD, timers, debrief, pilot logbook) and persists state via a fail-safe `localStorage` wrapper.
-
-### 🧪 Testing
-The pure engine is covered by a **zero-dependency** test suite (no npm, no build):
-* [`tests.html`](tests.html) - open in any browser to see a green/red pass report.
-* [`tests.js`](tests.js) - the assertions; also runnable in a terminal with `node tests.js`.
-
----
-
-## 📜 License
-This project is licensed under the MIT License. Feel free to fork, adapt, and fly.
+For copy compliance, scan against the avoid-list maintained in `ROADMAP.md`.

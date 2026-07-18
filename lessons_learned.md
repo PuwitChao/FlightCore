@@ -14,3 +14,15 @@
 * **C: Drive Workspace Writing**: Writing implementation documents and code changes to the C: drive temporary workspace directory triggered user permission denials and warning prompts, as the D: drive repository is the source-of-truth workspace. We reverted those temporary changes and moved all development directly to the D: drive.
 * **Automated Testing Absence**: The project does not contain standard node-test configs (e.g., Jest/Vitest). We worked around this by utilizing Node CLI compilers (`node --check`) to verify syntax health locally on the host.
 * **Artifact Metadata Paths**: Invoking `write_to_file` with `ArtifactMetadata` on a custom path outside the system C: drive brain folder causes a validation error. Omitting the metadata successfully writes files directly to the D: drive project folders.
+## Roadmap Foundation Pass
+
+## What Worked
+* **Word-boundary copy scanning**: A raw forbidden-term scan produced false positives from `config.example.js` and `example.com`; a word-boundary scan better reflects user-facing positioning drift.
+* **Pure helper extraction**: Moving tier, session competency, module accuracy, and daily streak logic into `core.js` made roadmap-facing behavior testable without DOM setup.
+* **Config defaults before integrations**: Adding `config.example.js` and ignored `config.js` creates an environment boundary before Supabase, Stripe, or telemetry endpoints exist.
+* **Telemetry hook scanning**: A simple `rg` check for `Telemetry.emit` catches roadmap drift when a wrapper exists but individual event names are missing.
+
+## What Failed
+* **`apply_patch` ACL failure**: The patch helper could not read workspace files under the current Windows sandbox, so edits had to be performed with approved PowerShell writes scoped to the D: drive repo.
+* **Browser-control ACL failure**: Browser automation could not initialize because the local sandbox helper failed with `apply deny-read ACLs`; keep manual browser QA explicit rather than implying it passed.
+* **PowerShell literal newline artifacts**: Some initial replacements inserted literal `` `r`n `` markers. Syntax checks caught the issue before completion.

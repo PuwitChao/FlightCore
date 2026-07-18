@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Flight Core - Operational Memory Challenge</title>
+  <title>Flight Core - Cockpit Challenge Game</title>
+  <meta name="description" content="A cockpit-inspired memory and pattern-recognition challenge game for aviation and simulation enthusiasts.">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,6 +16,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="env-badge" id="environment-badge" hidden aria-live="polite"></div>
 
   <div class="terminal-frame">
     
@@ -26,7 +28,7 @@
           <button class="abort-btn" id="btn-session-abort" style="display: none;">← ABORT</button>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound">
+          <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound" aria-label="Toggle sound">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sound-icon">
               <!-- Injected via JS -->
             </svg>
@@ -84,22 +86,22 @@
     </header>
 
     <!-- 2. DYNAMIC VIEWPORT (60% Height) -->
-    <main class="viewport-content" id="main-viewport">
+    <main class="viewport-content" id="main-viewport" aria-live="polite">
       
       <!-- SCREEN 1: HOME/START SCREEN -->
       <section class="screen-container active" id="screen-home" style="display: flex; flex-direction: column;">
         
         <!-- Segment Control switch -->
-        <div class="segment-control" style="display: flex; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 4px; margin-bottom: 16px;">
-          <button class="segment-btn active" id="segment-btn-deck" style="flex: 1; border: none; background: var(--btn-neutral-bg); color: var(--text-primary); border-radius: var(--radius-sm); padding: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast);">FLIGHT DECK</button>
-          <button class="segment-btn" id="segment-btn-logbook" style="flex: 1; border: none; background: transparent; color: var(--text-muted); border-radius: var(--radius-sm); padding: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast);">PILOT LOGBOOK</button>
+        <div class="segment-control" role="tablist" aria-label="Home panels" style="display: flex; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 4px; margin-bottom: 16px;">
+          <button class="segment-btn active" id="segment-btn-deck" role="tab" aria-selected="true" aria-controls="segment-content-deck" style="flex: 1; border: none; background: var(--btn-neutral-bg); color: var(--text-primary); border-radius: var(--radius-sm); padding: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast);">FLIGHT DECK</button>
+          <button class="segment-btn" id="segment-btn-logbook" role="tab" aria-selected="false" aria-controls="segment-content-logbook" style="flex: 1; border: none; background: transparent; color: var(--text-muted); border-radius: var(--radius-sm); padding: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast);">RUN HISTORY</button>
         </div>
 
-        <!-- Segment Content: FLIGHT DECK (Simulator dashboard) -->
-        <div id="segment-content-deck" style="display: flex; flex-direction: column; width: 100%;">
+        <!-- Segment Content: FLIGHT DECK (challenge dashboard) -->
+        <div id="segment-content-deck" role="tabpanel" aria-labelledby="segment-btn-deck" style="display: flex; flex-direction: column; width: 100%;">
           <div class="terminal-card" style="margin-bottom: 12px;">
             <div class="terminal-card-header">
-              <span>Flight Deck Briefing</span>
+              <span>Cockpit Challenge Briefing</span>
               <span class="type-tag">Info</span>
             </div>
             <p style="font-size: 0.82rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 12px;">
@@ -112,7 +114,7 @@
 
           <!-- Home Screen Disclaimer -->
           <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; font-style: italic; margin-top: -6px; margin-bottom: 16px; text-align: center; border-left: 2px solid var(--border-subtle); padding-left: 8px;">
-            Flight Core is a cognitive challenge game. It is NOT a pilot training tool or FAA-approved procedural simulator. Do not use for real-world aviation.
+            Flight Core is a cockpit-inspired memory game. It is not real aviation instruction, not regulatory study material, and not for real-world aviation use.
           </p>
 
           <div class="home-stats-summary" id="home-stats-summary-viewport">
@@ -156,7 +158,7 @@
               </div>
             </div>
             <div id="history-panel-calendar" style="display: none;">
-              <div class="calendar-grid" id="training-calendar">
+              <div class="calendar-grid" id="play-calendar" aria-label="Recent play calendar">
                 <!-- JS injected -->
               </div>
             </div>
@@ -256,13 +258,13 @@
           </button>
         </div>
 
-        <!-- Segment Content: PILOT LOGBOOK (new panel) -->
-        <div id="segment-content-logbook" style="display: none; flex-direction: column; width: 100%;">
+        <!-- Segment Content: RUN HISTORY -->
+        <div id="segment-content-logbook" role="tabpanel" aria-labelledby="segment-btn-logbook" style="display: none; flex-direction: column; width: 100%;">
           
           <div class="home-stats-summary" style="margin-bottom: 16px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
             <div class="home-stat-box">
-              <span class="home-stat-num" id="log-stat-flights">0</span>
-              <span class="home-stat-label">Total Flights</span>
+              <span class="home-stat-num" id="log-stat-runs">0</span>
+              <span class="home-stat-label">Total Runs</span>
             </div>
             <div class="home-stat-box">
               <span class="home-stat-num" id="log-stat-high">0</span>
@@ -281,8 +283,8 @@
           <!-- Skill Competency Card -->
           <div class="terminal-card" style="margin-bottom: 16px;">
             <div class="terminal-card-header">
-              <span>Skill Competency Matrix</span>
-              <span class="type-tag" style="background-color: rgba(52, 199, 89, 0.1); color: var(--success-emerald);">Proficiency</span>
+              <span>Module Accuracy Matrix</span>
+              <span class="type-tag" style="background-color: rgba(52, 199, 89, 0.1); color: var(--success-emerald);">Accuracy</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: 14px;" id="competency-matrix-list">
               <!-- Checklist -->
@@ -341,11 +343,11 @@
           <!-- Flight Logs List Card -->
           <div class="terminal-card" style="margin-bottom: 0;">
             <div class="terminal-card-header">
-              <span>Flight Logbook Entries</span>
-              <span class="type-tag" id="log-entries-count">0 Flights</span>
+              <span>Challenge Run Entries</span>
+              <span class="type-tag" id="log-entries-count">0 Runs</span>
             </div>
             <div class="logbook-scroll-area" id="logbook-scroll-list" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-              <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 12px;">NO PILOT LOGS AVAILABLE</div>
+              <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 12px;">NO RUN HISTORY YET</div>
             </div>
           </div>
 
@@ -529,7 +531,7 @@
           <span style="font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">SESSION COMPLETED</span>
           <div style="font-size: 2rem; font-weight: 800; color: var(--accent-blue); margin: 6px 0;" id="debrief-score">09,450</div>
           <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;" id="debrief-percentage">92% ACCURACY</div>
-          <div class="debrief-rating proficient" id="debrief-rating-label">PROFICIENT</div>
+          <div class="debrief-rating ace" id="debrief-rating-label">ACE</div>
         </div>
 
         <div class="debrief-table-container" style="max-height: 120px; overflow-y: auto;">
@@ -570,7 +572,7 @@
 
         <!-- Debrief Screen Disclaimer -->
         <p style="font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 12px; margin-bottom: 0; font-style: italic;">
-          For recreational play only. Not real flight operations.
+          For entertainment only. Not for real aviation use.
         </p>
       </section>
 
@@ -582,7 +584,7 @@
       <div id="sidebar-static-panel" style="display: flex; flex-direction: column; gap: 14px; height: 100%;">
         <div class="terminal-card">
           <div class="terminal-card-header">
-            <span>Telemetry Stats</span>
+            <span>Player Stats</span>
             <span class="type-tag">Live</span>
           </div>
           <div class="home-stats-summary side-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 0;">
@@ -708,7 +710,7 @@
       <div class="theme-selector-card">
         <div class="theme-selector-header">
           <span>Select Theme</span>
-          <button class="theme-close-btn" id="btn-theme-close">&times;</button>
+          <button class="theme-close-btn" id="btn-theme-close" aria-label="Close theme panel">&times;</button>
         </div>
         <div class="theme-options-grid">
           <button class="theme-opt-btn" data-theme-val="dark">
@@ -732,9 +734,18 @@
             <span class="theme-opt-label">Warm Sand</span>
           </button>
         </div>
+        <div class="terminal-card" style="margin-top: 12px; margin-bottom: 8px; padding: 12px;">
+          <label for="toggle-telemetry" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+            <span style="display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 0.75rem; color: var(--text-primary); font-weight: 700;">Anonymous product events</span>
+              <span id="telemetry-status" style="font-size: 0.64rem; color: var(--text-muted); line-height: 1.35;">Telemetry endpoint is not configured.</span>
+            </span>
+            <input type="checkbox" id="toggle-telemetry" aria-describedby="telemetry-status">
+          </label>
+        </div>
         <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 8px;" id="purge-section">
           <button class="theme-opt-btn" id="btn-clear-history" style="justify-content: center; color: var(--error-rose); border-color: var(--error-border); background: var(--error-bg); font-weight: 700;">
-            PURGE TELEMETRY HISTORY
+            PURGE RUN HISTORY
           </button>
           <div id="purge-confirm-row" style="display: none; gap: 8px; margin-top: 8px;">
             <p style="font-size: 0.68rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.4;">This will erase all session history permanently.</p>
@@ -752,7 +763,7 @@
       <div class="theme-selector-card" style="max-width: 380px;">
         <div class="theme-selector-header">
           <span>Flight Core Help & Keymap</span>
-          <button class="theme-close-btn" id="btn-help-close">&times;</button>
+          <button class="theme-close-btn" id="btn-help-close" aria-label="Close help panel">&times;</button>
         </div>
         <div style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.5; max-height: 280px; overflow-y: auto; padding-right: 4px;">
           <p style="margin-bottom: 12px; color: var(--text-primary); font-weight: 600;">Welcome to Flight Core. Use these physical key shortcuts or touch targets:</p>
@@ -791,7 +802,7 @@
           <div style="margin-top: 16px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
             <p style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px; font-size: 0.72rem;">DISCLAIMER & TERMS</p>
             <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0;">
-              Flight Core is a recreational cognitive recall game. It is for entertainment and brain-puzzle purposes only. The clearances, checklist procedures, and emergency diagnostics contained herein are stylized/randomized and are NOT accurate to any real aircraft type or FAA regulation. Do not use or reference in real aviation.
+              Flight Core is a recreational memory game. It is for entertainment and brain-puzzle purposes only. Clearances, checklist sequences, and fault scenarios are stylized and randomized. Do not use or reference them in real aviation.
             </p>
           </div>
         </div>
@@ -805,7 +816,7 @@
           <span style="color: var(--accent-amber); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">SESSION PAUSED</span>
         </div>
         <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 20px;">
-          Select telemetry action. Restarting instantly starts Round 1. Exiting terminates the training loop.
+          Select session action. Restarting instantly starts Round 1. Exiting returns to the home panel.
         </p>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button class="btn btn-primary btn-block" id="btn-abort-restart" style="min-height: 44px; padding: 10px 16px; background: var(--success-emerald); border-color: var(--success-border); color: #FFFFFF;">
@@ -874,7 +885,7 @@
         </div>
       </div>
       <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.45; text-align: center; margin-top: 8px; margin-bottom: 16px; font-style: italic;">
-        Disclaimer: For entertainment purposes only. Not real flight procedure.
+        Disclaimer: For entertainment only. Not for real aviation use.
       </p>
       <button class="btn btn-primary btn-block" id="btn-onboarding-dismiss" style="min-height: 48px;">
         BEGIN CHALLENGE
@@ -882,6 +893,8 @@
     </div>
   </div>
 
+  <script src="config.example.js"></script>
+  <script src="config.js"></script>
   <script src="core.js"></script>
   <script src="app.js"></script>
 </body>

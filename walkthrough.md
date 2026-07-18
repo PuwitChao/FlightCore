@@ -1,48 +1,57 @@
-# Widescreen Multi-Device UI Support - Walkthrough
+# FlightCore Roadmap Foundation Walkthrough
 
-We have successfully resolved the playability issues on PC/desktop devices by creating a premium, responsive multi-device console layout.
+This pass moved FlightCore from the prior widescreen UI milestone into the first roadmap foundation slice.
 
----
+## 1. Positioning Cleanup
 
-## Changes Implemented
+- Public copy now frames FlightCore as a cockpit-inspired challenge game.
+- README and manifest no longer position the app as a trainer, proficiency tool, education app, or logbook product.
+- In-app labels changed from pilot/logbook/proficiency language to run-history, accuracy, and challenge language.
 
-### 1. HTML Layout Upgrades
-- Wrapped challenge setup widgets in `.home-config-grid` inside [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) to allow structured grid layouts on widescreen monitors.
-- Expanded the static sidebar stats panel inside [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html) to display all 5 player statistics (High Score, Avg Grade, Total Sessions, Max Streak, and Day Streak) in a clean grid.
-- Assigned unique identifier IDs to the duplicate viewport statistics and history chart panels to target them for hiding on PC screens.
+## 2. Phase 0 Launch Scaffold
 
-### 2. Stylesheet Layout Redesign
-- Set up a three-tiered media query system in [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css):
-  - **Mobile (< 680px)**: Retains the original single-column phone interface, centering the UI.
-  - **Tablet (680px - 1023px)**: Retains the original 2-column layout (Viewport + Sidebar) where the virtual keypad overlays the sidebar when active.
-  - **Widescreen Desktop (>= 1024px)**: Introduces a dynamic 3-column cockpit console. When an input keypad is shown (using CSS `:has()`), the frame width expands from 1100px to 1320px, displaying the Viewport, virtual Keypad, and Telemetry Sidebar side-by-side.
-- Hid duplicate viewport stats cards (`#home-stats-summary-viewport` and `#home-history-card`) on PC screens since the sidebar displays them.
-- Formatted home configuration cards into a clean 2x2 grid layout and expanded frame heights to prevent cramped scrolling.
+- Added `landing/index.html` and `landing/styles.css` for a static waitlist page.
+- Added a visual cockpit-style preview, waitlist form placeholder with visitor-safe helper copy, and entertainment-only disclaimer.
+- Added runtime config defaults in `config.example.js`.
+- Added Phase 0 telemetry emits for session start, module completion, streak extension, session finish, and settings changes.
 
-### 3. JavaScript Telemetry Synchronization
-- Modified `updateHomeStats()` in [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js) to set values for the new sidebar indicators (`#side-stat-sessions`, `#side-stat-max-streak`, `#side-stat-daily-streak`) during initialization and profile loads.
-- Added corresponding fallback resets to `0` in case telemetry history is purged.
+## 3. Maintainability Split
 
----
+- Added pure helpers in `core.js`:
+  - `sessionTier()`
+  - `averageAccuracy()`
+  - `sessionCompetencies()`
+  - `sessionModuleAccuracy()`
+  - `nextDailyStreak()`
+- Updated `finishSession()` in `app.js` to use those helpers instead of reimplementing calculation logic inside DOM flow.
+- Added tests for the new helpers; `node tests.js` now reports 73/73.
 
-## Verification & Testing
+## 4. PWA and Security Preparation
 
-### 1. Automated Verification
-- Ran syntax checks on JavaScript files:
-  ```powershell
-  node --check app.js
-  ```
-  *Result: Syntax validation succeeded with no compilation warnings.*
-- Ran core engine tests:
-  ```powershell
-  node tests.js
-  ```
-  *Result: 69/69 passed successfully.*
+- Added ignored `config.js` boundary and committed `config.example.js` defaults.
+- Runtime config now has production guardrails for accidental test Stripe keys or local Supabase URLs.
+- Service worker cache was bumped to `v4` and future dynamic/config/API/vendor requests bypass the static cache.
 
-### 2. Manual Visual Verification
-- **Mobile View**: Verified layout is standard 440px wide, and stats are displayed inline.
-- **Tablet View**: Verified 2-column card layout with keypad overlay works as intended.
-- **PC Widescreen View**:
-  - The Home screen displays a clean 2x2 grid of configuration cards, and the duplicate stats panels are hidden.
-  - Telemetry sidebar displays High Score, Avg Grade, Sessions, Max Streak, and Day Streak.
-  - During a session, selecting a gauge or entering ATC details slides open the numeric/text keypad in the middle column while the live telemetry sidebar remains fully visible.
+## 5. Accessibility Foundations
+
+- Added tab roles and `aria-selected` state synchronization for the home segment control.
+- Added accessible labels for top control buttons and close buttons.
+- Added focus-visible styling and reduced-motion handling.
+- Added a visible non-production environment badge when `APP_ENV` is not production.
+
+## Verification
+
+```powershell
+node --check app.js
+node --check core.js
+node --check sw.js
+node tests.js
+```
+
+Result: all syntax checks passed, and engine tests passed at 73/73.
+
+A word-boundary scan for avoid-list positioning terms across `README.md`, `index.html`, `app.js`, `manifest.json`, `landing/`, and `core.js` returned no matches.
+
+A telemetry hook scan confirms `session_started`, `module_completed`, `streak_extended`, `session_finished`, and `settings_changed` emits are present.
+
+Manual browser QA remains open: browser-control setup was blocked in this Codex session by a Windows sandbox ACL error (`apply deny-read ACLs`).
