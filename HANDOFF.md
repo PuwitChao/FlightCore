@@ -1,13 +1,13 @@
 # Handoff: Aptitude Suite Closeout
 
-**Generated**: 2026-07-19 19:45 +07:00
+**Generated**: 2026-07-19 20:02 +07:00
 **Branch**: main
 **Status**: Ready for Review
 
 ## Loop Telemetry
 - **Active Subtask**: Aptitude suite usability correction
-- **Current Iteration**: Corrective patch verification and repository wrap-up
-- **Healing Actions Taken**: Used narrowly scoped escalated PowerShell reads/writes after the Windows sandbox repeatedly failed with `helper_unknown_error: apply deny-read ACLs`. Browser automation was attempted through Node REPL but failed before Playwright could load with the same ACL issue.
+- **Current Iteration**: Final pushed-state handoff
+- **Healing Actions Taken**: Used narrowly scoped escalated PowerShell reads/writes after the Windows sandbox repeatedly failed with `helper_unknown_error: apply deny-read ACLs`. Browser automation was attempted through Node REPL but failed before Playwright could load with the same ACL issue. Final status/log checks confirmed `main` is even with `origin/main`.
 
 ## Goal
 
@@ -34,6 +34,7 @@ Expand FlightCore from four cockpit-flavored recall modules into a broader aptit
 - [x] Fixed Wire Trace ambiguity by generating drawable route points in `core.js` and rendering a haloed active path from those points.
 - [x] Locked the Advanced Intercept prototype out of normal/default module selection until it is redesigned and manually QAed.
 - [x] Added Wire Trace route-geometry regression coverage; engine tests now pass at 85/85.
+- [x] Committed and pushed `4d96a69 Fix aptitude module usability regressions` to `origin/main`.
 
 ## Not Yet Done
 - [ ] Manually open `index.html` and complete visual QA across desktop, tablet, and mobile widths.
@@ -60,7 +61,7 @@ Expand FlightCore from four cockpit-flavored recall modules into a broader aptit
 ## Current State
 - **Working**: `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` all pass. Engine tests report `85/85 passed`. Touched code/UI files scan clean for non-ASCII glyph dependencies.
 - **Broken**: Automated browser QA is blocked by the Windows sandbox ACL error described above, not by a confirmed app runtime failure.
-- **Uncommitted Changes**: This corrective patch is expected to be committed and pushed by the current wrap-up request. If resuming later, run `git status --short` first.
+- **Uncommitted Changes**: None at the time of this final handoff update before the handoff/log-only wrap commit. `main` was even with `origin/main` at `4d96a69`.
 
 ## Files to Know
 | File | Why It Matters |
@@ -98,7 +99,7 @@ function generateIntercept(level, rng) { /* pure prototype scenario generator */
 ```
 
 ## Resume Instructions
-1. Run `git status --short` and confirm the closeout commit is present on `main`.
+1. Run `git status --short --branch` and confirm `main` is even with `origin/main`.
 2. Manually open `index.html` in a browser and complete the QA checklist in `task.md`.
 3. Keep Aero Intercept locked out of default rotation until it is redesigned with real continuous-control telemetry and manually QAed.
 4. For the next implementation sprint, add a Spatial module using `docs/aptitude_module_contract.md` before adding full 3D.
