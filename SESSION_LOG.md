@@ -30,3 +30,27 @@ Completed the aptitude-suite sprint implementation and closeout for FlightCore. 
 - Browser visual QA across desktop/tablet/mobile and all themes.
 - Manual keyboard, pointer, and touch QA for the new modules.
 - Aero Intercept continuous-control telemetry before default rotation.
+## 2026-07-19 19:45 +07:00 - Usability Correction Patch
+
+### Summary
+Fixed the unusable aptitude-suite surfaces reported from screenshots: corrupted onboarding glyphs, empty Target Scan study stimulus, ambiguous Wire Trace diagrams, and Advanced prototype appearing in normal flow.
+
+### Code Changes
+- Changed Wire Trace generation in `core.js` to emit explicit drawable route points tied to the answer mapping.
+- Updated Wire Trace rendering in `app.js` to draw a haloed blue active route with start/end terminal markers and clarify that crossings are overpasses, not junctions.
+- Updated Target Scan study rendering to show the actual generated grid instead of a blank prompt card.
+- Removed answer controls from Intercept during the study phase and locked the prototype out of normal/default module selection.
+- Replaced mojibake-prone onboarding icons and visible special glyphs with ASCII labels/text.
+- Added CSS for locked module cards, onboarding badges, clearer wire paths, and a stable Target Scan grid.
+- Added a Wire Trace regression test for drawable paths matching answer mappings.
+
+### Verification
+- `node --check app.js` passed.
+- `node --check core.js` passed.
+- `node --check sw.js` passed.
+- `node tests.js` passed: 85/85.
+- `rg -n "[^\\x00-\\x7F]" app.js core.js index.html styles.css tests.js` returned no matches.
+- `git diff --check` passed with normal CRLF warnings only.
+
+### Remaining Manual Work
+- Browser visual QA is still manual because browser automation remains blocked by the workspace ACL issue.

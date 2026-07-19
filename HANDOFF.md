@@ -1,12 +1,12 @@
 # Handoff: Aptitude Suite Closeout
 
-**Generated**: 2026-07-19 18:49 +07:00
+**Generated**: 2026-07-19 19:45 +07:00
 **Branch**: main
 **Status**: Ready for Review
 
 ## Loop Telemetry
-- **Active Subtask**: Aptitude suite sprint closeout
-- **Current Iteration**: Final verification and repository wrap-up
+- **Active Subtask**: Aptitude suite usability correction
+- **Current Iteration**: Corrective patch verification and repository wrap-up
 - **Healing Actions Taken**: Used narrowly scoped escalated PowerShell reads/writes after the Windows sandbox repeatedly failed with `helper_unknown_error: apply deny-read ACLs`. Browser automation was attempted through Node REPL but failed before Playwright could load with the same ACL issue.
 
 ## Goal
@@ -29,11 +29,16 @@ Expand FlightCore from four cockpit-flavored recall modules into a broader aptit
 - [x] Added compact Skill Family Map and Skill Family Debrief UI surfaces.
 - [x] Updated `README.md` for the new module catalog and verification flow.
 - [x] Ran final syntax, engine test, whitespace, and positioning-copy scans.
+- [x] Fixed corrupted onboarding glyphs by replacing emoji/special-symbol labels with ASCII badges.
+- [x] Fixed Target Scan study phase so the generated scan grid is visible before recall.
+- [x] Fixed Wire Trace ambiguity by generating drawable route points in `core.js` and rendering a haloed active path from those points.
+- [x] Locked the Advanced Intercept prototype out of normal/default module selection until it is redesigned and manually QAed.
+- [x] Added Wire Trace route-geometry regression coverage; engine tests now pass at 85/85.
 
 ## Not Yet Done
 - [ ] Manually open `index.html` and complete visual QA across desktop, tablet, and mobile widths.
 - [ ] Manually verify dark, light, mono, sage, and warm themes against the grouped catalog and new module screens.
-- [ ] Manually verify keyboard, pointer, and touch input paths for answer tiles and the optional Aero Intercept prototype.
+- [ ] Manually verify keyboard, pointer, and touch input paths for answer tiles. Aero Intercept remains locked out of normal selection.
 - [ ] Add real continuous-control telemetry for Aero Intercept: time-in-band, mean distance, false alarms, and missed prompts.
 - [ ] Add the first Spatial module, likely `Attitude Vector` or `Beacon Bearing`, after browser QA passes.
 
@@ -46,15 +51,16 @@ Expand FlightCore from four cockpit-flavored recall modules into a broader aptit
 | Decision | Rationale |
 |---|---|
 | Keep `core.js` as answer source of truth | Generators and scorers can be tested without DOM/SVG/canvas coupling. |
+| Store Wire Trace route geometry in generated data | The diagram must match the answer mapping; renderer-only geometry made crossings ambiguous. |
 | Exclude Aero Intercept from default selection | It is an Advanced prototype and still needs manual input/performance QA. |
 | Restrict Balance Bender to orange/green rule shapes for now | The displayed rule explains every generated answer, avoiding hidden-weight ambiguity. |
 | Reuse existing theme tokens and UI primitives | Preserves the cockpit/glass style and avoids inconsistent sample-app styling. |
 | Keep the app static-first | The current module set does not justify framework, backend, or 3D dependencies yet. |
 
 ## Current State
-- **Working**: `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` all pass. Engine tests report `84/84 passed`.
+- **Working**: `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` all pass. Engine tests report `85/85 passed`. Touched code/UI files scan clean for non-ASCII glyph dependencies.
 - **Broken**: Automated browser QA is blocked by the Windows sandbox ACL error described above, not by a confirmed app runtime failure.
-- **Uncommitted Changes**: This closeout is expected to be committed and pushed by the wrap-up request. If resuming later, run `git status --short` first.
+- **Uncommitted Changes**: This corrective patch is expected to be committed and pushed by the current wrap-up request. If resuming later, run `git status --short` first.
 
 ## Files to Know
 | File | Why It Matters |
@@ -78,7 +84,8 @@ const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "bala
 ```
 
 ```js
-const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => key !== "intercept");
+const PROTOTYPE_MODULE_KEYS = ["intercept"];
+const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => !PROTOTYPE_MODULE_KEYS.includes(key));
 let selectedModules = DEFAULT_SELECTED_MODULES.slice();
 ```
 
@@ -93,7 +100,7 @@ function generateIntercept(level, rng) { /* pure prototype scenario generator */
 ## Resume Instructions
 1. Run `git status --short` and confirm the closeout commit is present on `main`.
 2. Manually open `index.html` in a browser and complete the QA checklist in `task.md`.
-3. If visual QA passes, decide whether Aero Intercept should stay opt-in or become part of the default module rotation.
+3. Keep Aero Intercept locked out of default rotation until it is redesigned with real continuous-control telemetry and manually QAed.
 4. For the next implementation sprint, add a Spatial module using `docs/aptitude_module_contract.md` before adding full 3D.
 5. Re-run `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` after any changes.
 

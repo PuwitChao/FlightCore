@@ -1,5 +1,5 @@
-﻿// ==========================================
-// Flight Core â€” Zero-dependency test suite for the pure engine (core.js).
+// ==========================================
+// Flight Core - Zero-dependency test suite for the pure engine (core.js).
 // Runs in the browser (open tests.html) and under Node (`node tests.js`).
 // No build step, no npm, no frameworks.
 // ==========================================
@@ -26,16 +26,16 @@
   }
   function assertEqual(actual, expected, msg) {
     if (actual !== expected) {
-      throw new Error((msg || "not equal") + ` â€” expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+      throw new Error((msg || "not equal") + ` - expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
     }
   }
   function assertDeep(actual, expected, msg) {
     if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-      throw new Error((msg || "not deep-equal") + ` â€” expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+      throw new Error((msg || "not deep-equal") + ` - expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
     }
   }
   function assertNoThrow(fn, msg) {
-    try { fn(); } catch (e) { throw new Error((msg || "threw") + ` â€” ${e.message}`); }
+    try { fn(); } catch (e) { throw new Error((msg || "threw") + ` - ${e.message}`); }
   }
 
   // Deterministic, seedable PRNG (mulberry32) for reproducible generator tests.
@@ -129,7 +129,7 @@
     }
   });
   test("selectModule: empty filter result falls back (never undefined)", () => {
-    // Only one module selected and it is the repeated one â€” must still return it.
+    // Only one module selected and it is the repeated one - must still return it.
     const m = FC.selectModule(["checklist", "checklist"], ["checklist", "checklist"], seeded(3));
     assertEqual(m, "checklist");
   });
@@ -367,6 +367,27 @@
     assertEqual(FC.wireAccuracy(d.expected, d.expected), 100);
   });
 
+  test("generateWire: emits drawable paths that match answer mappings", () => {
+    const d = FC.generateWire(5, seeded(12));
+    assertEqual(d.paths.length, d.mappings.length);
+    d.paths.forEach(path => {
+      const mapping = d.mappings.find(m => m.start === path.start);
+      const startIdx = d.starts.indexOf(path.start);
+      const endIdx = d.ends.indexOf(path.end);
+      const startPoint = path.points[0];
+      const endPoint = path.points[path.points.length - 1];
+      assert(mapping, `missing mapping for ${path.start}`);
+      assertEqual(mapping.end, path.end);
+      assertEqual(startPoint.x, 12);
+      assertEqual(endPoint.x, 88);
+      assert(startIdx >= 0 && endIdx >= 0);
+      assert(path.points.length >= 4);
+    });
+    const queryPath = d.paths.find(path => path.start === d.queryStart);
+    assert(queryPath, "query path missing");
+    assertEqual(queryPath.end, d.expected);
+  });
+
   test("generateClearance: produces extended recall fields", () => {
     const d = FC.generateClearance(ATC, 5, seeded(12));
     ["callsign", "facility", "freq", "squawk", "altitude", "heading", "speed"].forEach(f => assert(d.expected[f]));
@@ -396,17 +417,17 @@
     const root = document.getElementById("results") || document.body;
     const summary = document.createElement("div");
     summary.className = "summary " + (failed === 0 ? "ok" : "fail");
-    summary.textContent = `${passed}/${results.length} passed` + (failed ? ` â€” ${failed} FAILED` : " â€” ALL GREEN");
+    summary.textContent = `${passed}/${results.length} passed` + (failed ? ` - ${failed} FAILED` : " - ALL GREEN");
     root.appendChild(summary);
     results.forEach(r => {
       const row = document.createElement("div");
       row.className = "row " + (r.ok ? "pass" : "failrow");
-      row.textContent = (r.ok ? "âœ“ " : "âœ— ") + r.name + (r.ok ? "" : "  â†’  " + r.error);
+      row.textContent = (r.ok ? "PASS " : "FAIL ") + r.name + (r.ok ? "" : "  ->  " + r.error);
       root.appendChild(row);
     });
   } else {
     results.forEach(r => {
-      if (!r.ok) console.error("âœ— " + r.name + "  â†’  " + r.error);
+      if (!r.ok) console.error("FAIL " + r.name + "  ->  " + r.error);
     });
     console.log(`\nFlight Core engine tests: ${passed}/${results.length} passed${failed ? `, ${failed} FAILED` : ""}`);
     if (typeof process !== "undefined" && process.exit) process.exit(failed === 0 ? 0 : 1);

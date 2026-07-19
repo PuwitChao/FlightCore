@@ -505,7 +505,7 @@ body[data-theme="warm"] .theme-opt-btn {
   transform: scale(0.98);
 }
 
-/* Unified active selected-theme state — accent border + per-theme tint for all themes */
+/* Unified active selected-theme state - accent border + per-theme tint for all themes */
 .theme-opt-btn.active {
   border-color: var(--accent-blue);
   background-color: var(--select-active-bg);
@@ -513,7 +513,7 @@ body[data-theme="warm"] .theme-opt-btn {
 
 /* Clear, unambiguous selected affordance on the active theme */
 .theme-opt-btn.active .theme-opt-label::after {
-  content: "✓";
+  content: " selected";
   margin-left: 8px;
   font-weight: 800;
   color: var(--accent-blue);
@@ -1411,7 +1411,7 @@ body[data-theme="light"] .debrief-table tr.warning-row {
 }
 
 .blindspot-list li::before {
-  content: "•";
+  content: "-";
   color: var(--error-rose);
   display: inline-block;
   width: 12px;
@@ -2303,12 +2303,37 @@ input:focus-visible {
   letter-spacing: 0.4px;
 }
 
+.module-select-card.is-disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.module-select-card.is-disabled .select-indicator {
+  background: var(--text-muted);
+  box-shadow: none;
+}
+
 .challenge-mode-wrap {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--border-subtle);
 }
 
+.onboarding-code-badge {
+  flex: 0 0 auto;
+  min-width: 42px;
+  padding: 3px 6px;
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-sm);
+  color: var(--accent-blue);
+  background: var(--select-active-bg);
+  font-size: 0.56rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  letter-spacing: 0.35px;
+}
 .compact-header {
   margin-bottom: 10px;
   padding-bottom: 0;
@@ -2461,12 +2486,36 @@ body[data-theme="warm"] .balance-panel {
   fill: none;
   stroke: var(--text-secondary);
   stroke-width: 0.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
+}
+
+.wire-path.wire-muted {
+  opacity: 0.42;
+}
+
+.wire-path.wire-active-halo {
+  stroke: var(--bg-input);
+  stroke-width: 5.2;
+  opacity: 0.98;
 }
 
 .wire-path.wire-active {
   stroke: var(--accent-blue);
-  stroke-width: 1.45;
+  stroke-width: 2.1;
+}
+
+.wire-terminal {
+  fill: var(--accent-blue);
+  stroke: var(--text-primary);
+  stroke-width: 0.8;
+}
+
+.wire-terminal.wire-end {
+  fill: var(--bg-input);
+  stroke: var(--accent-blue);
+  stroke-width: 1.3;
 }
 
 .wire-label {
@@ -2480,14 +2529,21 @@ body[data-theme="warm"] .balance-panel {
   fill: var(--accent-blue);
 }
 
+.target-board {
+  min-height: 0;
+}
+
 .target-grid {
   display: grid;
-  gap: 7px;
+  gap: 8px;
+  width: min(100%, 360px);
+  margin: 4px auto 0;
 }
 
 .target-cell {
   aspect-ratio: 1;
   min-width: 0;
+  min-height: 34px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   display: flex;

@@ -145,7 +145,7 @@ const INSTRUMENT_METRIC_POOLS = [
   { label: "IAS", name: "Indicated Airspeed", min: 100, max: 340, unit: "KT", color: "#4895EF" },
   { label: "ALT", name: "Altimeter", min: 1500, max: 12000, unit: "FT", color: "#E2953C" },
   { label: "N1", name: "Fan Speed RPM", min: 45, max: 98, unit: "%", color: "#4A7C59" },
-  { label: "EGT", name: "Exhaust Gas Temp", min: 200, max: 850, unit: "°C", color: "#A54657" },
+  { label: "EGT", name: "Exhaust Gas Temp", min: 200, max: 850, unit: "C", color: "#A54657" },
   { label: "FF", name: "Fuel Flow", min: 1200, max: 5800, unit: "PPH", color: "#9D4EDD" },
   { label: "OIL", name: "Oil Pressure", min: 25, max: 95, unit: "PSI", color: "#56CFE1" },
   { label: "VIB", name: "Engine Vibration", min: 0.2, max: 4.8, unit: "MIL", color: "#70E000" },
@@ -197,7 +197,8 @@ let level = 1;
 let sessionMaxStreak = 0;
 let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
-const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => key !== "intercept");
+const PROTOTYPE_MODULE_KEYS = ["intercept"];
+const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => !PROTOTYPE_MODULE_KEYS.includes(key));
 let selectedModules = DEFAULT_SELECTED_MODULES.slice();
 let challengeMode = localStorage.getItem("flightcore_challenge_mode") || "mock";
 let sessionLength = FlightCore.safeNumber(localStorage.getItem("flightcore_session_length"), 8, { min: 1, max: 50 });
@@ -218,7 +219,7 @@ let focusedInputId = null;
 let activeKeypadBuffer = "";
 
 let roundByRoundHistory = []; // Session history
-// Corrupt or tampered storage must never crash boot — safeParse guarantees an array.
+// Corrupt or tampered storage must never crash boot - safeParse guarantees an array.
 let globalHistory = FlightCore.safeParse(localStorage.getItem("flightcore_history"), []);
 let dailyStreak = FlightCore.safeNumber(localStorage.getItem("flightcore_daily_streak"), 0, { min: 0 });
 
@@ -240,13 +241,13 @@ function triggerHaptic(type) {
 }
 
 // Persist to localStorage without ever throwing. Private mode / quota-exceeded
-// must not crash the session — we warn once and continue.
+// must not crash the session - we warn once and continue.
 function safeStorageSet(key, value) {
   try {
     localStorage.setItem(key, value);
     return true;
   } catch (e) {
-    console.warn(`Flight Core: unable to persist "${key}" (storage blocked or full).`, e);
+    console.warn(`Unable to persist localStorage key "${key}":`, e);
     return false;
   }
 }
@@ -297,7 +298,7 @@ const Telemetry = {
       fetch(APP_CONFIG.TELEMETRY_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch(() => {});
       return true;
     } catch (e) {
-      console.warn("Flight Core: telemetry emit failed.", e);
+      console.warn("Telemetry emit failed:", e);
       return false;
     }
   }
@@ -368,7 +369,9 @@ function renderRoundStepTracker() {
 
 function selectNextModule() {
   // Pure "No 3x Repeat" selection with empty-pool safeguard (never undefined).
-  let selected = FlightCore.selectModule(selectedModules, recentlyPlayedModules);
+  const playableModules = selectedModules.filter(key => !PROTOTYPE_MODULE_KEYS.includes(key));
+  if (playableModules.length === 0) selectedModules = DEFAULT_SELECTED_MODULES.slice();
+  let selected = FlightCore.selectModule(playableModules.length > 0 ? playableModules : selectedModules, recentlyPlayedModules);
   // Absolute last-resort fallback if the active selection is somehow empty.
   if (!selected) selected = "checklist";
 
@@ -495,23 +498,34 @@ function renderBalanceBoard(data, includeChoices) {
   `;
 }
 
+function pointsToPath(points) {
+  const pts = Array.isArray(points) ? points : [];
+  if (pts.length === 0) return "";
+  return pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+}
+
 function renderWireBoard(data) {
-  const rowGap = 100 / Math.max(data.starts.length - 1, 1);
-  const lines = data.mappings.map((m, idx) => {
-    const startY = 18 + idx * rowGap * 0.62;
-    const endIdx = data.ends.indexOf(m.end);
-    const endY = 18 + endIdx * rowGap * 0.62;
-    const midX = 34 + ((idx % 4) * 8);
-    const activeClass = m.start === data.queryStart ? " wire-active" : "";
-    return `<path class="wire-path${activeClass}" d="M 12 ${startY} H ${midX} V ${endY} H 88" />`;
-  }).join("");
-  const startLabels = data.starts.map((s, idx) => `<text x="5" y="${21 + idx * rowGap * 0.62}" class="wire-label ${s === data.queryStart ? 'wire-query' : ''}">${s}</text>`).join("");
-  const endLabels = data.ends.map((e, idx) => `<text x="93" y="${21 + idx * rowGap * 0.62}" class="wire-label">${e}</text>`).join("");
+  const count = data.starts.length;
+  const rowGap = count > 1 ? 68 / (count - 1) : 0;
+  const yForIndex = idx => Math.round((10 + idx * rowGap) * 10) / 10;
+  const paths = Array.isArray(data.paths) ? data.paths : [];
+  const activePath = paths.find(p => p.start === data.queryStart);
+  const inactiveLines = paths.filter(p => p.start !== data.queryStart).map(p =>
+    `<path class="wire-path wire-muted" d="${pointsToPath(p.points)}" />`
+  ).join("");
+  const activeLine = activePath ? `
+    <path class="wire-path wire-active-halo" d="${pointsToPath(activePath.points)}" />
+    <path class="wire-path wire-active" d="${pointsToPath(activePath.points)}" />
+    <circle class="wire-terminal wire-start" cx="${activePath.points[0].x}" cy="${activePath.points[0].y}" r="1.9" />
+    <circle class="wire-terminal wire-end" cx="${activePath.points[activePath.points.length - 1].x}" cy="${activePath.points[activePath.points.length - 1].y}" r="2.4" />
+  ` : "";
+  const startLabels = data.starts.map((s, idx) => `<text x="4" y="${yForIndex(idx) + 1.8}" class="wire-label ${s === data.queryStart ? 'wire-query' : ''}">${s}</text>`).join("");
+  const endLabels = data.ends.map((e, idx) => `<text x="94" y="${yForIndex(idx) + 1.8}" class="wire-label">${e}</text>`).join("");
   return `
     <div class="aptitude-board wire-board">
-      <div class="board-prompt">Trace start <strong>${data.queryStart}</strong> to its endpoint.</div>
-      <svg class="wire-svg" viewBox="0 0 100 85" role="img" aria-label="Wire trace puzzle from ${data.queryStart} to a numbered endpoint">
-        ${lines}${startLabels}${endLabels}
+      <div class="board-prompt">Trace the blue route from <strong>${data.queryStart}</strong>. Crossings are overpasses, not junctions.</div>
+      <svg class="wire-svg" viewBox="0 0 100 88" role="img" aria-label="Wire trace puzzle from ${data.queryStart} to a numbered endpoint">
+        ${inactiveLines}${activeLine}${startLabels}${endLabels}
       </svg>
     </div>
     <div class="answer-grid compact" id="wire-choice-grid">
@@ -520,21 +534,21 @@ function renderWireBoard(data) {
   `;
 }
 
-function renderTargetBoard(data) {
+function renderTargetBoard(data, includeChoices = true) {
   const cells = data.cells.map((cell, idx) => `
     <div class="target-cell" aria-label="${cell.color} ${cell.shape} ${idx + 1}">
       <span class="scan-mark shape-${cell.color} mark-${cell.shape}"></span>
     </div>
   `).join("");
-  const maxCount = Math.min(data.size * data.size, 9);
+  const maxCount = Math.min(data.size * data.size, Math.max(9, Number(data.expected) || 0));
   return `
     <div class="aptitude-board target-board">
       <div class="board-prompt">Count <strong>${data.targetColor.toUpperCase()} ${data.targetShape.toUpperCase()}</strong> marks.</div>
       <div class="target-grid" style="grid-template-columns: repeat(${data.size}, 1fr);">${cells}</div>
     </div>
-    <div class="answer-grid compact" id="target-choice-grid">
+    ${includeChoices ? `<div class="answer-grid compact" id="target-choice-grid">
       ${Array.from({ length: maxCount + 1 }, (_, n) => `<button class="answer-tile aptitude-choice-btn" data-choice="${n}"><span class="choice-key">${n}</span></button>`).join("")}
-    </div>
+    </div>` : ""}
   `;
 }
 
@@ -556,7 +570,7 @@ function renderClearanceChoices(field, correct, pool) {
   `;
 }
 
-function renderInterceptBoard(data) {
+function renderInterceptBoard(data, includeChoices = true) {
   const altitudePct = Math.min(Math.max(((data.altitude - 8000) / 28000) * 100, 0), 100);
   return `
     <div class="aptitude-board intercept-board">
@@ -571,15 +585,15 @@ function renderInterceptBoard(data) {
         <span>${data.quiz}</span>
       </div>
     </div>
-    <div class="answer-grid compact" id="intercept-action-grid">
+    ${includeChoices ? `<div class="answer-grid compact" id="intercept-action-grid">
       ${["CLIMB", "HOLD", "DESCEND"].map(action => `<button class="answer-tile intercept-action" data-choice="${action}">${action}</button>`).join("")}
     </div>
     <div class="answer-grid compact" id="intercept-quiz-grid">
       ${shuffle([data.expected.quiz, data.expected.quiz + 1, Math.max(0, data.expected.quiz - 1), data.expected.quiz + 2]).map(val => `<button class="answer-tile intercept-quiz" data-choice="${val}">${val}</button>`).join("")}
-    </div>
+    </div>` : ""}
   `;
 }
-// Utility shuffler — delegates to the pure engine (returns a new array).
+// Utility shuffler - delegates to the pure engine (returns a new array).
 function shuffle(array) {
   return FlightCore.shuffle(array);
 }
@@ -627,7 +641,7 @@ function updateSidebarLiveStats() {
   if (streakEl) streakEl.textContent = streak;
   if (roundEl) roundEl.textContent = `${sessionRound}/${sessionLength}`;
   if (levelEl) levelEl.textContent = `LVL ${level}`;
-  if (moduleEl) moduleEl.textContent = activeModule ? activeModule.toUpperCase() : "—";
+  if (moduleEl) moduleEl.textContent = activeModule ? activeModule.toUpperCase() : "-";
 
   if (historyEl) {
     historyEl.innerHTML = "";
@@ -769,13 +783,13 @@ function setupStudyScreen(module) {
     titleEl.textContent = "SCAN TARGET SET";
     const el = document.getElementById("briefing-target");
     el.style.display = "block";
-    el.innerHTML = `<div class="aptitude-board"><div class="board-prompt">Find and count ${currentRndExpected.targetColor.toUpperCase()} ${currentRndExpected.targetShape.toUpperCase()} marks.</div></div>`;
+    el.innerHTML = renderTargetBoard(currentRndExpected, false);
   }
   else if (module === "intercept") {
     titleEl.textContent = "ADVANCED CAPACITY CHECK";
     const el = document.getElementById("briefing-intercept");
     el.style.display = "block";
-    el.innerHTML = renderInterceptBoard(currentRndExpected);
+    el.innerHTML = renderInterceptBoard(currentRndExpected, false);
   }
   
   // Study timer dynamic setup (shorter as levels scale up, scaled by user's timer duration setting)
@@ -824,7 +838,7 @@ function setupStudyScreen(module) {
     timerDisplay.textContent = `${studyDurationRemaining.toFixed(2)}s`;
     if (speedBonusBadge) speedBonusBadge.textContent = `+${Math.round(studyDurationRemaining * 50)} EARLY`;
 
-    // Low-time warning: turn bar amber and pulse tag when ≤ 3 s remain
+    // Low-time warning: turn bar amber and pulse tag when <= 3 s remain
     if (studyDurationRemaining <= 3 && !lowTimeWarned) {
       lowTimeWarned = true;
       timerBar.style.backgroundColor = "var(--accent-amber)";
@@ -1000,7 +1014,7 @@ function renderChecklistPool() {
   const poolContainer = document.getElementById("checklist-pool");
   poolContainer.innerHTML = "";
   
-  // Once every slot is filled, stop offering pool items — selecting more than
+  // Once every slot is filled, stop offering pool items - selecting more than
   // the slot count would index a non-existent slot element and throw.
   const slotsFull = currentRndInput.length >= currentRndExpected.expected.length;
 
@@ -1047,7 +1061,7 @@ function renderChecklistPool() {
     undo.className = "btn btn-danger btn-block";
     undo.style.minHeight = "36px";
     undo.style.marginTop = "8px";
-    undo.textContent = "⌫ RESET LAST CHOICE";
+    undo.textContent = "RESET LAST CHOICE";
     undo.addEventListener("click", () => {
       playSound("click");
       const removed = currentRndInput.pop();
@@ -1302,7 +1316,7 @@ function renderFaultPool() {
     clearBtn.className = "btn btn-danger btn-block";
     clearBtn.style.minHeight = "36px";
     clearBtn.style.marginTop = "8px";
-    clearBtn.textContent = "⌫ CLEAR DIAGNOSTIC";
+    clearBtn.textContent = "CLEAR DIAGNOSTIC";
     clearBtn.addEventListener("click", () => {
       playSound("click");
       currentRndInput = ["", ""];
@@ -1473,7 +1487,7 @@ function handleKeypadConfirm() {
         return;
       }
 
-      // All gauges filled — pulse the submit button
+      // All gauges filled - pulse the submit button
       const submitBtn = document.getElementById("btn-submit-test");
       submitBtn.classList.add("submit-ready");
       setTimeout(() => submitBtn.classList.remove("submit-ready"), 700);
@@ -2031,9 +2045,9 @@ document.getElementById("btn-copy-score").addEventListener("click", () => {
   }).filter(Boolean);
 
   const text = [
-    "✈ FLIGHT CORE — SESSION DEBRIEF",
-    `Score: ${scoreEl ? scoreEl.textContent : "—"} | ${pctEl ? pctEl.textContent : "—"}`,
-    `Tier: ${tierEl ? tierEl.textContent : "—"} | Streak: ${sessionMaxStreak} | Level: ${level}`,
+    "FLIGHT CORE - SESSION DEBRIEF",
+    `Score: ${scoreEl ? scoreEl.textContent : "-"} | ${pctEl ? pctEl.textContent : "-"}`,
+    `Tier: ${tierEl ? tierEl.textContent : "-"} | Streak: ${sessionMaxStreak} | Level: ${level}`,
     modLines.join(" | "),
     "flightcore.app"
   ].join("\n");
@@ -2131,7 +2145,7 @@ function renderHistoryChart() {
     return;
   }
   
-  // Real Chart populated state — show last 15 sessions
+  // Real Chart populated state - show last 15 sessions
   const recent = globalHistory.slice(-15);
   
   const createRealChartHTML = (widthPercent = "100%") => {
@@ -2142,7 +2156,7 @@ function renderHistoryChart() {
       // Center a lone data point instead of pinning it to the left edge
       const x = recent.length === 1 ? 150 : 20 + idx * (260 / (recent.length - 1));
       const y = 58 - (h.percentage / 100) * 46;
-      return { x, y, percentage: h.percentage, date: new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), score: h.score };
+      return { x, y, percentage: h.percentage, date: new Date(h.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }), score: h.score };
     });
     
     let pathD = `M ${points[0].x} ${points[0].y}`;
@@ -2962,6 +2976,7 @@ function initModuleSelection() {
   const grid = document.querySelector(".module-selection-grid");
   const countEl = document.getElementById("modules-selected-count");
   const allMods = FlightCore.CHALLENGE_MODULE_KEYS.slice();
+  const selectableMods = allMods.filter(key => !PROTOTYPE_MODULE_KEYS.includes(key));
   if (!grid) return;
 
   const grouped = {};
@@ -2980,9 +2995,9 @@ function initModuleSelection() {
         <div class="module-family-heading">${moduleFamilyDisplay(family)}</div>
         <div class="module-family-list">
           ${mods.map(({ key, meta }) => `
-            <div class="module-select-card ${selectedModules.includes(key) ? 'active' : ''}" data-module="${key}" id="select-${key}" role="button" tabindex="0" aria-pressed="${selectedModules.includes(key) ? 'true' : 'false'}">
+            <div class="module-select-card ${PROTOTYPE_MODULE_KEYS.includes(key) ? 'is-disabled' : ''} ${selectedModules.includes(key) ? 'active' : ''}" data-module="${key}" id="select-${key}" role="button" tabindex="0" aria-disabled="${PROTOTYPE_MODULE_KEYS.includes(key) ? 'true' : 'false'}" aria-pressed="${selectedModules.includes(key) ? 'true' : 'false'}">
               <span class="select-indicator"></span>
-              <span class="module-select-text"><span>${meta.label}</span><small>${meta.skillLabel}</small></span>
+              <span class="module-select-text"><span>${meta.label}</span><small>${PROTOTYPE_MODULE_KEYS.includes(key) ? "Prototype locked" : meta.skillLabel}</small></span>
             </div>
           `).join("")}
         </div>
@@ -2995,6 +3010,12 @@ function initModuleSelection() {
 
   const toggleCard = (card) => {
     const mod = card.getAttribute("data-module");
+    if (PROTOTYPE_MODULE_KEYS.includes(mod)) {
+      card.classList.add("shake");
+      triggerHaptic("warning");
+      setTimeout(() => card.classList.remove("shake"), 300);
+      return;
+    }
     if (card.classList.contains("active")) {
       if (selectedModules.length <= 1) {
         card.classList.add("shake");
@@ -3027,8 +3048,8 @@ function initModuleSelection() {
   if (btnAll) {
     btnAll.addEventListener("click", () => {
       playSound("click");
-      const allActive = allMods.every(m => selectedModules.includes(m));
-      selectedModules = allActive ? [allMods[0]] : allMods.slice();
+      const allActive = selectableMods.every(m => selectedModules.includes(m));
+      selectedModules = allActive ? [selectableMods[0]] : selectableMods.slice();
       cards.forEach(c => {
         const active = selectedModules.includes(c.getAttribute("data-module"));
         c.classList.toggle("active", active);
@@ -3298,7 +3319,7 @@ function renderRunHistory() {
   document.getElementById("log-stat-avg").textContent = `${averageGrade}%`;
   document.getElementById("log-stat-streak").textContent = maxStreak;
   
-  // Dynamic competency metrics — averaged across saved sessions with safe
+  // Dynamic competency metrics - averaged across saved sessions with safe
   // fallbacks for legacy records (see FlightCore.competencyAverages).
   const compAvgs = FlightCore.competencyAverages(globalHistory);
   const checklistAvg = compAvgs.checklist;
@@ -3333,13 +3354,13 @@ function renderRunHistory() {
     blindspotCard.style.display = "block";
     let advice = "";
     if (blindspot.code === "checklist") {
-      advice = "🎯 SEQUENCE FOCUS: You are experiencing cognitive friction when ordering checklists under stress. Try Checklist mode next and focus on ordering the sequence cleanly.";
+      advice = "SEQUENCE FOCUS: You are experiencing cognitive friction when ordering checklists under stress. Try Checklist mode next and focus on ordering the sequence cleanly.";
     } else if (blindspot.code === "instruments") {
-      advice = "🎯 INSTRUMENT SCAN FOCUS: Numerical scanning and gauge recall is currently your weakest area. Slow down during the study window and practice sweep scanning from top-left to bottom-right.";
+      advice = "INSTRUMENT SCAN FOCUS: Numerical scanning and gauge recall is currently your weakest area. Slow down during the study window and practice sweep scanning from top-left to bottom-right.";
     } else if (blindspot.code === "atc") {
-      advice = "🎯 RADIO MEMORY FOCUS: Auditory clearances and Squawk digits are slip-sliding in memory. Pay extra close visual attention during the transmission briefing.";
+      advice = "RADIO MEMORY FOCUS: Auditory clearances and Squawk digits are slip-sliding in memory. Pay extra close visual attention during the transmission briefing.";
     } else if (blindspot.code === "fault") {
-      advice = "🎯 SYSTEMS PUZZLE FOCUS: Matching symptoms to systems is currently your lowest area. Slow down during the next fault briefing and look for pattern cues.";
+      advice = "SYSTEMS PUZZLE FOCUS: Matching symptoms to systems is currently your lowest area. Slow down during the next fault briefing and look for pattern cues.";
     }
     blindspotMsg.textContent = advice;
   } else {

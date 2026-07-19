@@ -1,5 +1,5 @@
 // ==========================================
-// Flight Core — Pure Engine Core
+// Flight Core - Pure Engine Core
 // ------------------------------------------
 // Side-effect-free game logic extracted from app.js so it can be unit-tested
 // in isolation (see tests.html) and reused without touching the DOM or
@@ -23,8 +23,8 @@
 
   // ---- safe data parsing / coercion ----
 
-  // Parse JSON without ever throwing. Returns `fallback` on any failure, and —
-  // when `fallback` is an array — guarantees the result is an array too
+  // Parse JSON without ever throwing. Returns `fallback` on any failure, and -
+  // when `fallback` is an array - guarantees the result is an array too
   // (guards against corrupt or maliciously-shaped localStorage values).
   function safeParse(json, fallback) {
     if (json === null || json === undefined) return fallback;
@@ -333,7 +333,7 @@
   }
   // ---- randomness / data generation ----
 
-  // Pure Fisher–Yates: returns a new shuffled array, leaving the input intact.
+  // Pure Fisher-Yates: returns a new shuffled array, leaving the input intact.
   function shuffle(array, rng) {
     rng = rng || Math.random;
     const a = Array.isArray(array) ? array.slice() : [];
@@ -525,9 +525,27 @@
     const starts = "ABCDEFGHIJKL".slice(0, count).split("");
     const ends = Array.from({ length: count }, (_, i) => String(i + 1));
     const shuffledEnds = shuffle(ends, rng);
+    const rowGap = count > 1 ? 68 / (count - 1) : 0;
+    const yForIndex = idx => Math.round((10 + idx * rowGap) * 10) / 10;
     const mappings = starts.map((start, idx) => ({ start, end: shuffledEnds[idx] }));
+    const paths = mappings.map((mapping, idx) => {
+      const endIdx = ends.indexOf(mapping.end);
+      const startY = yForIndex(idx);
+      const endY = yForIndex(endIdx);
+      const midX = 25 + ((idx * 9) % 42);
+      return {
+        start: mapping.start,
+        end: mapping.end,
+        points: [
+          { x: 12, y: startY },
+          { x: midX, y: startY },
+          { x: midX, y: endY },
+          { x: 88, y: endY }
+        ]
+      };
+    });
     const query = mappings[Math.floor(rng() * mappings.length)];
-    return { starts, ends, mappings, queryStart: query.start, expected: query.end };
+    return { starts, ends, mappings, paths, queryStart: query.start, expected: query.end };
   }
 
   function wireAccuracy(expected, input) {

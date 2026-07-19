@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -25,7 +25,7 @@
       <div class="dashboard-row">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div class="system-title" id="system-status">FLIGHT CORE</div>
-          <button class="abort-btn" id="btn-session-abort" style="display: none;">â† ABORT</button>
+          <button class="abort-btn" id="btn-session-abort" style="display: none;">ABORT</button>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
           <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound" aria-label="Toggle sound">
@@ -259,7 +259,7 @@
                 <button class="session-len-btn" data-multiplier="2">Extended</button>
               </div>
               <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
-                How long to study each briefing before the test begins. Relaxed = 1.5Ã—, Extended = 2Ã— the default duration.
+                How long to study each briefing before the test begins. Relaxed = 1.5x, Extended = 2x the default duration.
               </p>
             </div>
           </div>
@@ -344,7 +344,7 @@
           <!-- Cognitive Blindspot Card -->
           <div class="terminal-card" id="log-blindspot-card" style="margin-bottom: 16px; border-color: var(--warning-border); background-color: var(--warning-bg); display: none;">
             <div class="terminal-card-header" style="border-bottom-color: var(--warning-border); border-bottom-width: 1px; border-bottom-style: solid;">
-              <span style="color: var(--accent-amber); display: flex; align-items: center; gap: 6px;">âš ï¸ COGNITIVE BLINDSPOT DIAGNOSTIC</span>
+              <span style="color: var(--accent-amber); display: flex; align-items: center; gap: 6px;">COGNITIVE BLINDSPOT DIAGNOSTIC</span>
             </div>
             <p id="log-blindspot-msg" style="font-size: 0.75rem; line-height: 1.4; color: var(--text-primary);">
               No significant blindspots diagnosed. Maintain active play across all modules.
@@ -571,7 +571,7 @@
           </div>
         </div>
         <div class="blindspot-log" id="debrief-blindspots" style="display: none;">
-          <div class="blindspot-title">ðŸš© AREAS FOR REVIEW</div>
+          <div class="blindspot-title">AREAS FOR REVIEW</div>
           <ul class="blindspot-list" id="debrief-blindspot-list">
             <!-- JS Injected errors -->
           </ul>
@@ -669,7 +669,7 @@
         <div class="terminal-card" style="flex-grow: 1;">
           <div class="terminal-card-header">
             <span>Module</span>
-            <span class="type-tag" id="live-stat-module">â€”</span>
+            <span class="type-tag" id="live-stat-module">-</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;" id="live-round-history">
             <!-- JS injected -->
@@ -701,7 +701,7 @@
         
         <button class="keypad-btn" id="keypad-dot" aria-label="Decimal point">.</button>
         <button class="keypad-btn" aria-label="0">0</button>
-        <button class="keypad-btn action" id="keypad-back" aria-label="Backspace">âŒ«</button>
+        <button class="keypad-btn action" id="keypad-back" aria-label="Backspace">BACK</button>
       </div>
 
       <div class="keypad-grid" style="grid-template-columns: 1fr 1fr; margin-top: 4px;">
@@ -884,23 +884,23 @@
         <span style="font-size: 1rem; font-weight: 800; color: var(--accent-blue);">Welcome to Flight Core</span>
       </div>
       <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
-        A cockpit-inspired cognitive recall game built for aviation simulators, flight enthusiasts, and puzzle solvers. Challenge your memory and visual scanning across 4 flight deck modules.
+        A cockpit-inspired cognitive challenge game built for aviation simulators, flight enthusiasts, and puzzle solvers. Challenge memory, logic, visual scanning, and multitask focus across the Flight Core aptitude suite.
       </p>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
         <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <span style="font-size: 1rem; line-height: 1;">ðŸ“‹</span>
+          <span class="onboarding-code-badge">SEQ</span>
           <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Checklist Sequencing</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Memorize and recall procedure steps in exact order.</span></div>
         </div>
         <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <span style="font-size: 1rem; line-height: 1;">ðŸŽ›ï¸</span>
+          <span class="onboarding-code-badge">SCAN</span>
           <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Instrument Scanning</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Read gauge values from a brief flash, then recall them.</span></div>
         </div>
         <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <span style="font-size: 1rem; line-height: 1;">ðŸŽ™ï¸</span>
+          <span class="onboarding-code-badge">COM</span>
           <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">ATC Communications</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Hold callsign, facility, frequency, and squawk in memory.</span></div>
         </div>
         <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <span style="font-size: 1rem; line-height: 1;">âš ï¸</span>
+          <span class="onboarding-code-badge">FAULT</span>
           <div><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">Emergency Diagnostics</span><br><span style="font-size: 0.68rem; color: var(--text-muted);">Connect fault symptoms to isolation and mitigation actions.</span></div>
         </div>
       </div>
