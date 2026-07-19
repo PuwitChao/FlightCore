@@ -197,7 +197,9 @@ let level = 1;
 let sessionMaxStreak = 0;
 let activeModule = null;
 let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repeat"
-let selectedModules = ["checklist", "instruments", "atc", "fault"];
+const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => key !== "intercept");
+let selectedModules = DEFAULT_SELECTED_MODULES.slice();
+let challengeMode = localStorage.getItem("flightcore_challenge_mode") || "mock";
 let sessionLength = FlightCore.safeNumber(localStorage.getItem("flightcore_session_length"), 8, { min: 1, max: 50 });
 let startingStreak = FlightCore.safeNumber(localStorage.getItem("flightcore_starting_streak"), 4, { min: 0, max: 100 });
 let timerMultiplier = FlightCore.safeNumber(localStorage.getItem("flightcore_timer_multiplier"), 1, { min: 0.1, max: 10 });
@@ -207,6 +209,7 @@ let currentRndInput = null;
 let studyTimer = null;
 let studyDurationRemaining = 0;
 let briefingStartTime = 0;
+let testStartTime = 0;
 let isTimerPaused = false;
 let pausedAccum = 0;
 let pauseStart = 0;
@@ -376,7 +379,8 @@ function selectNextModule() {
   }
   
   activeModule = selected;
-  document.getElementById("hud-module").textContent = selected.toUpperCase();
+  const meta = FlightCore.moduleMetadata(selected);
+  document.getElementById("hud-module").textContent = meta.label.toUpperCase();
   return selected;
 }
 
@@ -408,7 +412,173 @@ function generateFaultData() {
   usedFaultIndices.push(data.chosenIdx);
   return { symptom: data.symptom, expected: data.expected, pool: data.pool };
 }
+function generateBalanceData() {
+  return FlightCore.generateBalance(level);
+}
 
+function generateWireData() {
+  return FlightCore.generateWire(level);
+}
+
+function generateClearanceData() {
+  return FlightCore.generateClearance(ATC_POOLS, level);
+}
+
+function generateTargetData() {
+  return FlightCore.generateTarget(level);
+}
+
+function generateInterceptData() {
+  return FlightCore.generateIntercept(level);
+}
+
+function ensureAptitudeContainers() {
+  const briefingParent = document.getElementById("briefing-checklist")?.parentElement;
+  const testParent = document.getElementById("test-checklist")?.parentElement;
+  const modules = ["balance", "wire", "clearance", "target", "intercept"];
+  modules.forEach(mod => {
+    if (briefingParent && !document.getElementById(`briefing-${mod}`)) {
+      const div = document.createElement("div");
+      div.id = `briefing-${mod}`;
+      div.style.display = "none";
+      div.style.width = "100%";
+      briefingParent.appendChild(div);
+    }
+    if (testParent && !document.getElementById(`test-${mod}`)) {
+      const div = document.createElement("div");
+      div.id = `test-${mod}`;
+      div.style.display = "none";
+      div.style.width = "100%";
+      testParent.appendChild(div);
+    }
+  });
+}
+
+function hideModuleBlocks(prefix) {
+  ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept"].forEach(mod => {
+    const el = document.getElementById(`${prefix}-${mod}`);
+    if (el) el.style.display = "none";
+  });
+}
+
+function renderShapeItems(items) {
+  return (items || []).map(item => `
+    <span class="aptitude-shape-stack" aria-label="${item.count} ${item.shape}">
+      ${Array.from({ length: item.count }, () => `<span class="aptitude-shape shape-${item.shape}"></span>`).join("")}
+    </span>
+  `).join("");
+}
+
+function renderBalanceBoard(data, includeChoices) {
+  const choices = includeChoices ? `
+    <div class="answer-grid" id="balance-choice-grid">
+      ${data.options.map(opt => `
+        <button class="answer-tile aptitude-choice-btn" data-choice="${opt.id}" aria-label="Choice ${opt.id}">
+          <span class="choice-key">${opt.id}</span>
+          <span class="choice-content">${renderShapeItems(opt.items)}</span>
+        </button>
+      `).join("")}
+    </div>
+  ` : "";
+  return `
+    <div class="aptitude-board balance-board">
+      <div class="balance-panel">
+        <span class="board-label">Rule</span>
+        <div class="balance-scale"><div>${renderShapeItems(data.rule.left)}</div><span>=</span><div>${renderShapeItems(data.rule.right)}</div></div>
+      </div>
+      <div class="balance-panel">
+        <span class="board-label">Question</span>
+        <div class="balance-scale"><div>${renderShapeItems(data.question.left)}</div><span>=</span><div class="unknown-token">?</div></div>
+      </div>
+    </div>
+    ${choices}
+  `;
+}
+
+function renderWireBoard(data) {
+  const rowGap = 100 / Math.max(data.starts.length - 1, 1);
+  const lines = data.mappings.map((m, idx) => {
+    const startY = 18 + idx * rowGap * 0.62;
+    const endIdx = data.ends.indexOf(m.end);
+    const endY = 18 + endIdx * rowGap * 0.62;
+    const midX = 34 + ((idx % 4) * 8);
+    const activeClass = m.start === data.queryStart ? " wire-active" : "";
+    return `<path class="wire-path${activeClass}" d="M 12 ${startY} H ${midX} V ${endY} H 88" />`;
+  }).join("");
+  const startLabels = data.starts.map((s, idx) => `<text x="5" y="${21 + idx * rowGap * 0.62}" class="wire-label ${s === data.queryStart ? 'wire-query' : ''}">${s}</text>`).join("");
+  const endLabels = data.ends.map((e, idx) => `<text x="93" y="${21 + idx * rowGap * 0.62}" class="wire-label">${e}</text>`).join("");
+  return `
+    <div class="aptitude-board wire-board">
+      <div class="board-prompt">Trace start <strong>${data.queryStart}</strong> to its endpoint.</div>
+      <svg class="wire-svg" viewBox="0 0 100 85" role="img" aria-label="Wire trace puzzle from ${data.queryStart} to a numbered endpoint">
+        ${lines}${startLabels}${endLabels}
+      </svg>
+    </div>
+    <div class="answer-grid compact" id="wire-choice-grid">
+      ${data.ends.map(end => `<button class="answer-tile aptitude-choice-btn" data-choice="${end}"><span class="choice-key">${end}</span></button>`).join("")}
+    </div>
+  `;
+}
+
+function renderTargetBoard(data) {
+  const cells = data.cells.map((cell, idx) => `
+    <div class="target-cell" aria-label="${cell.color} ${cell.shape} ${idx + 1}">
+      <span class="scan-mark shape-${cell.color} mark-${cell.shape}"></span>
+    </div>
+  `).join("");
+  const maxCount = Math.min(data.size * data.size, 9);
+  return `
+    <div class="aptitude-board target-board">
+      <div class="board-prompt">Count <strong>${data.targetColor.toUpperCase()} ${data.targetShape.toUpperCase()}</strong> marks.</div>
+      <div class="target-grid" style="grid-template-columns: repeat(${data.size}, 1fr);">${cells}</div>
+    </div>
+    <div class="answer-grid compact" id="target-choice-grid">
+      ${Array.from({ length: maxCount + 1 }, (_, n) => `<button class="answer-tile aptitude-choice-btn" data-choice="${n}"><span class="choice-key">${n}</span></button>`).join("")}
+    </div>
+  `;
+}
+
+function renderClearanceChoices(field, correct, pool) {
+  let options = [correct];
+  let guard = 0;
+  while (options.length < 4 && guard++ < 100) {
+    const opt = pool[Math.floor(Math.random() * pool.length)];
+    if (!options.includes(opt)) options.push(opt);
+  }
+  options = shuffle(options);
+  return `
+    <div class="clearance-field" data-field="${field}">
+      <span class="atc-input-label">${field.toUpperCase()}</span>
+      <div class="answer-grid compact">
+        ${options.map(opt => `<button class="answer-tile clearance-choice" data-field="${field}" data-choice="${escapeHTML(opt)}">${escapeHTML(opt)}</button>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderInterceptBoard(data) {
+  const altitudePct = Math.min(Math.max(((data.altitude - 8000) / 28000) * 100, 0), 100);
+  return `
+    <div class="aptitude-board intercept-board">
+      <div class="intercept-horizon">
+        <div class="intercept-band"></div>
+        <div class="intercept-reticle" style="bottom:${altitudePct}%"></div>
+        <div class="intercept-bearing">BRG ${String(data.targetBearing).padStart(3, "0")}</div>
+      </div>
+      <div class="intercept-readouts">
+        <span>${data.altitude.toLocaleString()} FT</span>
+        <span>${data.bandStatus}</span>
+        <span>${data.quiz}</span>
+      </div>
+    </div>
+    <div class="answer-grid compact" id="intercept-action-grid">
+      ${["CLIMB", "HOLD", "DESCEND"].map(action => `<button class="answer-tile intercept-action" data-choice="${action}">${action}</button>`).join("")}
+    </div>
+    <div class="answer-grid compact" id="intercept-quiz-grid">
+      ${shuffle([data.expected.quiz, data.expected.quiz + 1, Math.max(0, data.expected.quiz - 1), data.expected.quiz + 2]).map(val => `<button class="answer-tile intercept-quiz" data-choice="${val}">${val}</button>`).join("")}
+    </div>
+  `;
+}
 // Utility shuffler — delegates to the pure engine (returns a new array).
 function shuffle(array) {
   return FlightCore.shuffle(array);
@@ -491,6 +661,16 @@ function startRound() {
     currentRndExpected = generateATCData();
   } else if (module === "fault") {
     currentRndExpected = generateFaultData();
+  } else if (module === "balance") {
+    currentRndExpected = generateBalanceData();
+  } else if (module === "wire") {
+    currentRndExpected = generateWireData();
+  } else if (module === "clearance") {
+    currentRndExpected = generateClearanceData();
+  } else if (module === "target") {
+    currentRndExpected = generateTargetData();
+  } else if (module === "intercept") {
+    currentRndExpected = generateInterceptData();
   }
   
   setupStudyScreen(module);
@@ -516,10 +696,7 @@ function setupStudyScreen(module) {
   }
 
   // Hide all briefing content blocks first
-  document.getElementById("briefing-checklist").style.display = "none";
-  document.getElementById("briefing-instruments").style.display = "none";
-  document.getElementById("briefing-atc").style.display = "none";
-  document.getElementById("briefing-fault").style.display = "none";
+  hideModuleBlocks("briefing");
   
   // Title adjust
   const titleEl = document.getElementById("study-type-title");
@@ -570,6 +747,36 @@ function setupStudyScreen(module) {
       flowBrief.appendChild(node);
     }
   }
+  else if (module === "balance") {
+    titleEl.textContent = "DEDUCE BALANCE RULE";
+    const el = document.getElementById("briefing-balance");
+    el.style.display = "block";
+    el.innerHTML = renderBalanceBoard(currentRndExpected, false);
+  }
+  else if (module === "wire") {
+    titleEl.textContent = "TRACE VISUAL ROUTE";
+    const el = document.getElementById("briefing-wire");
+    el.style.display = "block";
+    el.innerHTML = `<div class="aptitude-board"><div class="board-prompt">Track the highlighted start label during recall.</div></div>`;
+  }
+  else if (module === "clearance") {
+    titleEl.textContent = "RETAIN EXTENDED CLEARANCE";
+    const el = document.getElementById("briefing-clearance");
+    el.style.display = "block";
+    el.innerHTML = `<p style="font-size: 0.62rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">CLEARANCE STRING:</p><div class="atc-telemetry-display">${escapeHTML(currentRndExpected.displayText)}</div>`;
+  }
+  else if (module === "target") {
+    titleEl.textContent = "SCAN TARGET SET";
+    const el = document.getElementById("briefing-target");
+    el.style.display = "block";
+    el.innerHTML = `<div class="aptitude-board"><div class="board-prompt">Find and count ${currentRndExpected.targetColor.toUpperCase()} ${currentRndExpected.targetShape.toUpperCase()} marks.</div></div>`;
+  }
+  else if (module === "intercept") {
+    titleEl.textContent = "ADVANCED CAPACITY CHECK";
+    const el = document.getElementById("briefing-intercept");
+    el.style.display = "block";
+    el.innerHTML = renderInterceptBoard(currentRndExpected);
+  }
   
   // Study timer dynamic setup (shorter as levels scale up, scaled by user's timer duration setting)
   let studySecs = 10;
@@ -581,8 +788,15 @@ function setupStudyScreen(module) {
     studySecs = Math.max(10 - (level * 0.8), 4);
   } else if (module === "fault") {
     studySecs = Math.max(10 - (level * 0.8), 4.5);
+  } else if (module === "balance" || module === "wire" || module === "target") {
+    studySecs = Math.max(7 - (level * 0.45), 3.5);
+  } else if (module === "clearance") {
+    studySecs = Math.max(11 - (level * 0.7), 4.5);
+  } else if (module === "intercept") {
+    studySecs = Math.max(6 - (level * 0.35), 3);
   }
   studySecs = studySecs * timerMultiplier;
+  if (challengeMode === "practice") studySecs *= 1.4;
   
   briefingStartTime = Date.now();
   pausedAccum = 0;
@@ -694,12 +908,10 @@ function commenceTest() {
   // Reset input state variables
   focusedInputId = null;
   activeKeypadBuffer = "";
+  testStartTime = Date.now();
   
   // Hide all test content blocks first
-  document.getElementById("test-checklist").style.display = "none";
-  document.getElementById("test-instruments").style.display = "none";
-  document.getElementById("test-atc").style.display = "none";
-  document.getElementById("test-fault").style.display = "none";
+  hideModuleBlocks("test");
   
   const labelEl = document.getElementById("test-type-label");
   
@@ -730,6 +942,36 @@ function commenceTest() {
     
     currentRndInput = ["", ""]; // Slot 1: system, Slot 2: action
     renderFaultTestLayout();
+  }
+  else if (activeModule === "balance") {
+    labelEl.textContent = "BALANCE DEDUCTION";
+    document.getElementById("test-balance").style.display = "block";
+    currentRndInput = "";
+    renderBalanceTestLayout();
+  }
+  else if (activeModule === "wire") {
+    labelEl.textContent = "WIRE TRACE";
+    document.getElementById("test-wire").style.display = "block";
+    currentRndInput = "";
+    renderWireTestLayout();
+  }
+  else if (activeModule === "clearance") {
+    labelEl.textContent = "CLEARANCE RECALL";
+    document.getElementById("test-clearance").style.display = "block";
+    currentRndInput = { callsign: "", facility: "", freq: "", squawk: "", altitude: "", heading: "", speed: "" };
+    renderClearanceTestLayout();
+  }
+  else if (activeModule === "target") {
+    labelEl.textContent = "TARGET SCAN";
+    document.getElementById("test-target").style.display = "block";
+    currentRndInput = null;
+    renderTargetTestLayout();
+  }
+  else if (activeModule === "intercept") {
+    labelEl.textContent = "CAPACITY PROTOTYPE";
+    document.getElementById("test-intercept").style.display = "block";
+    currentRndInput = { action: "", quiz: null };
+    renderInterceptTestLayout();
   }
   
   showScreen("screen-test");
@@ -1078,6 +1320,96 @@ function renderFaultPool() {
   }
 }
 
+function markChoiceSelection(containerSelector, choice) {
+  document.querySelectorAll(`${containerSelector} .answer-tile`).forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-choice") === String(choice));
+  });
+}
+
+function renderBalanceTestLayout() {
+  const root = document.getElementById("test-balance");
+  root.innerHTML = `<p class="module-instruction">Pick the item group that balances the question scale.</p>${renderBalanceBoard(currentRndExpected, true)}`;
+  root.querySelectorAll(".aptitude-choice-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = btn.getAttribute("data-choice");
+      markChoiceSelection("#balance-choice-grid", currentRndInput);
+    });
+  });
+}
+
+function renderWireTestLayout() {
+  const root = document.getElementById("test-wire");
+  root.innerHTML = `<p class="module-instruction">Follow the highlighted route and choose its endpoint.</p>${renderWireBoard(currentRndExpected)}`;
+  root.querySelectorAll(".aptitude-choice-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = btn.getAttribute("data-choice");
+      markChoiceSelection("#wire-choice-grid", currentRndInput);
+    });
+  });
+}
+
+function renderTargetTestLayout() {
+  const root = document.getElementById("test-target");
+  root.innerHTML = `<p class="module-instruction">Scan the board and select the target count.</p>${renderTargetBoard(currentRndExpected)}`;
+  root.querySelectorAll(".aptitude-choice-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = Number(btn.getAttribute("data-choice"));
+      markChoiceSelection("#target-choice-grid", currentRndInput);
+    });
+  });
+}
+
+function renderClearanceTestLayout() {
+  const exp = currentRndExpected.expected;
+  const root = document.getElementById("test-clearance");
+  const altitudePool = [exp.altitude, String(Number(exp.altitude) + 1000), String(Math.max(1000, Number(exp.altitude) - 1000)), String(Number(exp.altitude) + 2000)];
+  const headingPool = [exp.heading, String((Number(exp.heading) + 30) % 360).padStart(3, "0"), String((Number(exp.heading) + 60) % 360).padStart(3, "0"), String((Number(exp.heading) + 330) % 360).padStart(3, "0")];
+  const speedPool = [exp.speed, String(Number(exp.speed) + 10), String(Math.max(100, Number(exp.speed) - 10)), String(Number(exp.speed) + 20)];
+  root.innerHTML = `
+    <p class="module-instruction">Recall every clearance field after the study window.</p>
+    <div class="clearance-grid">
+      ${renderClearanceChoices("callsign", exp.callsign, ATC_POOLS.callsigns)}
+      ${renderClearanceChoices("facility", exp.facility, ATC_POOLS.facilities)}
+      ${renderClearanceChoices("freq", exp.freq, ATC_POOLS.frequencies)}
+      ${renderClearanceChoices("squawk", exp.squawk, ATC_POOLS.squawks)}
+      ${renderClearanceChoices("altitude", exp.altitude, altitudePool)}
+      ${renderClearanceChoices("heading", exp.heading, headingPool)}
+      ${renderClearanceChoices("speed", exp.speed, speedPool)}
+    </div>
+  `;
+  root.querySelectorAll(".clearance-choice").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      const field = btn.getAttribute("data-field");
+      const choice = btn.getAttribute("data-choice");
+      currentRndInput[field] = choice;
+      btn.closest(".clearance-field").querySelectorAll(".clearance-choice").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+}
+
+function renderInterceptTestLayout() {
+  const root = document.getElementById("test-intercept");
+  root.innerHTML = `<p class="module-instruction">Choose the altitude correction and solve the secondary prompt.</p>${renderInterceptBoard(currentRndExpected)}`;
+  root.querySelectorAll(".intercept-action").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput.action = btn.getAttribute("data-choice");
+      markChoiceSelection("#intercept-action-grid", currentRndInput.action);
+    });
+  });
+  root.querySelectorAll(".intercept-quiz").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput.quiz = Number(btn.getAttribute("data-choice"));
+      markChoiceSelection("#intercept-quiz-grid", currentRndInput.quiz);
+    });
+  });
+}
 // ==========================================
 // 9. ON-SCREEN CUSTOM KEYPAD HANDLING
 // ==========================================
@@ -1292,6 +1624,40 @@ function submitTelemetry() {
     discrepancyLogItem = accuracy < 100 ? `Diagnostic chain protocol failure` : null;
   }
   
+  else if (activeModule === "balance") {
+    accuracy = FlightCore.balanceAccuracy(currentRndExpected.expected, currentRndInput);
+    breakdownRows.push({ field: "Balance Choice", expected: currentRndExpected.expected, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Balance rule mismatch" : null;
+  }
+  else if (activeModule === "wire") {
+    accuracy = FlightCore.wireAccuracy(currentRndExpected.expected, currentRndInput);
+    breakdownRows.push({ field: `Start ${currentRndExpected.queryStart}`, expected: currentRndExpected.expected, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Visual trace endpoint mismatch" : null;
+  }
+  else if (activeModule === "clearance") {
+    const exp = currentRndExpected.expected;
+    const fields = ["callsign", "facility", "freq", "squawk", "altitude", "heading", "speed"];
+    fields.forEach(f => {
+      const expected = String(exp[f]).trim().toUpperCase();
+      const input = String(currentRndInput[f] || "").trim().toUpperCase();
+      breakdownRows.push({ field: f.toUpperCase(), expected: exp[f], input: currentRndInput[f] || "[OMITTED]", correct: expected === input });
+    });
+    accuracy = FlightCore.clearanceAccuracy(exp, currentRndInput);
+    discrepancyLogItem = accuracy < 100 ? "Extended clearance recall mismatch" : null;
+  }
+  else if (activeModule === "target") {
+    accuracy = FlightCore.targetAccuracy(currentRndExpected.expected, currentRndInput);
+    breakdownRows.push({ field: "Target Count", expected: String(currentRndExpected.expected), input: currentRndInput === null ? "[OMITTED]" : String(currentRndInput), correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Target scan count mismatch" : null;
+  }
+  else if (activeModule === "intercept") {
+    accuracy = FlightCore.interceptAccuracy(currentRndExpected.expected, currentRndInput);
+    const actionCorrect = currentRndExpected.expected.action === currentRndInput.action;
+    const quizCorrect = Number(currentRndExpected.expected.quiz) === Number(currentRndInput.quiz);
+    breakdownRows.push({ field: "Altitude Action", expected: currentRndExpected.expected.action, input: currentRndInput.action || "[OMITTED]", correct: actionCorrect });
+    breakdownRows.push({ field: "Secondary Prompt", expected: String(currentRndExpected.expected.quiz), input: currentRndInput.quiz === null ? "[OMITTED]" : String(currentRndInput.quiz), correct: quizCorrect });
+    discrepancyLogItem = accuracy < 100 ? "Capacity split-task mismatch" : null;
+  }
   // Calculate scoring & tier
   let grade = "fail";
   if (accuracy === 100) {
@@ -1348,14 +1714,22 @@ function submitTelemetry() {
   // Update session max streak
   sessionMaxStreak = Math.max(sessionMaxStreak, streak);
   
+  const skillFamily = FlightCore.moduleSkillFamily(activeModule);
+  const responseMs = testStartTime > 0 ? Math.max(0, Date.now() - testStartTime) : 0;
+  const mistakes = breakdownRows.filter(row => !row.correct).length;
+
   // Save round result
   const rndResult = {
     round: sessionRound,
     module: activeModule,
+    skillFamily: skillFamily,
     score: addedPoints,
     correct: accuracy === 100, // exact 100% correct
     accuracy: accuracy,
     grade: grade,
+    responseMs: responseMs,
+    difficulty: level,
+    mistakes: mistakes,
     breakdown: breakdownRows,
     blindspot: discrepancyLogItem
   };
@@ -1363,11 +1737,14 @@ function submitTelemetry() {
   Telemetry.emit("module_completed", {
     round: sessionRound,
     module: activeModule,
+    skillFamily,
     grade,
     accuracy,
     score: addedPoints,
     streak,
-    level
+    level,
+    responseMs,
+    mistakes
   });
   if (streak > 0 && streak === sessionMaxStreak) {
     Telemetry.emit("streak_extended", { streak, round: sessionRound, module: activeModule });
@@ -1521,6 +1898,7 @@ function finishSession() {
 
   const compsData = FlightCore.sessionCompetencies(roundByRoundHistory, percentage);
   const moduleAccuracy = FlightCore.sessionModuleAccuracy(roundByRoundHistory);
+  const skillFamilyAccuracy = FlightCore.sessionSkillFamilyAccuracy(roundByRoundHistory);
 
   const todayStr = new Date().toDateString();
   const lastPlayedStr = localStorage.getItem("flightcore_last_played") || localStorage.getItem("flightcore_last_trained");
@@ -1536,7 +1914,8 @@ function finishSession() {
     maxLevel: level,
     maxStreak: sessionMaxStreak,
     competencies: compsData,
-    moduleAccuracy: moduleAccuracy
+    moduleAccuracy: moduleAccuracy,
+    skillFamilyAccuracy: skillFamilyAccuracy
   };
 
   const previousBest = globalHistory.length > 0 ? Math.max(...globalHistory.map(h => h.percentage)) : -1;
@@ -1544,7 +1923,8 @@ function finishSession() {
   if (globalHistory.length > 30) globalHistory.shift();
   safeStorageSet("flightcore_history", JSON.stringify(globalHistory));
 
-  Telemetry.emit("session_finished", { rounds: roundByRoundHistory.length, score: sessionScore, accuracy: percentage, tier: tierInfo.label, maxStreak: sessionMaxStreak });
+  renderDebriefSkillFamilies(skillFamilyAccuracy);
+  Telemetry.emit("session_finished", { rounds: roundByRoundHistory.length, score: sessionScore, accuracy: percentage, tier: tierInfo.label, maxStreak: sessionMaxStreak, weakestSkillFamily: FlightCore.weakestSkillFamily(globalHistory) });
   showScreen("screen-debrief");
   if (percentage > previousBest && previousBest >= 0) showPersonalBestBanner();
 }
@@ -1928,7 +2308,52 @@ function renderModuleStats() {
     container.appendChild(row);
   });
 }
+function skillFamilyLabel(key) {
+  return String(key || "").replace(/^./, c => c.toUpperCase());
+}
 
+function renderSkillFamilyBars(container, values, emptyMessage) {
+  if (!container) return;
+  const data = values || {};
+  const hasData = FlightCore.SKILL_FAMILIES.some(key => data[key] > 0);
+  if (!hasData) {
+    container.innerHTML = `<div style="font-size: 0.65rem; color: var(--text-muted); text-align: center;">${emptyMessage}</div>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  FlightCore.SKILL_FAMILIES.forEach(key => {
+    const avg = Math.round(data[key] || 0);
+    const color = avg >= 80 ? "var(--success-emerald)" : avg >= 50 ? "var(--accent-amber)" : "var(--error-rose)";
+    const row = document.createElement("div");
+    row.className = "module-stat-row skill-family-row";
+    row.innerHTML = `
+      <span class="module-stat-label">${skillFamilyLabel(key)}</span>
+      <div class="module-stat-track">
+        <div class="module-stat-fill" style="width: ${avg}%; background: ${color};"></div>
+      </div>
+      <span class="module-stat-pct">${avg}%</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderSkillFamilyStats() {
+  const container = document.getElementById("skill-family-stats-bars");
+  const weakestEl = document.getElementById("skill-family-weakest");
+  const averages = FlightCore.skillFamilyAverages(globalHistory);
+  renderSkillFamilyBars(container, averages, "COMPLETE A SESSION TO MAP SKILL FAMILIES");
+
+  if (weakestEl) {
+    const weakest = FlightCore.weakestSkillFamily(globalHistory);
+    weakestEl.textContent = weakest ? `${weakest.label}: ${weakest.accuracy}%` : "Pending";
+  }
+}
+
+function renderDebriefSkillFamilies(skillFamilyAccuracy) {
+  const container = document.getElementById("debrief-skill-family-bars");
+  renderSkillFamilyBars(container, skillFamilyAccuracy, "NO SKILL FAMILY DATA RECORDED");
+}
 function loadHomeStats() {
   if (globalHistory.length > 0) {
     const scores = globalHistory.map(h => h.score);
@@ -1981,6 +2406,7 @@ function loadHomeStats() {
 
   renderHistoryChart();
   renderModuleStats();
+  renderSkillFamilyStats();
   renderRoundStepTracker();
 }
 
@@ -2275,6 +2701,15 @@ window.addEventListener("keydown", (e) => {
   if (!activeScreen) return;
   
   // Custom Keyboard playability for each module in the Test screen
+  if (activeScreen.id === "screen-test" && ["balance", "wire", "target", "intercept", "clearance"].includes(activeModule)) {
+    if (/^[1-9]$/.test(key)) {
+      e.preventDefault();
+      const choices = Array.from(document.querySelectorAll("#screen-test .answer-tile"));
+      const idx = parseInt(key, 10) - 1;
+      if (choices[idx]) choices[idx].click();
+      return;
+    }
+  }
   if (activeScreen.id === "screen-test" && (focusedInputId === null || activeModule === "fault")) {
     if (activeModule === "checklist") {
       if (/^[1-9]$/.test(key)) {
@@ -2487,49 +2922,123 @@ function initSessionLengthSelector() {
   });
 }
 
+function moduleFamilyDisplay(family) {
+  return String(family || "").replace(/^./, c => c.toUpperCase());
+}
+
+function initChallengeModeSelector() {
+  const selectionCard = document.getElementById("game-selection-card");
+  if (!selectionCard || document.getElementById("challenge-mode-selector")) return;
+  const modeWrap = document.createElement("div");
+  modeWrap.className = "challenge-mode-wrap";
+  modeWrap.innerHTML = `
+    <div class="terminal-card-header compact-header">
+      <span>Run Mode</span>
+      <span class="type-tag" id="challenge-mode-label">${challengeMode === "practice" ? "Practice" : "Mock Run"}</span>
+    </div>
+    <div class="session-length-selector" id="challenge-mode-selector">
+      <button class="session-len-btn" data-mode="practice">Practice</button>
+      <button class="session-len-btn" data-mode="mock">Mock Run</button>
+    </div>
+  `;
+  selectionCard.appendChild(modeWrap);
+  const buttons = modeWrap.querySelectorAll(".session-len-btn");
+  const label = document.getElementById("challenge-mode-label");
+  buttons.forEach(btn => {
+    const mode = btn.getAttribute("data-mode");
+    btn.classList.toggle("active", mode === challengeMode);
+    btn.addEventListener("click", () => {
+      playSound("click");
+      challengeMode = mode;
+      safeStorageSet("flightcore_challenge_mode", mode);
+      buttons.forEach(b => b.classList.toggle("active", b === btn));
+      if (label) label.textContent = mode === "practice" ? "Practice" : "Mock Run";
+      Telemetry.emit("settings_changed", { setting: "challenge_mode", value: mode });
+    });
+  });
+}
+
 function initModuleSelection() {
-  const cards = document.querySelectorAll(".module-select-card");
-  const allMods = ["checklist", "instruments", "atc", "fault"];
+  const grid = document.querySelector(".module-selection-grid");
+  const countEl = document.getElementById("modules-selected-count");
+  const allMods = FlightCore.CHALLENGE_MODULE_KEYS.slice();
+  if (!grid) return;
+
+  const grouped = {};
+  allMods.forEach(key => {
+    const meta = FlightCore.moduleMetadata(key);
+    if (!grouped[meta.skillFamily]) grouped[meta.skillFamily] = [];
+    grouped[meta.skillFamily].push({ key, meta });
+  });
+
+  grid.classList.add("module-catalog-grid");
+  grid.innerHTML = FlightCore.SKILL_FAMILIES.map(family => {
+    const mods = grouped[family] || [];
+    if (mods.length === 0) return "";
+    return `
+      <div class="module-family-group">
+        <div class="module-family-heading">${moduleFamilyDisplay(family)}</div>
+        <div class="module-family-list">
+          ${mods.map(({ key, meta }) => `
+            <div class="module-select-card ${selectedModules.includes(key) ? 'active' : ''}" data-module="${key}" id="select-${key}" role="button" tabindex="0" aria-pressed="${selectedModules.includes(key) ? 'true' : 'false'}">
+              <span class="select-indicator"></span>
+              <span class="module-select-text"><span>${meta.label}</span><small>${meta.skillLabel}</small></span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const cards = grid.querySelectorAll(".module-select-card");
+  const updateCount = () => { if (countEl) countEl.textContent = `${selectedModules.length} Active`; };
+
+  const toggleCard = (card) => {
+    const mod = card.getAttribute("data-module");
+    if (card.classList.contains("active")) {
+      if (selectedModules.length <= 1) {
+        card.classList.add("shake");
+        triggerHaptic("error");
+        setTimeout(() => card.classList.remove("shake"), 300);
+        return;
+      }
+      card.classList.remove("active");
+      card.setAttribute("aria-pressed", "false");
+      selectedModules = selectedModules.filter(m => m !== mod);
+    } else {
+      card.classList.add("active");
+      card.setAttribute("aria-pressed", "true");
+      selectedModules.push(mod);
+    }
+    updateCount();
+  };
 
   cards.forEach(card => {
-    card.addEventListener("click", () => {
-      const mod = card.getAttribute("data-module");
-      if (card.classList.contains("active")) {
-        if (selectedModules.length <= 1) {
-          card.classList.add("shake");
-          triggerHaptic("error");
-          setTimeout(() => card.classList.remove("shake"), 300);
-          return;
-        }
-        card.classList.remove("active");
-        selectedModules = selectedModules.filter(m => m !== mod);
-      } else {
-        card.classList.add("active");
-        selectedModules.push(mod);
+    card.addEventListener("click", () => toggleCard(card));
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleCard(card);
       }
-      document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
     });
   });
 
-  // ALL toggle button
   const btnAll = document.getElementById("btn-select-all-modules");
   if (btnAll) {
     btnAll.addEventListener("click", () => {
       playSound("click");
       const allActive = allMods.every(m => selectedModules.includes(m));
-      if (allActive) {
-        // Leave only the first module active (can't go to 0)
-        selectedModules = [allMods[0]];
-        cards.forEach(c => {
-          c.classList.toggle("active", c.getAttribute("data-module") === allMods[0]);
-        });
-      } else {
-        selectedModules = [...allMods];
-        cards.forEach(c => c.classList.add("active"));
-      }
-      document.getElementById("modules-selected-count").textContent = `${selectedModules.length} Active`;
+      selectedModules = allActive ? [allMods[0]] : allMods.slice();
+      cards.forEach(c => {
+        const active = selectedModules.includes(c.getAttribute("data-module"));
+        c.classList.toggle("active", active);
+        c.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      updateCount();
     });
   }
+  updateCount();
+  initChallengeModeSelector();
 }
 
 function initHelpSystem() {
@@ -2700,6 +3209,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  ensureAptitudeContainers();
   initThemeSystem();
   initSegmentControl();
   loadHomeStats();

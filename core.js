@@ -73,6 +73,42 @@
     return clampPct(((v - mn) / range) * 100);
   }
 
+  // ---- module metadata and skill families ----
+
+  const SKILL_FAMILIES = ["logical", "spatial", "visual", "memory", "advanced"];
+  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept"];
+
+  const MODULE_METADATA = {
+    checklist: { label: "Checklist", skillFamily: "memory", skillLabel: "Memory" },
+    instruments: { label: "Instruments", skillFamily: "visual", skillLabel: "Visual" },
+    atc: { label: "ATC", skillFamily: "memory", skillLabel: "Memory" },
+    fault: { label: "Fault", skillFamily: "logical", skillLabel: "Logical" },
+    balance: { label: "Balance Bender", skillFamily: "logical", skillLabel: "Logical" },
+    wire: { label: "Wire Trace", skillFamily: "visual", skillLabel: "Visual" },
+    target: { label: "Target Scan", skillFamily: "visual", skillLabel: "Visual" },
+    clearance: { label: "Clearance Recall", skillFamily: "memory", skillLabel: "Memory" },
+    attitude: { label: "Attitude Vector", skillFamily: "spatial", skillLabel: "Spatial" },
+    beacon: { label: "Beacon Bearing", skillFamily: "spatial", skillLabel: "Spatial" },
+    intercept: { label: "Aero Intercept", skillFamily: "advanced", skillLabel: "Advanced" },
+    capacity: { label: "Cockpit Capacity", skillFamily: "advanced", skillLabel: "Advanced" }
+  };
+
+  function titleCaseFamily(key) {
+    const text = String(key || "");
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Unknown";
+  }
+
+  function moduleMetadata(module) {
+    const key = String(module || "").toLowerCase();
+    const meta = MODULE_METADATA[key];
+    if (meta) return Object.assign({ key }, meta);
+    return { key, label: key ? titleCaseFamily(key) : "Unknown", skillFamily: "advanced", skillLabel: "Advanced" };
+  }
+
+  function moduleSkillFamily(module) {
+    return moduleMetadata(module).skillFamily;
+  }
+
   // ---- module selection ("No 3x Repeat") ----
 
   // Pick the next challenge module from the active selection, filtering out a
@@ -192,7 +228,7 @@
   function sessionCompetencies(rounds, fallback) {
     const rs = Array.isArray(rounds) ? rounds : [];
     const result = {};
-    ["checklist", "instruments", "atc", "fault"].forEach(key => {
+    CHALLENGE_MODULE_KEYS.forEach(key => {
       result[key] = averageAccuracy(rs.filter(r => r && r.module === key), fallback);
     });
     return result;
@@ -201,11 +237,84 @@
   function sessionModuleAccuracy(rounds) {
     const rs = Array.isArray(rounds) ? rounds : [];
     const result = {};
-    ["checklist", "instruments", "atc", "fault"].forEach(key => {
+    CHALLENGE_MODULE_KEYS.forEach(key => {
       const modRounds = rs.filter(r => r && r.module === key);
       if (modRounds.length > 0) result[key] = averageAccuracy(modRounds, 0);
     });
     return result;
+  }
+
+  function sessionSkillFamilyAccuracy(rounds, fallback) {
+    const rs = Array.isArray(rounds) ? rounds : [];
+    const result = {};
+    SKILL_FAMILIES.forEach(key => {
+      const familyRounds = rs.filter(r => r && ((r.skillFamily || moduleSkillFamily(r.module)) === key));
+      if (familyRounds.length > 0) result[key] = averageAccuracy(familyRounds, 0);
+      else if (fallback !== undefined) result[key] = clampPct(Number(fallback) || 0);
+    });
+    return result;
+  }
+
+  function skillFamilyAverages(history) {
+    const hist = Array.isArray(history) ? history : [];
+    const result = {};
+    const sums = {};
+    const counts = {};
+    SKILL_FAMILIES.forEach(key => {
+      result[key] = 0;
+      sums[key] = 0;
+      counts[key] = 0;
+    });
+    if (hist.length === 0) return result;
+
+    hist.forEach(h => {
+      const record = h || {};
+      if (record.skillFamilyAccuracy) {
+        SKILL_FAMILIES.forEach(key => {
+          if (Number.isFinite(Number(record.skillFamilyAccuracy[key]))) {
+            sums[key] += Number(record.skillFamilyAccuracy[key]);
+            counts[key]++;
+          }
+        });
+        return;
+      }
+
+      if (record.moduleAccuracy || record.competencies) {
+        const moduleData = record.moduleAccuracy || record.competencies;
+        Object.keys(moduleData).forEach(moduleKey => {
+          const family = moduleSkillFamily(moduleKey);
+          if (!SKILL_FAMILIES.includes(family)) return;
+          const value = Number(moduleData[moduleKey]);
+          if (!Number.isFinite(value)) return;
+          sums[family] += value;
+          counts[family]++;
+        });
+        return;
+      }
+
+      const fallback = Number(record.percentage);
+      if (Number.isFinite(fallback)) {
+        SKILL_FAMILIES.forEach(key => {
+          sums[key] += fallback;
+          counts[key]++;
+        });
+      }
+    });
+
+    SKILL_FAMILIES.forEach(key => {
+      result[key] = counts[key] > 0 ? clampPct(Math.round(sums[key] / counts[key])) : 0;
+    });
+    return result;
+  }
+
+  function weakestSkillFamily(history) {
+    const averages = skillFamilyAverages(history);
+    const populated = SKILL_FAMILIES
+      .filter(key => averages[key] > 0)
+      .map(key => ({ key, label: titleCaseFamily(key), accuracy: averages[key] }));
+    if (populated.length === 0) return null;
+    populated.sort((a, b) => a.accuracy - b.accuracy || SKILL_FAMILIES.indexOf(a.key) - SKILL_FAMILIES.indexOf(b.key));
+    return populated[0];
   }
 
   function nextDailyStreak(lastPlayedDate, currentStreak, today) {
@@ -360,12 +469,165 @@
     };
   }
 
+
+  function makeShapeCount(shape, count) {
+    return { shape, count };
+  }
+
+  function itemTotal(items, weights) {
+    return (Array.isArray(items) ? items : []).reduce((sum, item) => sum + (weights[item.shape] || 0) * item.count, 0);
+  }
+
+  function generateBalance(level, rng) {
+    rng = rng || Math.random;
+    const lvl = Number.isFinite(level) ? level : 1;
+    const shapes = ["orange", "green"];
+    const weights = { orange: 1, green: 2, cyan: 3, rose: 4 };
+    const questionTotal = Math.min(4 + Math.floor(lvl / 2), 9);
+    const correctShape = shapes[Math.floor(rng() * Math.min(2 + Math.floor(lvl / 3), shapes.length))];
+    const correctCount = Math.max(1, Math.round(questionTotal / weights[correctShape]));
+    const correctTotal = correctCount * weights[correctShape];
+    const leftItems = [makeShapeCount("orange", correctTotal)];
+    const correctItems = [makeShapeCount(correctShape, correctCount)];
+
+    const options = [{ id: "A", items: correctItems, total: correctTotal }];
+    let optionCode = 66;
+    let guard = 0;
+    while (options.length < 5 && guard++ < 100) {
+      const shape = shapes[Math.floor(rng() * shapes.length)];
+      const delta = [-2, -1, 1, 2][Math.floor(rng() * 4)];
+      const count = Math.max(1, correctCount + delta + Math.floor(rng() * 2));
+      const total = count * weights[shape];
+      if (total === correctTotal) continue;
+      if (options.some(o => o.items[0].shape === shape && o.items[0].count === count)) continue;
+      options.push({ id: String.fromCharCode(optionCode++), items: [makeShapeCount(shape, count)], total });
+    }
+
+    const shuffled = shuffle(options, rng).map((opt, idx) => Object.assign({}, opt, { id: String.fromCharCode(65 + idx) }));
+    const correct = shuffled.find(opt => opt.total === correctTotal);
+    return {
+      rule: { left: [makeShapeCount("orange", 2)], right: [makeShapeCount("green", 1)] },
+      question: { left: leftItems, targetTotal: correctTotal },
+      options: shuffled.map(({ id, items }) => ({ id, items })),
+      expected: correct.id,
+      weights
+    };
+  }
+
+  function balanceAccuracy(expected, input) {
+    return String(expected || "") === String(input || "") ? 100 : 0;
+  }
+
+  function generateWire(level, rng) {
+    rng = rng || Math.random;
+    const lvl = Number.isFinite(level) ? level : 1;
+    const count = Math.min(5 + Math.floor(lvl / 2), 10);
+    const starts = "ABCDEFGHIJKL".slice(0, count).split("");
+    const ends = Array.from({ length: count }, (_, i) => String(i + 1));
+    const shuffledEnds = shuffle(ends, rng);
+    const mappings = starts.map((start, idx) => ({ start, end: shuffledEnds[idx] }));
+    const query = mappings[Math.floor(rng() * mappings.length)];
+    return { starts, ends, mappings, queryStart: query.start, expected: query.end };
+  }
+
+  function wireAccuracy(expected, input) {
+    return String(expected || "") === String(input || "") ? 100 : 0;
+  }
+
+  function generateClearance(pools, level, rng) {
+    rng = rng || Math.random;
+    const lvl = Number.isFinite(level) ? level : 1;
+    const callsign = pools.callsigns[Math.floor(rng() * pools.callsigns.length)];
+    const facility = pools.facilities[Math.floor(rng() * pools.facilities.length)];
+    const freq = pools.frequencies[Math.floor(rng() * pools.frequencies.length)];
+    const squawk = pools.squawks[Math.floor(rng() * pools.squawks.length)];
+    const altitude = `${(Math.floor(rng() * 24) + 6) * 1000}`;
+    const heading = String(Math.floor(rng() * 36) * 10).padStart(3, "0");
+    const speed = String((Math.floor(rng() * 9) + 22) * 10);
+    const expected = { callsign, facility, freq, squawk, altitude, heading, speed };
+    const displayText = lvl < 4
+      ? `"${callsign}, ${facility}, CLIMB AND MAINTAIN ${altitude}, FLY HEADING ${heading}, CONTACT ${freq}, SQUAWK ${squawk}."`
+      : `"${callsign}, ${facility}, CLIMB AND MAINTAIN ${altitude}, SPEED ${speed}, FLY HEADING ${heading}, CONTACT ${freq}, SQUAWK ${squawk}."`;
+    return { expected, displayText };
+  }
+
+  function clearanceAccuracy(expected, inputs) {
+    const exp = expected || {}, inp = inputs || {};
+    const fields = ["callsign", "facility", "freq", "squawk", "altitude", "heading", "speed"];
+    let errors = 0;
+    fields.forEach(f => {
+      const e = String(exp[f] === undefined || exp[f] === null ? "" : exp[f]).trim().toUpperCase();
+      const i = String(inp[f] === undefined || inp[f] === null ? "" : inp[f]).trim().toUpperCase();
+      if (e !== i) errors++;
+    });
+    return clampPct(Math.round(((fields.length - errors) / fields.length) * 100));
+  }
+
+  function generateTarget(level, rng) {
+    rng = rng || Math.random;
+    const lvl = Number.isFinite(level) ? level : 1;
+    const size = lvl >= 5 ? 5 : 4;
+    const colors = ["blue", "amber", "green", "rose"];
+    const shapes = ["circle", "square", "triangle", "diamond"];
+    const targetColor = colors[Math.floor(rng() * colors.length)];
+    const targetShape = shapes[Math.floor(rng() * shapes.length)];
+    const cells = [];
+    for (let i = 0; i < size * size; i++) {
+      cells.push({
+        color: colors[Math.floor(rng() * colors.length)],
+        shape: shapes[Math.floor(rng() * shapes.length)]
+      });
+    }
+    if (!cells.some(c => c.color === targetColor && c.shape === targetShape)) {
+      cells[Math.floor(rng() * cells.length)] = { color: targetColor, shape: targetShape };
+    }
+    const expected = cells.filter(c => c.color === targetColor && c.shape === targetShape).length;
+    return { size, targetColor, targetShape, cells, expected };
+  }
+
+  function targetAccuracy(expected, input) {
+    return Number(expected) === Number(input) ? 100 : 0;
+  }
+
+  function generateIntercept(level, rng) {
+    rng = rng || Math.random;
+    const lvl = Number.isFinite(level) ? level : 1;
+    const altitude = (Math.floor(rng() * 28) + 8) * 1000;
+    const bandLow = 16000;
+    const bandHigh = 24000;
+    const bandStatus = altitude < bandLow ? "LOW" : altitude > bandHigh ? "HIGH" : "IN BAND";
+    const expectedAction = altitude < bandLow ? "CLIMB" : altitude > bandHigh ? "DESCEND" : "HOLD";
+    const quizA = Math.floor(rng() * 7) + lvl;
+    const quizB = Math.floor(rng() * 7) + 3;
+    const expectedQuiz = quizA + quizB;
+    return {
+      altitude,
+      bandLow,
+      bandHigh,
+      bandStatus,
+      targetBearing: Math.floor(rng() * 360),
+      expected: { action: expectedAction, quiz: expectedQuiz },
+      quiz: `${quizA} + ${quizB}`
+    };
+  }
+
+  function interceptAccuracy(expected, input) {
+    const exp = expected || {}, inp = input || {};
+    const actionCorrect = String(exp.action || "") === String(inp.action || "");
+    const quizCorrect = Number(exp.quiz) === Number(inp.quiz);
+    return (actionCorrect ? 50 : 0) + (quizCorrect ? 50 : 0);
+  }
   return {
     MAX_LEVEL,
+    SKILL_FAMILIES,
+    CHALLENGE_MODULE_KEYS,
+    MODULE_METADATA,
     safeParse,
     safeNumber,
     computeLevel,
     gaugePercent,
+    moduleMetadata,
+    moduleSkillFamily,
     selectModule,
     checklistAccuracy,
     instrumentsAccuracy,
@@ -377,12 +639,25 @@
     averageAccuracy,
     sessionCompetencies,
     sessionModuleAccuracy,
+    sessionSkillFamilyAccuracy,
+    skillFamilyAverages,
+    weakestSkillFamily,
     nextDailyStreak,
     shuffle,
     pickUnused,
     generateChecklist,
     generateInstruments,
     generateATC,
-    generateFault
+    generateFault,
+    generateBalance,
+    balanceAccuracy,
+    generateWire,
+    wireAccuracy,
+    generateClearance,
+    clearanceAccuracy,
+    generateTarget,
+    targetAccuracy,
+    generateIntercept,
+    interceptAccuracy
   };
 });

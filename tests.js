@@ -1,5 +1,5 @@
-// ==========================================
-// Flight Core — Zero-dependency test suite for the pure engine (core.js).
+﻿// ==========================================
+// Flight Core â€” Zero-dependency test suite for the pure engine (core.js).
 // Runs in the browser (open tests.html) and under Node (`node tests.js`).
 // No build step, no npm, no frameworks.
 // ==========================================
@@ -26,16 +26,16 @@
   }
   function assertEqual(actual, expected, msg) {
     if (actual !== expected) {
-      throw new Error((msg || "not equal") + ` — expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+      throw new Error((msg || "not equal") + ` â€” expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
     }
   }
   function assertDeep(actual, expected, msg) {
     if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-      throw new Error((msg || "not deep-equal") + ` — expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+      throw new Error((msg || "not deep-equal") + ` â€” expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
     }
   }
   function assertNoThrow(fn, msg) {
-    try { fn(); } catch (e) { throw new Error((msg || "threw") + ` — ${e.message}`); }
+    try { fn(); } catch (e) { throw new Error((msg || "threw") + ` â€” ${e.message}`); }
   }
 
   // Deterministic, seedable PRNG (mulberry32) for reproducible generator tests.
@@ -129,7 +129,7 @@
     }
   });
   test("selectModule: empty filter result falls back (never undefined)", () => {
-    // Only one module selected and it is the repeated one — must still return it.
+    // Only one module selected and it is the repeated one â€” must still return it.
     const m = FC.selectModule(["checklist", "checklist"], ["checklist", "checklist"], seeded(3));
     assertEqual(m, "checklist");
   });
@@ -221,11 +221,51 @@
       { module: "checklist", accuracy: 50 },
       { module: "atc", accuracy: 25 }
     ];
-    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80 });
+    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, intercept: 80 });
   });
 
   test("sessionModuleAccuracy: only includes played modules", () => {
     assertDeep(FC.sessionModuleAccuracy([{ module: "fault", accuracy: 100 }, { module: "fault", accuracy: 50 }]), { fault: 75 });
+  });
+
+  test("moduleMetadata: maps current modules to skill families", () => {
+    assertEqual(FC.moduleSkillFamily("checklist"), "memory");
+    assertEqual(FC.moduleSkillFamily("instruments"), "visual");
+    assertEqual(FC.moduleSkillFamily("fault"), "logical");
+    assert(FC.SKILL_FAMILIES.includes("spatial"));
+    assert(FC.SKILL_FAMILIES.includes("advanced"));
+  });
+
+  test("sessionSkillFamilyAccuracy: averages explicit or inferred families", () => {
+    const rounds = [
+      { module: "checklist", accuracy: 100 },
+      { module: "atc", skillFamily: "memory", accuracy: 50 },
+      { module: "fault", accuracy: 25 }
+    ];
+    assertDeep(FC.sessionSkillFamilyAccuracy(rounds, 80), { logical: 25, spatial: 80, visual: 80, memory: 75, advanced: 80 });
+  });
+
+  test("skillFamilyAverages: uses new skill-family records first", () => {
+    const history = [
+      { skillFamilyAccuracy: { memory: 100, visual: 60, logical: 40 } },
+      { skillFamilyAccuracy: { memory: 50, visual: 80, logical: 20 } }
+    ];
+    assertDeep(FC.skillFamilyAverages(history), { logical: 30, spatial: 0, visual: 70, memory: 75, advanced: 0 });
+  });
+
+  test("skillFamilyAverages: maps legacy module accuracy records", () => {
+    const history = [{ moduleAccuracy: { checklist: 80, atc: 60, instruments: 40, fault: 20 } }];
+    assertDeep(FC.skillFamilyAverages(history), { logical: 20, spatial: 0, visual: 40, memory: 70, advanced: 0 });
+  });
+
+  test("skillFamilyAverages: falls back for older percentage-only records", () => {
+    const history = [{ percentage: 50 }];
+    assertDeep(FC.skillFamilyAverages(history), { logical: 50, spatial: 50, visual: 50, memory: 50, advanced: 50 });
+  });
+
+  test("weakestSkillFamily: returns the lowest populated family", () => {
+    const weakest = FC.weakestSkillFamily([{ skillFamilyAccuracy: { memory: 90, visual: 70, logical: 40 } }]);
+    assertDeep(weakest, { key: "logical", label: "Logical", accuracy: 40 });
   });
 
   test("nextDailyStreak: same, next, and missed day behavior", () => {
@@ -312,7 +352,43 @@
     });
   });
 
-  // ---- reporting ----
+
+  test("generateBalance: has exactly one correct choice", () => {
+    const d = FC.generateBalance(4, seeded(10));
+    assert(d.options.some(o => o.id === d.expected));
+    assertEqual(FC.balanceAccuracy(d.expected, d.expected), 100);
+    assertEqual(FC.balanceAccuracy(d.expected, "Z"), 0);
+  });
+
+  test("generateWire: maps each start to one endpoint", () => {
+    const d = FC.generateWire(5, seeded(11));
+    assertEqual(d.starts.length, d.ends.length);
+    assertEqual(new Set(d.mappings.map(m => m.end)).size, d.ends.length);
+    assertEqual(FC.wireAccuracy(d.expected, d.expected), 100);
+  });
+
+  test("generateClearance: produces extended recall fields", () => {
+    const d = FC.generateClearance(ATC, 5, seeded(12));
+    ["callsign", "facility", "freq", "squawk", "altitude", "heading", "speed"].forEach(f => assert(d.expected[f]));
+    assertEqual(FC.clearanceAccuracy(d.expected, d.expected), 100);
+    assert(FC.clearanceAccuracy(d.expected, {}) < 100);
+  });
+
+  test("generateTarget: expected count matches generated cells", () => {
+    const d = FC.generateTarget(5, seeded(13));
+    const count = d.cells.filter(c => c.color === d.targetColor && c.shape === d.targetShape).length;
+    assertEqual(d.expected, count);
+    assertEqual(FC.targetAccuracy(d.expected, d.expected), 100);
+  });
+
+  test("generateIntercept: action follows altitude band", () => {
+    for (let s = 1; s <= 20; s++) {
+      const d = FC.generateIntercept(3, seeded(s));
+      const action = d.altitude < d.bandLow ? "CLIMB" : d.altitude > d.bandHigh ? "DESCEND" : "HOLD";
+      assertEqual(d.expected.action, action);
+      assertEqual(FC.interceptAccuracy(d.expected, d.expected), 100);
+    }
+  });  // ---- reporting ----
   const passed = results.filter(r => r.ok).length;
   const failed = results.length - passed;
 
@@ -320,17 +396,17 @@
     const root = document.getElementById("results") || document.body;
     const summary = document.createElement("div");
     summary.className = "summary " + (failed === 0 ? "ok" : "fail");
-    summary.textContent = `${passed}/${results.length} passed` + (failed ? ` — ${failed} FAILED` : " — ALL GREEN");
+    summary.textContent = `${passed}/${results.length} passed` + (failed ? ` â€” ${failed} FAILED` : " â€” ALL GREEN");
     root.appendChild(summary);
     results.forEach(r => {
       const row = document.createElement("div");
       row.className = "row " + (r.ok ? "pass" : "failrow");
-      row.textContent = (r.ok ? "✓ " : "✗ ") + r.name + (r.ok ? "" : "  →  " + r.error);
+      row.textContent = (r.ok ? "âœ“ " : "âœ— ") + r.name + (r.ok ? "" : "  â†’  " + r.error);
       root.appendChild(row);
     });
   } else {
     results.forEach(r => {
-      if (!r.ok) console.error("✗ " + r.name + "  →  " + r.error);
+      if (!r.ok) console.error("âœ— " + r.name + "  â†’  " + r.error);
     });
     console.log(`\nFlight Core engine tests: ${passed}/${results.length} passed${failed ? `, ${failed} FAILED` : ""}`);
     if (typeof process !== "undefined" && process.exit) process.exit(failed === 0 ? 0 : 1);

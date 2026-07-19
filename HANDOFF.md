@@ -1,52 +1,108 @@
-# Handoff: Roadmap Foundation Pass
+# Handoff: Aptitude Suite Closeout
 
-**Generated**: 2026-07-18 local time
+**Generated**: 2026-07-19 18:49 +07:00
 **Branch**: main
-**Status**: Automated verification complete; ready for manual browser QA
+**Status**: Ready for Review
+
+## Loop Telemetry
+- **Active Subtask**: Aptitude suite sprint closeout
+- **Current Iteration**: Final verification and repository wrap-up
+- **Healing Actions Taken**: Used narrowly scoped escalated PowerShell reads/writes after the Windows sandbox repeatedly failed with `helper_unknown_error: apply deny-read ACLs`. Browser automation was attempted through Node REPL but failed before Playwright could load with the same ACL issue.
 
 ## Goal
 
-Execute the five roadmap foundation steps: positioning cleanup, Phase 0 launch scaffold, core/app maintainability split, PWA/security hardening preparation, and accessibility/UI quality foundations.
+Expand FlightCore from four cockpit-flavored recall modules into a broader aptitude challenge suite while keeping the app zero-build, offline-first, visually consistent, and clearly positioned as an entertainment game rather than pilot training or exam preparation.
 
 ## Completed
+- [x] Added `APTITUDE_MODULE_RESEARCH.md` with source-backed aptitude module opportunities and implementation status.
+- [x] Added `docs/aptitude_module_contract.md` with module lifecycle, round-result shape, generator rules, UI shell, theme rules, and verification gate.
+- [x] Updated `implementation_plan.md` and `task.md` with sprint execution status and closeout verification.
+- [x] Added skill-family metadata in `core.js` for `logical`, `spatial`, `visual`, `memory`, and `advanced`.
+- [x] Added playable module support for Checklist, Instruments, ATC, Fault, Balance Bender, Wire Trace, Clearance Recall, Target Scan, and Aero Intercept.
+- [x] Kept Aero Intercept selectable but excluded from the default module rotation until manual browser/input QA passes.
+- [x] Added pure generators and scorers in `core.js` for Balance Bender, Wire Trace, Clearance Recall, Target Scan, and Aero Intercept.
+- [x] Added deterministic tests for new generators/scorers and expanded skill-family aggregation tests.
+- [x] Extended round/session records in `app.js` with `skillFamily`, `responseMs`, `difficulty`, `mistakes`, and `skillFamilyAccuracy` while preserving old localStorage history compatibility.
+- [x] Added grouped module catalog UI with Practice and Mock Run shell controls.
+- [x] Added shared aptitude UI primitives in `styles.css` using existing theme tokens, fonts, spacing, card radius, and control density.
+- [x] Added dynamic study/test containers and renderers for the new modules without requiring duplicated static markup in `index.html`.
+- [x] Added compact Skill Family Map and Skill Family Debrief UI surfaces.
+- [x] Updated `README.md` for the new module catalog and verification flow.
+- [x] Ran final syntax, engine test, whitespace, and positioning-copy scans.
 
-- [x] Reframed user-facing copy around a cockpit-inspired challenge game rather than training/proficiency/logbook language.
-- [x] Rewrote `README.md` and refreshed `manifest.json` with game/entertainment positioning.
-- [x] Added `landing/index.html` and `landing/styles.css` as a static Phase 0 waitlist scaffold.
-- [x] Added `config.example.js`, ignored real `config.js`, and wired runtime config into `app.js`.
-- [x] Added a no-op-by-default `Telemetry` wrapper with opt-out-aware emits for session start, module completion, streak extension, session finish, and theme changes.
-- [x] Extracted pure session tier, per-session module summaries, and daily streak logic into `core.js`.
-- [x] Updated `app.js` to consume the extracted `FlightCore` helpers.
-- [x] Added focused unit tests for the new pure helpers; engine suite is now 73 assertions.
-- [x] Bumped service worker cache to `v4` and bypassed future config/API/Supabase/Stripe/Plausible/PostHog requests.
-- [x] Added focus-visible, reduced-motion, environment badge, and tab ARIA state support.
-- [x] Updated `implementation_plan.md` and `task.md` with the orchestrated roadmap execution state.
+## Not Yet Done
+- [ ] Manually open `index.html` and complete visual QA across desktop, tablet, and mobile widths.
+- [ ] Manually verify dark, light, mono, sage, and warm themes against the grouped catalog and new module screens.
+- [ ] Manually verify keyboard, pointer, and touch input paths for answer tiles and the optional Aero Intercept prototype.
+- [ ] Add real continuous-control telemetry for Aero Intercept: time-in-band, mean distance, false alarms, and missed prompts.
+- [ ] Add the first Spatial module, likely `Attitude Vector` or `Beacon Bearing`, after browser QA passes.
 
-## Verification
+## Failed Approaches (Don't Repeat These)
+* Tried `apply_patch` for focused edits. It failed because the Windows sandbox helper could not apply read ACLs to this workspace. Used targeted PowerShell `Get-Content`/`Set-Content` edits inside `D:\Documents\Personal_Project\Google_AG\FlightCore` instead.
+* Tried browser automation through the available Node REPL path. The kernel exited before Playwright could load with `windows sandbox failed: helper_unknown_error: apply deny-read ACLs`. Treat browser visual QA as manual until that environment issue is resolved.
+* A parallel escalated verification batch timed out in the approvals reviewer. Retried the same syntax/test commands one at a time successfully.
 
-- `node --check app.js` passed.
-- `node --check core.js` passed.
-- `node --check sw.js` passed.
-- `node tests.js` passed: 73/73.
-- Word-boundary positioning scan for avoid-list terms returned no matches.
-- Telemetry hook scan confirms `session_started`, `module_completed`, `streak_extended`, `session_finished`, and `settings_changed` emits are present.
-- Browser-control QA could not run in this Codex session because the local Windows sandbox helper failed with `apply deny-read ACLs`.
+## Key Decisions
+| Decision | Rationale |
+|---|---|
+| Keep `core.js` as answer source of truth | Generators and scorers can be tested without DOM/SVG/canvas coupling. |
+| Exclude Aero Intercept from default selection | It is an Advanced prototype and still needs manual input/performance QA. |
+| Restrict Balance Bender to orange/green rule shapes for now | The displayed rule explains every generated answer, avoiding hidden-weight ambiguity. |
+| Reuse existing theme tokens and UI primitives | Preserves the cockpit/glass style and avoids inconsistent sample-app styling. |
+| Keep the app static-first | The current module set does not justify framework, backend, or 3D dependencies yet. |
 
-## Notes / Follow-Up
-
-- `config.js` is intentionally ignored and may be generated/copied from `config.example.js` for real environments. Without it, the committed `config.example.js` keeps the app in local/no-telemetry mode.
-- The landing waitlist still uses placeholder `mailto:hello@example.com`; replace the action after choosing Buttondown, Resend, or another provider. The visible helper copy is now visitor-safe.
-- Manual browser QA is still required for responsive layout, service-worker update behavior, and the new landing page because automated browser control was unavailable in this session.
-- No backend, Supabase project, Stripe account, production telemetry endpoint, or legal policy text was created in this pass.
+## Current State
+- **Working**: `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` all pass. Engine tests report `84/84 passed`.
+- **Broken**: Automated browser QA is blocked by the Windows sandbox ACL error described above, not by a confirmed app runtime failure.
+- **Uncommitted Changes**: This closeout is expected to be committed and pushed by the wrap-up request. If resuming later, run `git status --short` first.
 
 ## Files to Know
-
 | File | Why It Matters |
 |---|---|
-| `core.js` | Pure engine helpers now include tiers, session competencies, module accuracy, and daily streak calculation. |
-| `app.js` | Runtime config, telemetry wrapper, session finish flow, and tab accessibility live here. |
-| `index.html` | Updated app copy, run history labels, telemetry preference, config script loading, and ARIA markup. |
-| `styles.css` | Rating class rename, environment badge, focus-visible, and reduced-motion support. |
-| `landing/` | Static Phase 0 waitlist/launch scaffold. |
-| `config.example.js` | Safe local default config template; real `config.js` is ignored. |
-| `sw.js` | Cache v4 plus network bypasses for future dynamic endpoints. |
+| `core.js` | Skill-family metadata, pure generators, scorers, and aggregation helpers live here. |
+| `app.js` | Session flow, grouped catalog, module renderers, scoring integration, telemetry, and localStorage persistence are wired here. |
+| `styles.css` | Shared aptitude board, answer tile, wire, target, clearance, and intercept styles live here. |
+| `index.html` | Static app shell plus Skill Family Map and Skill Family Debrief containers. |
+| `tests.js` | Engine suite covers aggregation and new module generator/scorer regressions. |
+| `README.md` | User-facing app summary and local verification commands. |
+| `APTITUDE_MODULE_RESEARCH.md` | Product research, backlog, and current implementation status. |
+| `docs/aptitude_module_contract.md` | Agent-facing implementation contract and UI consistency rules. |
+| `implementation_plan.md` | Sprint plan plus execution status. |
+| `task.md` | Sprint checklist and verification snapshot. |
+| `SESSION_LOG.md` | Closeout log for this sprint wrap-up. |
+
+## Code Context
+```js
+const SKILL_FAMILIES = ["logical", "spatial", "visual", "memory", "advanced"];
+const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept"];
+```
+
+```js
+const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => key !== "intercept");
+let selectedModules = DEFAULT_SELECTED_MODULES.slice();
+```
+
+```js
+function generateBalance(level, rng) { /* pure puzzle generator */ }
+function generateWire(level, rng) { /* pure mapping generator */ }
+function generateClearance(pools, level, rng) { /* pure memory prompt generator */ }
+function generateTarget(level, rng) { /* pure scan-board generator */ }
+function generateIntercept(level, rng) { /* pure prototype scenario generator */ }
+```
+
+## Resume Instructions
+1. Run `git status --short` and confirm the closeout commit is present on `main`.
+2. Manually open `index.html` in a browser and complete the QA checklist in `task.md`.
+3. If visual QA passes, decide whether Aero Intercept should stay opt-in or become part of the default module rotation.
+4. For the next implementation sprint, add a Spatial module using `docs/aptitude_module_contract.md` before adding full 3D.
+5. Re-run `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` after any changes.
+
+## Setup Required
+- No npm install, build step, backend, or environment variables are required for the current app.
+- Open `index.html` directly or serve the folder with any static file server.
+
+## Warnings & Caveats
+- FlightCore must remain positioned as a cockpit-inspired challenge game, not pilot training, real-world aviation instruction, certification prep, or exam preparation.
+- Keep secrets out of the repository. `config.js` remains the ignored local runtime config path.
+- Do not promote Aero Intercept into default rotation until browser performance and touch/keyboard controls have been manually verified.
+- Browser automation may need environment repair before Playwright-style visual QA is reliable in this workspace.
