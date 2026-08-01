@@ -221,7 +221,7 @@
       { module: "checklist", accuracy: 50 },
       { module: "atc", accuracy: 25 }
     ];
-    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, intercept: 80 });
+    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, attitude: 80, intercept: 80 });
   });
 
   test("sessionModuleAccuracy: only includes played modules", () => {
@@ -409,6 +409,81 @@
       assertEqual(d.expected.action, action);
       assertEqual(FC.interceptAccuracy(d.expected, d.expected), 100);
     }
+  });
+
+  test("generateAttitude: produces 4 choices with exact expected index", () => {
+    const d = FC.generateAttitude(3, seeded(14));
+    assertEqual(d.choices.length, 4);
+    assert(d.expectedIndex >= 0 && d.expectedIndex < 4);
+    assertEqual(FC.attitudeAccuracy(d.expectedIndex, d.expectedIndex), 100);
+    assertEqual(FC.attitudeAccuracy(d.expectedIndex, 999), 0);
+  });
+
+  test("computePilotRank: scales rank title from Student to Test Pilot", () => {
+    assertEqual(FC.computePilotRank({ totalSessions: 0, highScore: 0 }).title, "Student Pilot");
+    assertEqual(FC.computePilotRank({ totalSessions: 2, highScore: 1500 }).title, "Cadet");
+    assertEqual(FC.computePilotRank({ totalSessions: 5, highScore: 3500 }).title, "Second Officer");
+    assertEqual(FC.computePilotRank({ totalSessions: 12, highScore: 7000 }).title, "First Officer");
+    assertEqual(FC.computePilotRank({ totalSessions: 25, highScore: 11000 }).title, "Captain");
+    assertEqual(FC.computePilotRank({ totalSessions: 55, highScore: 16000 }).title, "Test Pilot");
+  });
+
+  test("evaluateAchievements: unlocks badges based on flight history", () => {
+    const hist = [
+      { scorePct: 100, maxStreak: 6, score: 6000 }
+    ];
+    const badges = FC.evaluateAchievements(hist);
+    assert(badges.some(b => b.id === "first_sortie" && b.unlocked));
+    assert(badges.some(b => b.id === "flawless" && b.unlocked));
+    assert(badges.some(b => b.id === "streak_5" && b.unlocked));
+    assert(badges.some(b => b.id === "high_score_5k" && b.unlocked));
+  });
+
+  test("evaluateProAccess: validates pro license keys", () => {
+    const free = FC.evaluateProAccess("FREE");
+    assertEqual(free.isPro, false);
+    assertEqual(free.unlockedThemes.length, 5);
+
+    const pro = FC.evaluateProAccess("PRO-FLIGHT-PASS");
+    assertEqual(pro.isPro, true);
+    assert(pro.unlockedThemes.includes("amber"));
+    assertEqual(pro.customAudio, true);
+    assertEqual(pro.csvExport, true);
+  });
+
+  test("analyzeTechnicalPerformance: handles empty round arrays without NaN", () => {
+    const res = FC.analyzeTechnicalPerformance([]);
+    assertEqual(res.totalRounds, 0);
+    assertEqual(res.avgResponseMs, 0);
+    assertEqual(res.ceiScore, 0);
+  });
+
+  test("analyzeTechnicalPerformance: calculates accurate response speeds and style breakdowns", () => {
+    const rounds = [
+      { round: 1, module: "checklist", accuracy: 100, responseMs: 2000 },
+      { round: 2, module: "instruments", accuracy: 80, responseMs: 3000 },
+      { round: 3, module: "attitude", accuracy: 100, responseMs: 2500 }
+    ];
+    const res = FC.analyzeTechnicalPerformance(rounds);
+    assertEqual(res.totalRounds, 3);
+    assertEqual(res.avgResponseMs, 2500);
+    assertEqual(res.fastestMs, 2000);
+    assertEqual(res.slowestMs, 3000);
+    assertEqual(res.cadenceLabel, "Optimal Cadence");
+    assert(res.styleBreakdown.memory.accuracy === 100);
+    assert(res.styleBreakdown.visual.accuracy === 80);
+    assert(res.styleBreakdown.spatial.accuracy === 100);
+  });
+
+  test("generateRadarSVG & generateTimingHistogramSVG: emit valid SVG strings", () => {
+    const radarSVG = FC.generateRadarSVG({ memory: 80, visual: 90, spatial: 100, logical: 70, advanced: 60 });
+    assert(radarSVG.includes("<svg") && radarSVG.includes("polygon"));
+
+    const histSVG = FC.generateTimingHistogramSVG([
+      { round: 1, module: "checklist", accuracy: 100, responseMs: 1500 },
+      { round: 2, module: "instruments", accuracy: 50, responseMs: 3200 }
+    ]);
+    assert(histSVG.includes("<svg") && histSVG.includes("<rect"));
   });  // ---- reporting ----
   const passed = results.filter(r => r.ok).length;
   const failed = results.length - passed;

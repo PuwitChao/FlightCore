@@ -76,7 +76,7 @@
   // ---- module metadata and skill families ----
 
   const SKILL_FAMILIES = ["logical", "spatial", "visual", "memory", "advanced"];
-  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept"];
+  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "attitude", "intercept"];
 
   const MODULE_METADATA = {
     checklist: { label: "Checklist", skillFamily: "memory", skillLabel: "Memory" },
@@ -635,6 +635,322 @@
     const quizCorrect = Number(exp.quiz) === Number(inp.quiz);
     return (actionCorrect ? 50 : 0) + (quizCorrect ? 50 : 0);
   }
+
+  // ---- attitude vector (spatial orientation) generator & scorer ----
+  function generateAttitude(level, rng) {
+    rng = rng || Math.random;
+    const pitchOptions = [-20, -10, 0, 10, 20];
+    const rollOptions = [-45, -30, 0, 30, 45];
+    
+    const pitch = pitchOptions[Math.floor(rng() * pitchOptions.length)];
+    const roll = rollOptions[Math.floor(rng() * rollOptions.length)];
+
+    const pitchLabel = pitch > 0 ? `Nose Up +${pitch}°` : pitch < 0 ? `Nose Down ${pitch}°` : "Level Pitch";
+    const rollLabel = roll > 0 ? `Bank Right +${roll}°` : roll < 0 ? `Bank Left ${roll}°` : "Wings Level";
+    
+    const choices = [];
+    const correctChoice = `${pitchLabel}, ${rollLabel}`;
+    choices.push(correctChoice);
+
+    while (choices.length < 4) {
+      const p = pitchOptions[Math.floor(rng() * pitchOptions.length)];
+      const r = rollOptions[Math.floor(rng() * rollOptions.length)];
+      const pL = p > 0 ? `Nose Up +${p}°` : p < 0 ? `Nose Down ${p}°` : "Level Pitch";
+      const rL = r > 0 ? `Bank Right +${r}°` : r < 0 ? `Bank Left ${r}°` : "Wings Level";
+      const candidate = `${pL}, ${rL}`;
+      if (!choices.includes(candidate)) {
+        choices.push(candidate);
+      }
+    }
+
+    const shuffled = shuffle(choices.slice(), rng);
+    const expectedIndex = shuffled.indexOf(correctChoice);
+
+    return {
+      pitch,
+      roll,
+      pitchLabel,
+      rollLabel,
+      choices: shuffled,
+      expectedIndex
+    };
+  }
+
+  function attitudeAccuracy(expectedIndex, inputIndex) {
+    return Number(expectedIndex) === Number(inputIndex) ? 100 : 0;
+  }
+
+  // ---- gamification: pilot ranks & achievements ----
+
+  function computePilotRank(stats) {
+    const s = stats || {};
+    const sessions = safeNumber(s.totalSessions, 0, { min: 0 });
+    const highScore = safeNumber(s.highScore, 0, { min: 0 });
+
+    if (sessions >= 50 && highScore >= 15000) {
+      return { rankId: "test_pilot", title: "Test Pilot", badge: "TP", level: 6, req: "Maximum Rank Achieved" };
+    } else if (sessions >= 20 || highScore >= 10000) {
+      return { rankId: "captain", title: "Captain", badge: "CPT", level: 5, req: "Next: Test Pilot (50 Sessions & 15,000 Score)" };
+    } else if (sessions >= 10 || highScore >= 6000) {
+      return { rankId: "first_officer", title: "First Officer", badge: "FO", level: 4, req: "Next: Captain (20 Sessions or 10,000 Score)" };
+    } else if (sessions >= 5 || highScore >= 3000) {
+      return { rankId: "second_officer", title: "Second Officer", badge: "SO", level: 3, req: "Next: First Officer (10 Sessions or 6,000 Score)" };
+    } else if (sessions >= 1 || highScore >= 1000) {
+      return { rankId: "cadet", title: "Cadet", badge: "CDT", level: 2, req: "Next: Second Officer (5 Sessions or 3,000 Score)" };
+    }
+    return { rankId: "student", title: "Student Pilot", badge: "STU", level: 1, req: "Next: Cadet (Complete 1 Session)" };
+  }
+
+  function evaluateAchievements(history, currentSession) {
+    const hist = Array.isArray(history) ? history : [];
+    const curr = currentSession || null;
+    const all = curr ? [...hist, curr] : hist;
+
+    const badges = [
+      { id: "first_sortie", title: "First Flight", desc: "Completed your first flight core sortie", icon: "FLT", unlocked: all.length >= 1 },
+      { id: "flawless", title: "Flawless Flight", desc: "Achieved 100% accuracy in a session", icon: "ACE", unlocked: all.some(s => Number(s.scorePct) === 100) },
+      { id: "streak_5", title: "Streak Master", desc: "Reached a correct streak of 5+", icon: "STR", unlocked: all.some(s => Number(s.maxStreak) >= 5) },
+      { id: "high_score_5k", title: "High Performer", desc: "Scored over 5,000 points in a session", icon: "5K", unlocked: all.some(s => Number(s.score) >= 5000) },
+      { id: "all_families", title: "Master Navigator", desc: "Played sessions across all skill families", icon: "NAV", unlocked: all.length >= 5 },
+      { id: "veteran_10", title: "Flight Leader", desc: "Completed 10 or more flight sessions", icon: "CPT", unlocked: all.length >= 10 }
+    ];
+
+    return badges;
+  }
+
+  // ---- pro feature gating & licensing helper ----
+
+  function evaluateProAccess(licenseKey) {
+    const isPro = String(licenseKey || "").trim().toUpperCase() === "PRO-FLIGHT-PASS" || String(licenseKey || "").trim() === "FLIGHT-CORE-PRO";
+    return {
+      isPro,
+      unlockedThemes: isPro ? ["dark", "light", "mono", "sage", "warm", "amber", "stealth"] : ["dark", "light", "mono", "sage", "warm"],
+      customAudio: isPro,
+      csvExport: isPro,
+      prototypeAccess: isPro
+    };
+  }
+
+  // ---- technical performance analytics & SVG chart generators ----
+
+  function analyzeTechnicalPerformance(rounds) {
+    const rList = Array.isArray(rounds) ? rounds : [];
+    if (rList.length === 0) {
+      return {
+        totalRounds: 0,
+        overallAccuracy: 0,
+        avgResponseMs: 0,
+        fastestMs: 0,
+        slowestMs: 0,
+        cadenceLabel: "No Telemetry",
+        ceiScore: 0,
+        styleBreakdown: {},
+        timingList: []
+      };
+    }
+
+    const times = rList.map(r => safeNumber(r.responseMs, 0, { min: 0 }));
+    const totalMs = times.reduce((a, b) => a + b, 0);
+    const avgMs = Math.round(totalMs / rList.length);
+    const validTimes = times.filter(t => t > 0);
+    const fastestMs = validTimes.length > 0 ? Math.min(...validTimes) : 0;
+    const slowestMs = validTimes.length > 0 ? Math.max(...validTimes) : 0;
+
+    let cadenceLabel = "Optimal Cadence";
+    const avgSec = avgMs / 1000;
+    if (avgSec <= 2.0) cadenceLabel = "Lightning Fast";
+    else if (avgSec <= 4.0) cadenceLabel = "Optimal Cadence";
+    else if (avgSec <= 7.0) cadenceLabel = "Deliberate Pace";
+    else cadenceLabel = "Hesitant";
+
+    const styleMap = {
+      checklist: "memory",
+      clearance: "memory",
+      atc: "memory",
+      instruments: "visual",
+      target: "visual",
+      fault: "logical",
+      balance: "logical",
+      attitude: "spatial",
+      wire: "spatial",
+      intercept: "advanced",
+      capacity: "advanced"
+    };
+
+    const styleStats = {
+      memory: { label: "Sequential Memory", count: 0, correct: 0, totalAccuracy: 0, totalMs: 0 },
+      visual: { label: "Quantitative Scanning", count: 0, correct: 0, totalAccuracy: 0, totalMs: 0 },
+      logical: { label: "Logical Deduction", count: 0, correct: 0, totalAccuracy: 0, totalMs: 0 },
+      spatial: { label: "Spatial Orientation", count: 0, correct: 0, totalAccuracy: 0, totalMs: 0 },
+      advanced: { label: "Advanced Capacity", count: 0, correct: 0, totalAccuracy: 0, totalMs: 0 }
+    };
+
+    rList.forEach(r => {
+      const mod = String(r.module || "").toLowerCase();
+      const styleKey = styleMap[mod] || r.skillFamily || "memory";
+      if (!styleStats[styleKey]) {
+        styleStats[styleKey] = { label: titleCaseFamily(styleKey), count: 0, correct: 0, totalAccuracy: 0, totalMs: 0 };
+      }
+      const st = styleStats[styleKey];
+      st.count++;
+      const acc = safeNumber(r.accuracy, 0, { min: 0, max: 100 });
+      st.totalAccuracy += acc;
+      if (acc === 100) st.correct++;
+      st.totalMs += safeNumber(r.responseMs, 0, { min: 0 });
+    });
+
+    const styleBreakdown = {};
+    Object.keys(styleStats).forEach(key => {
+      const s = styleStats[key];
+      if (s.count > 0) {
+        styleBreakdown[key] = {
+          label: s.label,
+          count: s.count,
+          correct: s.correct,
+          accuracy: Math.round(s.totalAccuracy / s.count),
+          avgResponseMs: Math.round(s.totalMs / s.count)
+        };
+      }
+    });
+
+    const overallAccuracy = Math.round(rList.reduce((sum, r) => sum + safeNumber(r.accuracy, 0, { min: 0, max: 100 }), 0) / rList.length);
+    const speedMult = Math.min(Math.max(1.5 - (avgSec / 10), 0.5), 1.5);
+    const ceiScore = Math.min(100, Math.round(overallAccuracy * speedMult));
+
+    const timingList = rList.map(r => ({
+      round: r.round,
+      module: r.module,
+      accuracy: safeNumber(r.accuracy, 0, { min: 0, max: 100 }),
+      grade: r.grade || (r.accuracy === 100 ? "perfect" : r.accuracy >= 50 ? "good" : "fail"),
+      responseMs: safeNumber(r.responseMs, 0, { min: 0 })
+    }));
+
+    return {
+      totalRounds: rList.length,
+      overallAccuracy,
+      avgResponseMs: avgMs,
+      fastestMs,
+      slowestMs,
+      cadenceLabel,
+      ceiScore,
+      styleBreakdown,
+      timingList
+    };
+  }
+
+  function generateRadarSVG(skillAverages) {
+    const avgs = skillAverages || {};
+    const families = ["memory", "visual", "spatial", "logical", "advanced"];
+    const labels = ["Memory", "Visual", "Spatial", "Logical", "Advanced"];
+    const cx = 100, cy = 100, radius = 65;
+    const numPoints = 5;
+
+    let gridPolygons = "";
+    [0.2, 0.4, 0.6, 0.8, 1.0].forEach(level => {
+      const pts = [];
+      for (let i = 0; i < numPoints; i++) {
+        const angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+        const r = radius * level;
+        const x = Math.round((cx + r * Math.cos(angle)) * 10) / 10;
+        const y = Math.round((cy + r * Math.sin(angle)) * 10) / 10;
+        pts.push(`${x},${y}`);
+      }
+      const strokeStyle = level === 0.8 ? "stroke: var(--accent-blue); stroke-opacity: 0.4; stroke-dasharray: 2 2;" : "stroke: var(--border-subtle);";
+      gridPolygons += `<polygon points="${pts.join(" ")}" fill="none" style="${strokeStyle} stroke-width: 1;" />`;
+    });
+
+    let axisLines = "";
+    let labelElements = "";
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+      const x = Math.round((cx + radius * Math.cos(angle)) * 10) / 10;
+      const y = Math.round((cy + radius * Math.sin(angle)) * 10) / 10;
+      axisLines += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--border-subtle)" stroke-width="1" />`;
+
+      const lx = Math.round((cx + (radius + 18) * Math.cos(angle)) * 10) / 10;
+      const ly = Math.round((cy + (radius + 18) * Math.sin(angle)) * 10) / 10;
+      labelElements += `<text x="${lx}" y="${ly + 3}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--text-secondary)">${labels[i]}</text>`;
+    }
+
+    const perfPoints = [];
+    families.forEach((fam, i) => {
+      const angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+      const score = clampPct(avgs[fam] !== undefined ? avgs[fam] : 50);
+      const r = radius * (score / 100);
+      const x = Math.round((cx + r * Math.cos(angle)) * 10) / 10;
+      const y = Math.round((cy + r * Math.sin(angle)) * 10) / 10;
+      perfPoints.push(`${x},${y}`);
+    });
+
+    const perfPolygon = `
+      <polygon points="${perfPoints.join(" ")}" fill="var(--accent-blue-glow)" stroke="var(--accent-blue)" stroke-width="2.5" />
+      ${perfPoints.map(pt => {
+        const [px, py] = pt.split(",");
+        return `<circle cx="${px}" cy="${py}" r="3" fill="var(--accent-blue)" />`;
+      }).join("")}
+    `;
+
+    return `
+      <svg class="radar-chart-svg" viewBox="0 0 200 200" width="100%" height="180" role="img" aria-label="Skill Family Spider Radar Chart">
+        ${gridPolygons}
+        ${axisLines}
+        ${perfPolygon}
+        ${labelElements}
+      </svg>
+    `;
+  }
+
+  function generateTimingHistogramSVG(timingList) {
+    const list = Array.isArray(timingList) ? timingList : [];
+    if (list.length === 0) return "";
+
+    const maxMs = Math.max(...list.map(t => t.responseMs), 5000);
+    const barWidth = Math.min(22, Math.floor(160 / list.length));
+    const gap = 6;
+    const chartHeight = 70;
+    const startX = 25;
+
+    let barsHTML = "";
+    let labelsHTML = "";
+
+    const totalMs = list.reduce((a, b) => a + b.responseMs, 0);
+    const avgMs = Math.round(totalMs / list.length);
+    const avgY = Math.round(chartHeight - (avgMs / maxMs) * chartHeight);
+
+    list.forEach((t, i) => {
+      const x = startX + i * (barWidth + gap);
+      const h = Math.max(4, Math.round((t.responseMs / maxMs) * chartHeight));
+      const y = chartHeight - h;
+      const sec = (t.responseMs / 1000).toFixed(1);
+      const color = t.accuracy === 100 ? "var(--success-emerald)" : t.accuracy >= 50 ? "var(--accent-amber)" : "var(--error-rose)";
+
+      barsHTML += `
+        <rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="3" fill="${color}" opacity="0.85">
+          <title>R${t.round} (${t.module}): ${sec}s - ${t.accuracy}%</title>
+        </rect>
+        <text x="${x + barWidth / 2}" y="${Math.max(8, y - 3)}" text-anchor="middle" font-size="7" font-weight="700" fill="var(--text-muted)">${sec}s</text>
+      `;
+
+      labelsHTML += `
+        <text x="${x + barWidth / 2}" y="${chartHeight + 14}" text-anchor="middle" font-size="7" font-weight="700" fill="var(--text-secondary)">R${t.round}</text>
+      `;
+    });
+
+    const meanLine = `
+      <line x1="${startX - 5}" y1="${avgY}" x2="${startX + list.length * (barWidth + gap)}" y2="${avgY}" stroke="var(--accent-cyan)" stroke-width="1.5" stroke-dasharray="3 2" />
+      <text x="${startX + list.length * (barWidth + gap) + 2}" y="${avgY + 3}" font-size="6" font-weight="800" fill="var(--accent-cyan)">AVG ${(avgMs/1000).toFixed(1)}s</text>
+    `;
+
+    return `
+      <svg class="timing-histogram-svg" viewBox="0 0 240 95" width="100%" height="100" role="img" aria-label="Per-round response time histogram">
+        <line x1="${startX - 5}" y1="${chartHeight}" x2="235" y2="${chartHeight}" stroke="var(--border-subtle)" stroke-width="1" />
+        ${barsHTML}
+        ${meanLine}
+        ${labelsHTML}
+      </svg>
+    `;
+  }
+
   return {
     MAX_LEVEL,
     SKILL_FAMILIES,
@@ -676,6 +992,14 @@
     generateTarget,
     targetAccuracy,
     generateIntercept,
-    interceptAccuracy
+    interceptAccuracy,
+    generateAttitude,
+    attitudeAccuracy,
+    computePilotRank,
+    evaluateAchievements,
+    evaluateProAccess,
+    analyzeTechnicalPerformance,
+    generateRadarSVG,
+    generateTimingHistogramSVG
   };
 });

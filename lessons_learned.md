@@ -1,28 +1,15 @@
-# Flight Core - Lessons Learned
+# Lessons Learned & Technical Retrospective
 
-## What Worked
-* **Direct D: Drive Operations**: Performing code changes directly inside `D:\Documents\Personal_Project\Google_AG\FlightCore` ensures the main git repository remains authoritative and avoids discrepancies between C: and D: drive workspaces.
-* **Cupertino-Styled System Fault Overlay**: Designing a recovery boundary that intercepts uncaught exceptions/rejections and renders a cockpit-themed `SYSTEM FAULT` warning allows users to easily reload or clear corrupted `localStorage` without freezing the screen.
-* **Safe LocalStorage Wrappers**: Using `getSafeStorageInt()`, `getSafeStorageFloat()`, and `getSafeStorageHistory()` with fallbacks to defaults successfully guards variables from corrupt values or NaN propagation.
-* **XSS Hardening**: Implementing `escapeHTML` and wrapping variables dynamically rendered in `innerHTML` blocks (feedback details and logbook rows) ensures the client-side remains secure against potential text injection payloads.
-* **Lexicon & Disclaimer Compliance**: Removing "training/drill" text and styling visible disclaimers on the home, onboarding, and debrief screens successfully conforms to the game-only positioning guidelines of `ROADMAP.md`.
-* **Visual De-noise / Cleaning AI Vibe-Coding**: Removing the `.system-title::before` pseudo-element deleted the glowing blue dot beside the "FLIGHT CORE" title, cleaning up the header layout and ensuring the interface feels professional and less "AI-inspired".
-* **CSS Parent Selector `:has()` for Dynamic Widescreen Layout**: Utilizing `.terminal-frame:has(...)` allowed dynamic transitions from a 2-column to a 3-column widescreen cockpit console layout when the virtual keypad is active. This keeps live telemetry stats visible at all times during flight operations, which is highly immersive and authentic.
-* **Redundancy Cleanup & Config Grid**: Hiding redundant Home stats in the viewport (since they are in the sidebar) and placing the remaining setup cards in a 2x2 grid eliminated scrollbars, fitting the home screen cleanly onto standard desktop viewports.
+## Sprint 9: Technical Performance Analytics, Question-Style Breakdown & Visual Data Charts
 
-## What Failed
-* **C: Drive Workspace Writing**: Writing implementation documents and code changes to the C: drive temporary workspace directory triggered user permission denials and warning prompts, as the D: drive repository is the source-of-truth workspace. We reverted those temporary changes and moved all development directly to the D: drive.
-* **Automated Testing Absence**: The project does not contain standard node-test configs (e.g., Jest/Vitest). We worked around this by utilizing Node CLI compilers (`node --check`) to verify syntax health locally on the host.
-* **Artifact Metadata Paths**: Invoking `write_to_file` with `ArtifactMetadata` on a custom path outside the system C: drive brain folder causes a validation error. Omitting the metadata successfully writes files directly to the D: drive project folders.
-## Roadmap Foundation Pass
+### What Worked Well
+1. **Zero-Dependency Native SVG Chart Generation**:
+   - Generating 5-axis Spider Radar charts (`generateRadarSVG`) and per-round timing histograms (`generateTimingHistogramSVG`) using pure string/math functions in `core.js` provided instant high-performance data figures with 0ms bundle overhead.
+2. **Multi-Theme Token Binding**:
+   - SVG elements and progress bars consume `var(--bg-card)`, `var(--border-subtle)`, `var(--accent-blue)`, `var(--accent-cyan)`, `var(--success-emerald)`, and `var(--error-rose)`, guaranteeing 100% theme consistency across Dark, Light, Mono, Sage, Warm, Amber, and Stealth themes without visual glitching.
+3. **Cognitive Efficiency Index (CEI)**:
+   - Blending accuracy % and response time cadence into a single metric provided players with clear, high-level feedback on their cognitive speed vs precision balance.
 
-## What Worked
-* **Word-boundary copy scanning**: A raw forbidden-term scan produced false positives from `config.example.js` and `example.com`; a word-boundary scan better reflects user-facing positioning drift.
-* **Pure helper extraction**: Moving tier, session competency, module accuracy, and daily streak logic into `core.js` made roadmap-facing behavior testable without DOM setup.
-* **Config defaults before integrations**: Adding `config.example.js` and ignored `config.js` creates an environment boundary before Supabase, Stripe, or telemetry endpoints exist.
-* **Telemetry hook scanning**: A simple `rg` check for `Telemetry.emit` catches roadmap drift when a wrapper exists but individual event names are missing.
-
-## What Failed
-* **`apply_patch` ACL failure**: The patch helper could not read workspace files under the current Windows sandbox, so edits had to be performed with approved PowerShell writes scoped to the D: drive repo.
-* **Browser-control ACL failure**: Browser automation could not initialize because the local sandbox helper failed with `apply deny-read ACLs`; keep manual browser QA explicit rather than implying it passed.
-* **PowerShell literal newline artifacts**: Some initial replacements inserted literal `` `r`n `` markers. Syntax checks caught the issue before completion.
+### Best Practices to Persist
+- Always test SVG coordinate math with unit tests in `tests.js` to ensure generated XML attributes stay valid under extreme or zero inputs.
+- Keep UI components responsive with CSS variables for seamless rendering across screen widths.

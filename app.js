@@ -593,6 +593,31 @@ function renderInterceptBoard(data, includeChoices = true) {
     </div>` : ""}
   `;
 }
+
+function renderAttitudeBoard(data, includeChoices = true) {
+  const pitchOffset = Math.min(Math.max(data.pitch * 1.5, -40), 40);
+  const rollAngle = Math.min(Math.max(data.roll, -60), 60);
+
+  return `
+    <div class="aptitude-board attitude-board">
+      <div class="board-prompt">Identify target cockpit aircraft attitude.</div>
+      <div class="attitude-instrument">
+        <div class="horizon-sphere" style="transform: translateY(${pitchOffset}px) rotate(${-rollAngle}deg);">
+          <div class="horizon-sky"></div>
+          <div class="horizon-ground"></div>
+        </div>
+        <div class="attitude-reticle">
+          <div class="reticle-wing"></div>
+          <div class="reticle-dot"></div>
+          <div class="reticle-wing"></div>
+        </div>
+      </div>
+    </div>
+    ${includeChoices ? `<div class="answer-grid compact" id="attitude-choice-grid">
+      ${data.choices.map((choice, idx) => `<button class="answer-tile aptitude-choice-btn" data-choice="${idx}"><span class="choice-key" style="font-size: 0.72rem;">${escapeHTML(choice)}</span></button>`).join("")}
+    </div>` : ""}
+  `;
+}
 // Utility shuffler - delegates to the pure engine (returns a new array).
 function shuffle(array) {
   return FlightCore.shuffle(array);
@@ -683,6 +708,8 @@ function startRound() {
     currentRndExpected = generateClearanceData();
   } else if (module === "target") {
     currentRndExpected = generateTargetData();
+  } else if (module === "attitude") {
+    currentRndExpected = FlightCore.generateAttitude(level);
   } else if (module === "intercept") {
     currentRndExpected = generateInterceptData();
   }
@@ -784,6 +811,14 @@ function setupStudyScreen(module) {
     const el = document.getElementById("briefing-target");
     el.style.display = "block";
     el.innerHTML = renderTargetBoard(currentRndExpected, false);
+  }
+  else if (module === "attitude") {
+    titleEl.textContent = "IDENTIFY AIRCRAFT ATTITUDE";
+    const el = document.getElementById("briefing-attitude");
+    if (el) {
+      el.style.display = "block";
+      el.innerHTML = renderAttitudeBoard(currentRndExpected, false);
+    }
   }
   else if (module === "intercept") {
     titleEl.textContent = "ADVANCED CAPACITY CHECK";
@@ -980,6 +1015,12 @@ function commenceTest() {
     document.getElementById("test-target").style.display = "block";
     currentRndInput = null;
     renderTargetTestLayout();
+  }
+  else if (activeModule === "attitude") {
+    labelEl.textContent = "ATTITUDE ORIENTATION";
+    document.getElementById("test-attitude").style.display = "block";
+    currentRndInput = null;
+    renderAttitudeTestLayout();
   }
   else if (activeModule === "intercept") {
     labelEl.textContent = "CAPACITY PROTOTYPE";
@@ -1424,6 +1465,19 @@ function renderInterceptTestLayout() {
     });
   });
 }
+
+function renderAttitudeTestLayout() {
+  const root = document.getElementById("test-attitude");
+  if (!root) return;
+  root.innerHTML = `<p class="module-instruction">Select the target pitch and roll attitude combination.</p>${renderAttitudeBoard(currentRndExpected, true)}`;
+  root.querySelectorAll("#attitude-choice-grid .aptitude-choice-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = parseInt(btn.getAttribute("data-choice"), 10);
+      markChoiceSelection("#attitude-choice-grid", currentRndInput);
+    });
+  });
+}
 // ==========================================
 // 9. ON-SCREEN CUSTOM KEYPAD HANDLING
 // ==========================================
@@ -1663,6 +1717,13 @@ function submitTelemetry() {
     accuracy = FlightCore.targetAccuracy(currentRndExpected.expected, currentRndInput);
     breakdownRows.push({ field: "Target Count", expected: String(currentRndExpected.expected), input: currentRndInput === null ? "[OMITTED]" : String(currentRndInput), correct: accuracy === 100 });
     discrepancyLogItem = accuracy < 100 ? "Target scan count mismatch" : null;
+  }
+  else if (activeModule === "attitude") {
+    accuracy = FlightCore.attitudeAccuracy(currentRndExpected.expectedIndex, currentRndInput);
+    const expectedText = currentRndExpected.choices[currentRndExpected.expectedIndex] || "";
+    const inputText = currentRndInput !== null ? currentRndExpected.choices[currentRndInput] || "[OMITTED]" : "[OMITTED]";
+    breakdownRows.push({ field: "Attitude Vector", expected: expectedText, input: inputText, correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Spatial attitude orientation mismatch" : null;
   }
   else if (activeModule === "intercept") {
     accuracy = FlightCore.interceptAccuracy(currentRndExpected.expected, currentRndInput);
@@ -1938,9 +1999,58 @@ function finishSession() {
   safeStorageSet("flightcore_history", JSON.stringify(globalHistory));
 
   renderDebriefSkillFamilies(skillFamilyAccuracy);
+  renderTechnicalPerformanceAnalytics();
   Telemetry.emit("session_finished", { rounds: roundByRoundHistory.length, score: sessionScore, accuracy: percentage, tier: tierInfo.label, maxStreak: sessionMaxStreak, weakestSkillFamily: FlightCore.weakestSkillFamily(globalHistory) });
   showScreen("screen-debrief");
   if (percentage > previousBest && previousBest >= 0) showPersonalBestBanner();
+}
+
+function renderTechnicalPerformanceAnalytics() {
+  const analytics = FlightCore.analyzeTechnicalPerformance(roundByRoundHistory);
+  
+  const ceiBadge = document.getElementById("debrief-cei-badge");
+  if (ceiBadge) ceiBadge.textContent = `CEI: ${analytics.ceiScore}`;
+
+  const cadenceTag = document.getElementById("debrief-cadence-tag");
+  if (cadenceTag) cadenceTag.textContent = analytics.cadenceLabel;
+
+  const radarContainer = document.getElementById("debrief-radar-container");
+  if (radarContainer) {
+    const skillAvgs = FlightCore.sessionSkillFamilyAccuracy(roundByRoundHistory);
+    radarContainer.innerHTML = FlightCore.generateRadarSVG(skillAvgs);
+  }
+
+  const histogramContainer = document.getElementById("debrief-histogram-container");
+  if (histogramContainer) {
+    histogramContainer.innerHTML = FlightCore.generateTimingHistogramSVG(analytics.timingList);
+  }
+
+  const styleContainer = document.getElementById("debrief-style-breakdown-list");
+  if (styleContainer) {
+    const keys = Object.keys(analytics.styleBreakdown);
+    if (keys.length === 0) {
+      styleContainer.innerHTML = `<div style="font-size: 0.65rem; color: var(--text-muted);">No style telemetry available</div>`;
+    } else {
+      styleContainer.innerHTML = keys.map(k => {
+        const item = analytics.styleBreakdown[k];
+        const sec = (item.avgResponseMs / 1000).toFixed(1);
+        return `
+          <div class="style-breakdown-row">
+            <div class="style-breakdown-header">
+              <span>${escapeHTML(item.label)}</span>
+              <div class="style-breakdown-metrics">
+                <span style="color: var(--accent-blue);">${item.accuracy}% Acc</span>
+                <span style="color: var(--text-muted);">${sec}s Avg</span>
+              </div>
+            </div>
+            <div class="style-progress-track">
+              <div class="style-progress-fill" style="width: ${item.accuracy}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
 }
 
 function launchConfetti() {
@@ -3393,4 +3503,117 @@ function renderRunHistory() {
     `;
     logList.appendChild(row);
   });
+}
+
+// ==========================================
+// GAMIFICATION & PRO ACCESS INTEGRATION
+// ==========================================
+
+function updatePilotRankHUD() {
+  const history = getSafeStorageHistory();
+  const highScore = getSafeStorageInt("flightcore_high_score", 0);
+  const rank = FlightCore.computePilotRank({ totalSessions: history.length, highScore });
+  const badgeEl = document.getElementById("hud-rank-badge");
+  if (badgeEl) {
+    badgeEl.textContent = rank.badge;
+    badgeEl.title = `Pilot Rank: ${rank.title} (${rank.req})`;
+  }
+}
+
+function renderAchievementsModal() {
+  const history = getSafeStorageHistory();
+  const badges = FlightCore.evaluateAchievements(history);
+  const container = document.getElementById("achievements-list-container");
+  if (!container) return;
+
+  container.innerHTML = badges.map(b => `
+    <div class="achievement-card ${b.unlocked ? 'unlocked' : ''}">
+      <div class="achievement-icon">${b.icon}</div>
+      <strong style="font-size: 0.75rem; color: var(--text-primary); margin-bottom: 2px;">${escapeHTML(b.title)}</strong>
+      <span style="font-size: 0.65rem; color: var(--text-secondary); line-height: 1.3;">${escapeHTML(b.desc)}</span>
+    </div>
+  `).join("");
+}
+
+function exportLogbookCSV() {
+  const history = getSafeStorageHistory();
+  if (!history || history.length === 0) {
+    alert("No logbook runs to export yet.");
+    return;
+  }
+  let csv = "Date,Mode,Score,AccuracyPct,MaxStreak,Tier\n";
+  history.forEach(h => {
+    csv += `"${h.date || ''}","${h.mode || 'mock'}",${h.score || 0},${h.percentage || 0},${h.maxStreak || 0},"${h.tier || ''}"\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `flightcore_logbook_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function initProAndGamification() {
+  updatePilotRankHUD();
+
+  const btnAch = document.getElementById("btn-achievements-toggle");
+  const overlayAch = document.getElementById("achievements-overlay");
+  const btnAchClose = document.getElementById("btn-achievements-close");
+  if (btnAch && overlayAch) {
+    btnAch.addEventListener("click", () => {
+      playSound("click");
+      renderAchievementsModal();
+      overlayAch.style.display = "flex";
+    });
+  }
+  if (btnAchClose && overlayAch) {
+    btnAchClose.addEventListener("click", () => {
+      playSound("click");
+      overlayAch.style.display = "none";
+    });
+  }
+
+  const btnPro = document.getElementById("btn-pro-toggle");
+  const overlayPro = document.getElementById("pro-pass-overlay");
+  const btnProClose = document.getElementById("btn-pro-close");
+  const btnProUnlock = document.getElementById("btn-pro-unlock");
+  const inputProKey = document.getElementById("pro-license-input");
+
+  if (btnPro && overlayPro) {
+    btnPro.addEventListener("click", () => {
+      playSound("click");
+      overlayPro.style.display = "flex";
+    });
+  }
+  if (btnProClose && overlayPro) {
+    btnProClose.addEventListener("click", () => {
+      playSound("click");
+      overlayPro.style.display = "none";
+    });
+  }
+
+  if (btnProUnlock && inputProKey) {
+    btnProUnlock.addEventListener("click", () => {
+      const key = inputProKey.value;
+      const proState = FlightCore.evaluateProAccess(key);
+      if (proState.isPro) {
+        localStorage.setItem("flightcore_pro_key", key.trim());
+        playSound("success");
+        alert("Pro Pass Activated! Unlocked Pro themes, CSV export, and audio profiles.");
+        if (overlayPro) overlayPro.style.display = "none";
+      } else {
+        playSound("click");
+        alert("Invalid license key. Try using: PRO-FLIGHT-PASS");
+      }
+    });
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initProAndGamification);
+} else {
+  initProAndGamification();
 }

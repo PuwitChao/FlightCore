@@ -1,340 +1,117 @@
-# FlightCore Aptitude Suite Sprint Plan
+# FlightCore Technical Performance Analytics, Visual Charts & UI Polish Plan
 
-# Execution Status - 2026-07-19
+## Executive Summary
 
-Sprints 0-7 have been implemented through the code and documentation pass. Automated verification passes with `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` at 84/84. Browser visual QA remains a documented manual follow-up because the available automation path failed in this environment with a Windows sandbox ACL error before Playwright could load.
+The goal of this sprint is to add deep technical performance analytics, per-question response timing breakdown, cognitive question-style error analytics, and **lightweight, pure SVG visual data charts** (Spider Radar Chart, Timing Histogram, and Cognitive Style Comparison Bars) to FlightCore while performing a complete UI, theme, typography, color, and positioning polish across all 7 themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
 
-Important implementation decisions:
+---
 
-- Aero Intercept is shipped as a selectable Advanced prototype but excluded from default module rotation.
-- Balance Bender currently uses only the displayed orange/green rule set so every generated answer is explainable from the visible puzzle.
-- New module answers are generated and scored in `core.js`; DOM/SVG renderers do not own answer truth.
-- Shared aptitude board and answer-tile styles reuse existing theme tokens, fonts, radius, and control density.
+## Strict UI Consistency & Aesthetics Guarantee
 
-Generated: 2026-07-19
+To ensure no element looks or feels out of place:
 
-## Scope
+1. **Harmonious Multi-Theme Coloring**:
+   - All chart elements, axis lines, radar polygons, histogram bars, and text badges will strictly consume CSS variable tokens (`var(--bg-card)`, `var(--border-subtle)`, `var(--border-active)`, `var(--accent-blue)`, `var(--accent-cyan)`, `var(--accent-amber)`, `var(--success-emerald)`, `var(--error-rose)`).
+   - Automatic 100% theme inheritance across all 7 built-in themes.
+2. **Typography & Font Hierarchy**:
+   - Clean alignment with `--font-sans` (`Inter` typography system).
+   - Symmetrical padding, generous letter-spacing for eyebrow copy (`letter-spacing: 0.5px; font-weight: 700; font-size: 0.65rem;`), and legible numerical readouts.
+3. **Cockpit Geometry & UI Positioning**:
+   - Card containers use uniform `--radius-md` (14px) and `--radius-sm` (10px) with identical padding.
+   - Perfectly centered SVG viewports with responsive grid fallbacks for mobile (<380px), tablet, and desktop cockpit layouts.
+4. **Anti-AI-Slop Tactile Polish**:
+   - Subtle glowing borders (`box-shadow: 0 0 10px var(--accent-blue-glow)`), backdrop blurs (`backdrop-filter: blur(12px)`), and smooth micro-transitions (`transition: all var(--transition-fast)`).
 
-Plan the next FlightCore expansion from four cockpit-inspired modules into a broader aptitude-style game suite based on `APTITUDE_MODULE_RESEARCH.md`.
+---
 
-The plan keeps work scoped to `D:\Documents\Personal_Project\Google_AG\FlightCore` and preserves the current product boundary: FlightCore is a cockpit-inspired challenge game for entertainment, not pilot training, test prep, or real-world aviation instruction.
+## Technical Architecture & Visual Data Charts
 
-## Non-Negotiable Quality Bar
+### 1. Pure SVG 5-Axis Skill Radar Chart (`#debrief-radar-chart`)
+- **Concept**: A 5-point polygonal spider chart comparing target benchmark (80%) against actual player accuracy across the 5 skill families: `Memory`, `Visual`, `Spatial`, `Logical`, `Advanced`.
+- **Implementation**: Pure SVG element generated in `core.js` / `app.js` using polar coordinate calculations:
+  \(x = cx + r \times \cos(\theta), \quad y = cy + r \times \sin(\theta)\)
 
-Every sprint must keep the app working end to end:
+### 2. Response Time Histogram & Timing Chart (`#debrief-timing-chart`)
+- **Concept**: A bar chart displaying exact response time (seconds) for each round (R01 through R08), color-coded by accuracy grade:
+  - Green/Emerald: 100% Perfect
+  - Amber: Partial / Saved
+  - Rose/Red: Missed / Failed
+- **Mean Pace Line**: Overlay dashed line indicating average response time per prompt.
 
-- Existing Checklist, Instruments, ATC, and Fault modules continue to run.
-- Static PWA operation remains intact: no build step, no required backend, no required npm install.
-- Local history remains backward-compatible with existing `localStorage` records.
-- `node --check app.js`, `node --check core.js`, `node --check sw.js`, and `node tests.js` pass before a sprint is considered complete.
-- Manual browser QA is required for desktop, tablet, and mobile layouts because prior automated browser control was blocked by the local Windows sandbox ACL issue.
+### 3. Cognitive Style Comparison Meters (`#debrief-style-meters`)
+- **Concept**: Comparative progress meters showing accuracy % and average response speed (seconds) across 4 cognitive question styles:
+  - `Sequential Memory` (Checklist, Clearance)
+  - `Quantitative Scanning` (Instruments, Target Scan)
+  - `Logical Deduction` (Fault, Balance Bender)
+  - `Spatial Orientation` (Attitude Vector, Wire Trace)
 
-Every sprint must keep UI consistency intact:
+---
 
-- New screens and modules reuse existing theme tokens, cockpit glass styling, typography, spacing rhythm, controls, HUD language, and card density.
-- No one-off color palette, font stack, oversized landing-page styling, or mismatched button/card treatment should enter the app.
-- New module UIs must fit the current terminal/cockpit visual language and must not introduce nested cards, decorative orbs, or inconsistent rounded shapes.
-- SVG/canvas modules must define stable responsive dimensions so gameplay does not jump or overlap across viewports.
-- Accessibility affordances from the foundation pass remain intact: keyboard focus, reduced motion, live regions where appropriate, and clear button labels.
+## Proposed Changes
 
-## Suggested Sub-Agent Tracks
+### Core Engine & Analytics (`core.js`)
 
-These are planning roles for later delegation. They can run as sub-agents once the user approves execution.
+#### [MODIFY] [core.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/core.js)
+- Add `analyzeTechnicalPerformance(rounds)` pure helper function:
+  - **Response Timing**: Computes average, fastest, and slowest response times per question/round (ms), and assigns a speed cadence grade (*Lightning Fast*, *Optimal Cadence*, *Deliberate Pace*, *Hesitant*).
+  - **Question-Style Analytics**: Aggregates accuracy %, response speed, mistake count, and total prompts across cognitive question styles.
+  - **SVG Chart Math Helpers**: Polar coordinate math helper `generateRadarPolygon(skillAverages)` and histogram SVG builder `generateTimingHistogram(rounds)`.
+  - **Cognitive Efficiency Index (CEI)**: Formulates an overall score blending accuracy and speed.
 
-| Track | Ownership | Best assigned work |
-|---|---|---|
-| Core Engine Agent | Pure game logic in `core.js` and tests in `tests.js` | Generators, scorers, seeded randomness, history migration, backward compatibility. |
-| UI Consistency Agent | `index.html`, `styles.css`, shared module shells | Theme tokens, layout system, module catalog, responsive QA checklist. |
-| Gameplay Module Agent A | First logical module | `Balance Bender` generation, renderer, interaction, scoring. |
-| Gameplay Module Agent B | First visual module | `Wire Trace` generation, SVG renderer, answer interaction, scoring. |
-| Memory/Attention Agent | Existing ATC extension and visual attention | `Clearance Recall 2.0`, `Target Scan`, response-time scoring. |
-| QA/Verification Agent | Regression and manual QA support | Syntax checks, engine tests, local app smoke pass, responsive screenshot checklist. |
-| Docs/Handoff Agent | Durable project context | README/roadmap sync, `HANDOFF.md`, module documentation, open issues. |
+---
 
-## Execution Order
+### Automated Tests (`tests.js`)
 
-### Sprint 0: Baseline, UI Contract, and Architecture Map
+#### [MODIFY] [tests.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/tests.js)
+- Add unit tests for `analyzeTechnicalPerformance` and SVG geometry helpers:
+  - Test response timing calculations (average, fastest, slowest).
+  - Test cognitive question-style breakdown accuracy & response speeds.
+  - Test SVG radar polygon point generation and histogram scaling.
 
-Objective: Establish a stable baseline before adding modules, so parallel agents share the same contracts.
+---
 
-Tasks:
+### UI Styling & Aesthetics (`styles.css`)
 
-- Capture current app flow and module lifecycle: selection, generation, rendering, answer submission, scoring, debrief, local history.
-- Define a UI module shell contract for new aptitude modules: header, prompt area, board/canvas/SVG area, answer controls, feedback state, and mobile behavior.
-- Define a theme consistency checklist: colors, font usage, spacing, button styles, terminal cards, HUD elements, focus states, reduced motion.
-- Define skill family metadata: `logical`, `spatial`, `visual`, `memory`, `advanced`.
+#### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
+- Add professional cockpit telemetry UI card primitives and SVG chart styling:
+  - `.telemetry-analytics-card` (Dark glass container with subtle glowing borders).
+  - `.radar-chart-svg` & `.radar-polygon` (Polygonal web, axis grid lines, and filled performance polygon).
+  - `.timing-histogram-svg` & `.histogram-bar` (Interactive bar chart with hover tooltips).
+  - `.cei-badge` (Glow badge for Cognitive Efficiency Index).
 
-Dependencies: none.
+---
 
-Verification:
+### Markup & Component Containers (`index.html`)
 
-```powershell
-node --check app.js
-node --check core.js
-node --check sw.js
-node tests.js
-```
+#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
+- Add `#debrief-technical-analytics` section inside `#screen-debrief`:
+  - Radar Chart Container
+  - Timing Histogram Container
+  - Cognitive Style Progress Meters Container
 
-Manual QA:
+---
 
-- Open `index.html`.
-- Start and complete a mixed session.
-- Check home, active round, debrief, settings/help/theme states on desktop and mobile widths.
+### Controller & Rendering Glue (`app.js`)
 
-Estimated scope: medium.
+#### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
+- Wire `analyzeTechnicalPerformance` into `showDebriefScreen()` and render the SVG radar chart, timing histogram, and cognitive style meters.
+- Ensure 100% theme consistency across dark, light, mono, sage, warm, amber, and stealth themes.
 
-Parallelization: Core Engine Agent can map state contracts while UI Consistency Agent creates the UI contract.
+---
 
-### Sprint 1: Skill Taxonomy and Stats Foundation
+## User Review Required
 
-Objective: Add cognitive skill families without changing the visible game too much.
+> [!NOTE]
+> **Zero Dependencies & Full Theme Integration**: SVG graphs are rendered using native SVG markup generated by pure functions in `core.js`, maintaining offline PWA fast load times without any third-party JS packages, and dynamically styling via theme tokens.
 
-Tasks:
+---
 
-- Add module metadata mapping current modules to skill families.
-- Extend round records with `skillFamily`, `responseMs`, `difficulty`, and mistake metadata where available.
-- Preserve compatibility with old history records that only contain current fields.
-- Add family-level aggregation helpers in `core.js`.
-- Add focused tests for old and new history records.
-- Add family-level strengths and weakest-skill signals to home/debrief without cluttering the UI.
+## Verification Plan
 
-Dependencies: Sprint 0 contracts.
+### Automated Tests
+- Execute `node tests.js` to verify analytics and SVG chart generation assertions.
+- Execute `node --check app.js`, `node --check core.js`, `node --check sw.js` for syntax validation.
 
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node tests.js
-```
-
-Manual QA:
-
-- Existing saved history still renders.
-- A new session records family stats.
-- Home/debrief UI remains visually aligned with existing cockpit cards and typography.
-
-Estimated scope: medium.
-
-Parallelization: Core Engine Agent handles data helpers/tests; UI Consistency Agent handles display surfaces after helper API is stable.
-
-### Sprint 2: Module Catalog and Practice/Mock Mode Shell
-
-Objective: Prepare the app to hold more than four modules without making the home screen messy.
-
-Tasks:
-
-- Replace or evolve the flat four-module selector into a grouped module catalog by skill family.
-- Add module cards that support locked/planned/active states without changing the current free core loop.
-- Add `Practice` and `Mock Run` mode selection as a light shell: Practice allows slower timers/explanations later; Mock Run keeps stricter timing.
-- Keep all current modules selectable and playable.
-- Add no new backend or account requirement.
-
-Dependencies: Sprint 1 metadata.
-
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node tests.js
-```
-
-Manual QA:
-
-- Module catalog works with touch and keyboard.
-- Text does not overflow cards/buttons on mobile.
-- Theme toggle still applies cleanly.
-- No new font, color, or spacing style conflicts with `styles.css`.
-
-Estimated scope: medium-large.
-
-Parallelization: UI Consistency Agent leads; Core Engine Agent only supports selector state if needed.
-
-### Sprint 3: Balance Bender - First Logical Module
-
-Objective: Ship the first new fully playable aptitude module with deterministic logic and visual consistency.
-
-Tasks:
-
-- Add pure generator for balance puzzles with hidden integer weights and exactly one correct answer.
-- Add pure scorer and tests for correct, incorrect, malformed, and ambiguous generated cases.
-- Render rule scale, question scale, and 4-5 answer choices using existing cockpit UI patterns.
-- Add difficulty scaling: one-step equivalence at low levels, mixed shapes and near-miss distractors at higher levels.
-- Integrate with module rotation, scoring, session history, telemetry, and family stats.
-- Add post-round explanation in Practice mode only, or a minimal answer reveal if Practice mode is not fully implemented yet.
-
-Dependencies: Sprint 1 metadata; Sprint 2 catalog can run before or alongside if integration surface is defined.
-
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node tests.js
-```
-
-Manual QA:
-
-- Balance board scales cleanly on mobile, tablet, and desktop.
-- Shape colors come from an approved palette and remain distinguishable.
-- Answer tiles match existing button/card treatments.
-- Repeated plays do not generate impossible or duplicate-correct puzzles.
-
-Estimated scope: large.
-
-Parallelization: Core Engine Agent can build/test generator first; Gameplay Module Agent A can wire renderer after the generated data contract is stable; QA Agent verifies integration.
-
-### Sprint 4: Wire Trace - First Visual Scanning Module
-
-Objective: Ship a visual path-tracing module inspired by wire-trace aptitude tasks.
-
-Tasks:
-
-- Add pure generator that maps start labels to endpoints and stores the answer independent of SVG geometry.
-- Generate clear orthogonal SVG paths with crossings, stable grid dimensions, and no ambiguous branch points.
-- Render labels, highlighted query, answer buttons, and feedback in the existing cockpit style.
-- Add difficulty scaling: fewer wires at low levels, more crossings and denser paths at higher levels.
-- Integrate with module rotation, scoring, session history, telemetry, and family stats.
-
-Dependencies: Sprint 1 metadata; ideally Sprint 2 catalog; can start after the SVG board contract from Sprint 0.
-
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node tests.js
-```
-
-Manual QA:
-
-- Paths remain legible and do not overlap labels at common viewport sizes.
-- Touch target sizes are acceptable.
-- Reduced-motion users do not lose information.
-- Visual style matches existing cockpit linework and color contrast.
-
-Estimated scope: large.
-
-Parallelization: Core Engine Agent builds mapping/tests; Gameplay Module Agent B builds SVG renderer; QA Agent checks legibility.
-
-### Sprint 5: Memory and Attention Expansion
-
-Objective: Strengthen the existing memory category and introduce response-time attention mechanics without destabilizing the core loop.
-
-Tasks:
-
-- Extend ATC into `Clearance Recall 2.0`: more fields, brief exposure, distractor step, delayed recall.
-- Add response-time capture and scoring support where appropriate.
-- Add `Target Scan` as a simpler visual-attention module before any advanced 3D work.
-- Ensure both modules use the same UI shell, typography, HUD, answer controls, and feedback language established earlier.
-- Keep advanced multitask concepts behind a prototype flag or not yet visible in the public catalog.
-
-Dependencies: Sprint 1 stats; Sprint 2 shell; preferably at least one new module shipped to validate patterns.
-
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node tests.js
-```
-
-Manual QA:
-
-- Timed states are understandable and not visually noisy.
-- Input focus is reliable across keyboard, touch, and keypad interactions.
-- New timers and feedback do not break existing study timers.
-
-Estimated scope: large.
-
-Parallelization: Memory/Attention Agent leads; UI Consistency Agent reviews common shell reuse; QA Agent runs regression.
-
-### Sprint 6: Advanced Prototype - Aero Intercept / Cockpit Capacity
-
-Objective: Prototype the advanced multitask concept separately before integrating it into regular sessions.
-
-Tasks:
-
-- Build a contained 2D canvas prototype for reticle/altitude-band control and secondary task prompts.
-- Capture control stability metrics such as time in band, mean distance, false alarms, and missed prompts.
-- Test keyboard, pointer, and touch controls.
-- Keep the prototype visually aligned with the cockpit theme but clearly separate from the normal module rotation until performance is proven.
-- Decide whether full 3D is worth the dependency and QA cost.
-
-Dependencies: Response-time and pressure-profile scoring from Sprint 5.
-
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node tests.js
-```
-
-Manual QA:
-
-- Canvas is nonblank and responsive on desktop and mobile.
-- Controls feel usable without layout overlap.
-- Frame timing is acceptable on a typical mobile browser.
-
-Estimated scope: large.
-
-Parallelization: Advanced Gameplay Agent can prototype while QA Agent defines performance and viewport checks. Keep this isolated from release-critical work.
-
-### Sprint 7: Release Hardening, Docs, and Handoff
-
-Objective: Stabilize the aptitude-suite release and leave the repo ready for the next session.
-
-Tasks:
-
-- Run full syntax and engine test suite.
-- Perform manual browser QA for all active modules and theme states.
-- Update `README.md`, `APTITUDE_MODULE_RESEARCH.md` if decisions changed, `HANDOFF.md`, and any module documentation.
-- Run positioning scan to keep copy within game/challenge language.
-- Document remaining risks and deferred modules.
-
-Dependencies: all implemented sprints.
-
-Verification:
-
-```powershell
-node --check app.js
-node --check core.js
-node --check sw.js
-node tests.js
-rg -n -i "pilot training|certification|exam prep|checkride|proficiency|real-world aviation use" README.md index.html app.js manifest.json APTITUDE_MODULE_RESEARCH.md
-```
-
-Manual QA:
-
-- Complete at least one mixed session with all active modules.
-- Complete one focused run per new module.
-- Check desktop, tablet, and mobile layouts.
-- Check theme variants currently supported by the app.
-
-Estimated scope: medium.
-
-Parallelization: QA/Verification Agent and Docs/Handoff Agent can run after implementation agents finish.
-
-## Dependency Graph
-
-```text
-Sprint 0
-  -> Sprint 1
-    -> Sprint 2
-    -> Sprint 3
-    -> Sprint 4
-      -> Sprint 5
-        -> Sprint 6
-  -> Sprint 7 runs after implemented feature sprints
-```
-
-Sprint 3 and Sprint 4 can run in parallel after Sprint 1 if the module shell contract is stable. Sprint 6 should stay isolated until Sprints 3-5 prove the shared module and scoring patterns.
-
-## Open Questions
-
-- Whether the next execution pass should implement only Sprints 0-1 first, or include the first playable module (`Balance Bender`) in the same pass.
-- Whether Thai labels should be first-class in-app category labels now, or tracked as a localization pass after the English UI stabilizes.
-- Whether `Target Scan` should be a grid/symbol task or moving-dot task for its first version.
-- Whether advanced canvas work should remain a prototype page until manual QA confirms mobile performance.
+### Manual Verification
+- Complete a Mock Run (8 rounds) and inspect the SVG Radar Chart, Response Time Histogram, and Cognitive Style Meters on the debrief screen.
+- Test across theme toggles (Dark, Light, Amber, Stealth).

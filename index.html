@@ -27,7 +27,19 @@
           <div class="system-title" id="system-status">FLIGHT CORE</div>
           <button class="abort-btn" id="btn-session-abort" style="display: none;">ABORT</button>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="pilot-rank-badge" id="hud-rank-badge" title="Pilot Rank">STU</span>
+          <button class="theme-toggle-btn" id="btn-achievements-toggle" title="Pilot Achievements">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7" />
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+            </svg>
+          </button>
+          <button class="theme-toggle-btn" id="btn-pro-toggle" title="Flight Pass / Pro Access">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </button>
           <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound" aria-label="Toggle sound">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sound-icon">
               <!-- Injected via JS -->
@@ -570,6 +582,41 @@
             <!-- JS Injected -->
           </div>
         </div>
+
+        <!-- Technical Performance Analytics & Visual Data Charts -->
+        <div class="terminal-card" id="debrief-technical-analytics" style="margin-top: 12px; margin-bottom: 12px;">
+          <div class="terminal-card-header">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>Technical Telemetry & Timing</span>
+              <span class="cei-badge" id="debrief-cei-badge">CEI: 85</span>
+            </div>
+            <span class="type-tag" id="debrief-cadence-tag">Optimal Cadence</span>
+          </div>
+
+          <!-- 1. SVG 5-Axis Spider Radar Chart -->
+          <div style="margin-bottom: 14px; text-align: center;">
+            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Skill Family Radar Chart</div>
+            <div id="debrief-radar-container">
+              <!-- SVG Injected -->
+            </div>
+          </div>
+
+          <!-- 2. Response Time Histogram Bar Chart -->
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Per-Round Response Timing (Seconds)</div>
+            <div id="debrief-histogram-container">
+              <!-- SVG Injected -->
+            </div>
+          </div>
+
+          <!-- 3. Question Style Progress Breakdown -->
+          <div>
+            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Cognitive Question Style Breakdown</div>
+            <div id="debrief-style-breakdown-list">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+        </div>
         <div class="blindspot-log" id="debrief-blindspots" style="display: none;">
           <div class="blindspot-title">AREAS FOR REVIEW</div>
           <ul class="blindspot-list" id="debrief-blindspot-list">
@@ -910,6 +957,60 @@
       <button class="btn btn-primary btn-block" id="btn-onboarding-dismiss" style="min-height: 48px;">
         BEGIN CHALLENGE
       </button>
+    </div>
+  </div>
+
+  <!-- Achievements Drawer Overlay -->
+  <div class="theme-selector-overlay" id="achievements-overlay" style="display: none; z-index: 1250;">
+    <div class="theme-selector-card" style="max-width: 400px; max-height: 85vh; display: flex; flex-direction: column;">
+      <div class="theme-selector-header">
+        <span style="font-size: 1rem; font-weight: 800; color: var(--accent-blue);">Pilot Achievements</span>
+        <button class="theme-option-btn" id="btn-achievements-close" style="width: auto; padding: 4px 10px;">Close</button>
+      </div>
+      <div id="achievements-list-container" class="achievement-grid" style="overflow-y: auto; padding-right: 4px;">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Pro Flight Pass Modal Overlay -->
+  <div class="theme-selector-overlay" id="pro-pass-overlay" style="display: none; z-index: 1260;">
+    <div class="theme-selector-card" style="max-width: 400px;">
+      <div class="theme-selector-header">
+        <div style="display: flex; align-items: center;">
+          <span style="font-size: 1rem; font-weight: 800; color: var(--text-primary);">Flight Core Pro Pass</span>
+          <span class="pro-badge">PRO</span>
+        </div>
+        <button class="theme-option-btn" id="btn-pro-close" style="width: auto; padding: 4px 10px;">Close</button>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 14px;">
+        Support Flight Core development and unlock professional telemetry tools, exclusive cockpit themes, and advanced features. Core game modules remain 100% free forever.
+      </p>
+      <div class="pro-feature-card">
+        <div>
+          <strong style="font-size: 0.78rem; color: var(--text-primary);">Pro Cockpit HUD Themes</strong>
+          <div style="font-size: 0.68rem; color: var(--text-muted);">Amber Vector & Stealth AMOLED</div>
+        </div>
+        <span class="type-tag">Theme</span>
+      </div>
+      <div class="pro-feature-card">
+        <div>
+          <strong style="font-size: 0.78rem; color: var(--text-primary);">Logbook Telemetry Export</strong>
+          <div style="font-size: 0.68rem; color: var(--text-muted);">Export full CSV run telemetry & accuracy trends</div>
+        </div>
+        <span class="type-tag">CSV</span>
+      </div>
+      <div class="pro-feature-card">
+        <div>
+          <strong style="font-size: 0.78rem; color: var(--text-primary);">Custom Audio Synthesizers</strong>
+          <div style="font-size: 0.68rem; color: var(--text-muted);">Mechanical click vs Modern Electronic Synth</div>
+        </div>
+        <span class="type-tag">Audio</span>
+      </div>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <input type="text" id="pro-license-input" placeholder="Enter Pro License Key (e.g. PRO-FLIGHT-PASS)" style="padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-primary); font-size: 0.75rem; text-align: center;" />
+        <button class="btn btn-primary btn-block" id="btn-pro-unlock" style="min-height: 44px;">UNLOCK PRO FEATURES</button>
+      </div>
     </div>
   </div>
 

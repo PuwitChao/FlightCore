@@ -7,9 +7,10 @@ Flight Core is for entertainment only. It is not real aviation instruction, not 
 ## Current App
 
 - Static PWA: no build step, no npm install, no backend required.
-- Grouped module catalog by skill family: Logical, Spatial, Visual, Memory, and Advanced.
-- Playable challenge modules: Checklist, Instruments, ATC, Fault, Balance Bender, Wire Trace, Clearance Recall, Target Scan, and Aero Intercept.
-- Default mock rotation keeps the advanced Aero Intercept prototype available but not selected by default.
+- Grouped module catalog across 5 skill families: Logical, Spatial, Visual, Memory, and Advanced.
+- Playable challenge modules: Checklist, Instruments, ATC, Fault, Balance Bender, Wire Trace, Clearance Recall, Target Scan, Attitude Vector, and Aero Intercept.
+- Pilot Ranks & Achievements: Progression system from Student Pilot to Test Pilot, with 6 unlockable achievement badges.
+- Pro Flight Pass: Optional static supporter key (`PRO-FLIGHT-PASS`) unlocking Vintage Amber Vector and Stealth AMOLED themes, plus CSV logbook export.
 - Practice and Mock Run shell: Practice gives longer study timing; Mock Run keeps standard pressure.
 - Dynamic difficulty: level increases with correct streaks.
 - Module rotation: avoids playing the same module three times in a row when possible.
