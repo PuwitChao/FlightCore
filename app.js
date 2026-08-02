@@ -438,7 +438,7 @@ function generateInterceptData() {
 function ensureAptitudeContainers() {
   const briefingParent = document.getElementById("briefing-checklist")?.parentElement;
   const testParent = document.getElementById("test-checklist")?.parentElement;
-  const modules = ["balance", "wire", "clearance", "target", "intercept"];
+  const modules = ["balance", "wire", "clearance", "target", "intercept", "attitude", "fuel", "beacon", "radar", "horizon"];
   modules.forEach(mod => {
     if (briefingParent && !document.getElementById(`briefing-${mod}`)) {
       const div = document.createElement("div");
@@ -458,7 +458,7 @@ function ensureAptitudeContainers() {
 }
 
 function hideModuleBlocks(prefix) {
-  ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept"].forEach(mod => {
+  ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept", "attitude", "fuel", "beacon", "radar", "horizon"].forEach(mod => {
     const el = document.getElementById(`${prefix}-${mod}`);
     if (el) el.style.display = "none";
   });
@@ -618,6 +618,98 @@ function renderAttitudeBoard(data, includeChoices = true) {
     </div>` : ""}
   `;
 }
+
+function renderFuelBoard(data, includeControls = true) {
+  const t = data.tanks;
+  return `
+    <div class="aptitude-board fuel-board">
+      <div class="board-prompt">Balance Main Tanks A & B between <strong>${data.targetMin}</strong> and <strong>${data.targetMax} GAL</strong>.</div>
+      <div class="fuel-tank-grid">
+        <div class="fuel-tank-card">
+          <div class="fuel-tank-header"><span>MAIN TANK A</span><span>${t.mainA} GAL</span></div>
+          <div class="fuel-tank-meter"><div class="fuel-tank-fill ${t.mainA >= data.targetMin && t.mainA <= data.targetMax ? 'optimal' : ''}" style="width: ${t.mainA}%"></div></div>
+        </div>
+        <div class="fuel-tank-card">
+          <div class="fuel-tank-header"><span>MAIN TANK B</span><span>${t.mainB} GAL</span></div>
+          <div class="fuel-tank-meter"><div class="fuel-tank-fill ${t.mainB >= data.targetMin && t.mainB <= data.targetMax ? 'optimal' : ''}" style="width: ${t.mainB}%"></div></div>
+        </div>
+      </div>
+    </div>
+    ${includeControls ? `<div class="fuel-pump-list">
+      ${data.pumps.map(p => `
+        <button class="fuel-pump-btn ${currentRndInput && currentRndInput[p.id] ? 'active' : ''}" data-pump="${p.id}">
+          <span>${p.label}</span>
+          <span class="fuel-pump-led"></span>
+        </button>
+      `).join("")}
+    </div>` : ""}
+  `;
+}
+
+function renderBeaconBoard(data, includeChoices = true) {
+  return `
+    <div class="aptitude-board beacon-board">
+      <div class="board-prompt">Heading: <strong>${data.heading}°</strong> | Relative Bearing (RBI): <strong>${data.rbi}°</strong>.</div>
+      <div style="text-align: center; margin: 12px 0;">
+        <svg viewBox="0 0 100 100" width="100" height="100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-subtle)" stroke-width="2" />
+          <line x1="50" y1="50" x2="${50 + 35 * Math.sin(data.rbi * Math.PI / 180)}" y2="${50 - 35 * Math.cos(data.rbi * Math.PI / 180)}" stroke="var(--accent-blue)" stroke-width="3" stroke-linecap="round" />
+          <text x="50" y="16" font-size="7" font-weight="700" text-anchor="middle" fill="var(--text-muted)">N</text>
+        </svg>
+      </div>
+    </div>
+    ${includeChoices ? `<div class="beacon-card-grid">
+      ${data.options.map(opt => `
+        <div class="beacon-option-card ${currentRndInput === opt.id ? 'selected' : ''}" data-choice="${opt.id}">
+          <span style="font-size: 0.78rem; font-weight: 700;">${opt.label}</span>
+        </div>
+      `).join("")}
+    </div>` : ""}
+  `;
+}
+
+function renderRadarBoard(data, includeChoices = true) {
+  return `
+    <div class="aptitude-board radar-board">
+      <div class="board-prompt">Identify trajectory conflict and issue vector resolution.</div>
+      <div class="radar-screen-viewport">
+        <svg viewBox="0 0 200 200" width="100%" height="160">
+          <circle cx="100" cy="100" r="40" fill="none" stroke="var(--border-subtle)" stroke-dasharray="2 2" />
+          <circle cx="100" cy="100" r="80" fill="none" stroke="var(--border-subtle)" stroke-dasharray="2 2" />
+          ${data.blips.map(b => `
+            <circle cx="${b.x}" cy="${b.y}" r="4" fill="var(--accent-cyan)" />
+            <text x="${b.x + 6}" y="${b.y + 3}" font-size="7" font-weight="700" fill="var(--accent-cyan)">${b.callsign}</text>
+          `).join("")}
+        </svg>
+      </div>
+    </div>
+    ${includeChoices ? `<div class="radar-options-grid">
+      ${data.options.map(opt => `
+        <div class="radar-option-card ${currentRndInput === opt.id ? 'selected' : ''}" data-choice="${opt.id}">
+          <span style="font-size: 0.75rem; font-weight: 700;">${opt.label}</span>
+        </div>
+      `).join("")}
+    </div>` : ""}
+  `;
+}
+
+function renderHorizonBoard(data, includeChoices = true) {
+  return `
+    <div class="aptitude-board horizon-board">
+      <div class="board-prompt">Pitch: <strong>${data.pitch > 0 ? '+' : ''}${data.pitch}°</strong> | Bank: <strong>${data.roll > 0 ? '+' : ''}${data.roll}°</strong>.</div>
+      <div style="text-align: center; margin: 10px 0;">
+        ${renderAttitudeBoard(data, false)}
+      </div>
+    </div>
+    ${includeChoices ? `<div class="horizon-card-grid">
+      ${data.options.map(opt => `
+        <div class="horizon-option-card ${currentRndInput === opt.id ? 'selected' : ''}" data-choice="${opt.id}">
+          <span style="font-size: 0.72rem; font-weight: 700;">${opt.label}</span>
+        </div>
+      `).join("")}
+    </div>` : ""}
+  `;
+}
 // Utility shuffler - delegates to the pure engine (returns a new array).
 function shuffle(array) {
   return FlightCore.shuffle(array);
@@ -708,10 +800,14 @@ function startRound() {
     currentRndExpected = generateClearanceData();
   } else if (module === "target") {
     currentRndExpected = generateTargetData();
-  } else if (module === "attitude") {
-    currentRndExpected = FlightCore.generateAttitude(level);
-  } else if (module === "intercept") {
-    currentRndExpected = generateInterceptData();
+  } else if (module === "horizon") {
+    currentRndExpected = FlightCore.generateHorizon(level);
+  } else if (module === "fuel") {
+    currentRndExpected = FlightCore.generateFuel(level);
+  } else if (module === "beacon") {
+    currentRndExpected = FlightCore.generateBeacon(level);
+  } else if (module === "radar") {
+    currentRndExpected = FlightCore.generateRadar(level);
   }
   
   setupStudyScreen(module);
@@ -826,6 +922,38 @@ function setupStudyScreen(module) {
     el.style.display = "block";
     el.innerHTML = renderInterceptBoard(currentRndExpected, false);
   }
+  else if (module === "fuel") {
+    titleEl.textContent = "FUEL BALANCER PROTOCOL";
+    const el = document.getElementById("briefing-fuel");
+    if (el) {
+      el.style.display = "block";
+      el.innerHTML = renderFuelBoard(currentRndExpected, false);
+    }
+  }
+  else if (module === "beacon") {
+    titleEl.textContent = "BEACON BEARING VECTOR";
+    const el = document.getElementById("briefing-beacon");
+    if (el) {
+      el.style.display = "block";
+      el.innerHTML = renderBeaconBoard(currentRndExpected, false);
+    }
+  }
+  else if (module === "radar") {
+    titleEl.textContent = "2D RADAR SEPARATION SCAN";
+    const el = document.getElementById("briefing-radar");
+    if (el) {
+      el.style.display = "block";
+      el.innerHTML = renderRadarBoard(currentRndExpected, false);
+    }
+  }
+  else if (module === "horizon") {
+    titleEl.textContent = "ATTITUDE HORIZON POSTURE";
+    const el = document.getElementById("briefing-horizon");
+    if (el) {
+      el.style.display = "block";
+      el.innerHTML = renderHorizonBoard(currentRndExpected, false);
+    }
+  }
   
   // Study timer dynamic setup (shorter as levels scale up, scaled by user's timer duration setting)
   let studySecs = 10;
@@ -843,6 +971,8 @@ function setupStudyScreen(module) {
     studySecs = Math.max(11 - (level * 0.7), 4.5);
   } else if (module === "intercept") {
     studySecs = Math.max(6 - (level * 0.35), 3);
+  } else if (module === "fuel" || module === "beacon" || module === "radar" || module === "horizon") {
+    studySecs = Math.max(8 - (level * 0.5), 4);
   }
   studySecs = studySecs * timerMultiplier;
   if (challengeMode === "practice") studySecs *= 1.4;
@@ -1027,6 +1157,30 @@ function commenceTest() {
     document.getElementById("test-intercept").style.display = "block";
     currentRndInput = { action: "", quiz: null };
     renderInterceptTestLayout();
+  }
+  else if (activeModule === "fuel") {
+    labelEl.textContent = "BALANCE FUEL SYSTEM PUMPS";
+    document.getElementById("test-fuel").style.display = "block";
+    currentRndInput = { p1: false, p2: false, cross: false };
+    renderFuelTestLayout();
+  }
+  else if (activeModule === "beacon") {
+    labelEl.textContent = "RELATIVE BEARING RECALL";
+    document.getElementById("test-beacon").style.display = "block";
+    currentRndInput = null;
+    renderBeaconTestLayout();
+  }
+  else if (activeModule === "radar") {
+    labelEl.textContent = "RADAR TRAJECTORY CLEARANCE";
+    document.getElementById("test-radar").style.display = "block";
+    currentRndInput = null;
+    renderRadarTestLayout();
+  }
+  else if (activeModule === "horizon") {
+    labelEl.textContent = "3D POSTURE SELECTION";
+    document.getElementById("test-horizon").style.display = "block";
+    currentRndInput = null;
+    renderHorizonTestLayout();
   }
   
   showScreen("screen-test");
@@ -1373,6 +1527,63 @@ function renderFaultPool() {
     });
     poolContainer.appendChild(clearBtn);
   }
+}
+
+function renderFuelTestLayout() {
+  const root = document.getElementById("test-fuel");
+  if (!root) return;
+  root.innerHTML = renderFuelBoard(currentRndExpected, true);
+  root.querySelectorAll(".fuel-pump-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      const pumpId = btn.getAttribute("data-pump");
+      if (!currentRndInput) currentRndInput = { p1: false, p2: false, cross: false };
+      currentRndInput[pumpId] = !currentRndInput[pumpId];
+      btn.classList.toggle("active", currentRndInput[pumpId]);
+    });
+  });
+}
+
+function renderBeaconTestLayout() {
+  const root = document.getElementById("test-beacon");
+  if (!root) return;
+  root.innerHTML = renderBeaconBoard(currentRndExpected, true);
+  root.querySelectorAll(".beacon-option-card").forEach(card => {
+    card.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = card.getAttribute("data-choice");
+      root.querySelectorAll(".beacon-option-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+    });
+  });
+}
+
+function renderRadarTestLayout() {
+  const root = document.getElementById("test-radar");
+  if (!root) return;
+  root.innerHTML = renderRadarBoard(currentRndExpected, true);
+  root.querySelectorAll(".radar-option-card").forEach(card => {
+    card.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = card.getAttribute("data-choice");
+      root.querySelectorAll(".radar-option-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+    });
+  });
+}
+
+function renderHorizonTestLayout() {
+  const root = document.getElementById("test-horizon");
+  if (!root) return;
+  root.innerHTML = renderHorizonBoard(currentRndExpected, true);
+  root.querySelectorAll(".horizon-option-card").forEach(card => {
+    card.addEventListener("click", () => {
+      playSound("click");
+      currentRndInput = card.getAttribute("data-choice");
+      root.querySelectorAll(".horizon-option-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+    });
+  });
 }
 
 function markChoiceSelection(containerSelector, choice) {
@@ -1732,6 +1943,26 @@ function submitTelemetry() {
     breakdownRows.push({ field: "Altitude Action", expected: currentRndExpected.expected.action, input: currentRndInput.action || "[OMITTED]", correct: actionCorrect });
     breakdownRows.push({ field: "Secondary Prompt", expected: String(currentRndExpected.expected.quiz), input: currentRndInput.quiz === null ? "[OMITTED]" : String(currentRndInput.quiz), correct: quizCorrect });
     discrepancyLogItem = accuracy < 100 ? "Capacity split-task mismatch" : null;
+  }
+  else if (activeModule === "fuel") {
+    accuracy = FlightCore.fuelAccuracy(currentRndExpected.expectedPumps, currentRndInput);
+    breakdownRows.push({ field: "Pump Configuration", expected: "Balanced Flow", input: accuracy === 100 ? "Balanced Flow" : "Unbalanced Flow", correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Fuel flow pump imbalance" : null;
+  }
+  else if (activeModule === "beacon") {
+    accuracy = FlightCore.beaconAccuracy(currentRndExpected.expectedId, currentRndInput);
+    breakdownRows.push({ field: "Beacon Bearing", expected: currentRndExpected.expectedId, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Relative bearing vector mismatch" : null;
+  }
+  else if (activeModule === "radar") {
+    accuracy = FlightCore.radarAccuracy(currentRndExpected.expectedId, currentRndInput);
+    breakdownRows.push({ field: "Radar Conflict Vector", expected: currentRndExpected.expectedId, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Radar trajectory separation conflict" : null;
+  }
+  else if (activeModule === "horizon") {
+    accuracy = FlightCore.horizonAccuracy(currentRndExpected.expectedId, currentRndInput);
+    breakdownRows.push({ field: "Attitude Posture", expected: currentRndExpected.expectedId, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
+    discrepancyLogItem = accuracy < 100 ? "Horizon pitch/roll posture mismatch" : null;
   }
   // Calculate scoring & tier
   let grade = "fail";

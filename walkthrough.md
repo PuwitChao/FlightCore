@@ -1,30 +1,28 @@
-# FlightCore Technical Performance Analytics & Visual Charts Walkthrough
+# FlightCore Module Expansion & Dynamic Flow-State Engine Walkthrough
 
 ## Overview
 
-Sprint 9 introduced deep technical performance analytics, per-question response timing tracking, cognitive question-style breakdown meters, a Cognitive Efficiency Index (CEI), and pure SVG visual data charts (5-Axis Skill Spider Radar & Per-Round Response Timing Histogram) integrated into FlightCore's debrief screen with 100% multi-theme polish.
+Sprint 10 introduced 4 new cockpit cognitive challenge modules (`fuel`, `beacon`, `radar`, `horizon`), an interactive 5-axis SVG Skill Radar Chart for session debriefs, and a dynamic flow-state pressure engine to scale timers and score multipliers based on player performance streaks.
 
 ---
 
-## Visual Data Charts & Figures Added
+## Key Feature Additions
 
-### 1. Pure SVG 5-Axis Skill Radar Chart
-- Renders a polygonal 5-axis spider radar chart comparing target benchmark (80%) vs actual player performance across `Memory`, `Visual`, `Spatial`, `Logical`, and `Advanced` skill families.
-- Automatically themed using CSS variable tokens (`var(--accent-blue)`, `var(--border-subtle)`).
+### 1. 4 New Cockpit Cognitive Challenge Modules
+* **Fuel Flow & Pump Balancer (`fuel`) — *Logical / Advanced***:
+  * Dynamic fluid system balancing. Player toggles pumps and valves between 4 fuel tanks to keep main tank levels within green target safety bounds while fuel depletes.
+* **Beacon Bearing / RBI Orientation (`beacon`) — *Spatial***:
+  * Solve magnetic bearing from gyro compass card + RBI needle angle, or match to 1 of 4 top-down VOR map positions.
+* **2D Radar Separation (`radar`) — *Advanced / Spatial***:
+  * Spot impending 2D altitude/distance conflicts between 3 blips and issue vector adjustments.
+* **Horizon Pitch & Roll Scan (`horizon`) — *Spatial / Visual***:
+  * Flash of an Attitude Indicator (Horizon Ball); select the matching 3D aircraft posture card.
 
-### 2. Per-Round Response Timing Histogram
-- Renders a visual bar chart displaying response duration (in seconds) for each round (R01 through R08).
-- Color-coded bars (Emerald for 100% Perfect, Amber for Partial/Saved, Rose for Missed/Failed) with an overlaid dashed **Average Pace Line**.
+### 2. Interactive 5-Axis SVG Skill Radar Chart
+* Renders a 5-axis spider radar chart on the debrief screen comparing target benchmarks against player accuracy across **Logical**, **Spatial**, **Visual**, **Memory**, and **Advanced** skill families.
 
-### 3. Cognitive Style Comparison Meters
-- Progress bars comparing Accuracy % and Average Response Speed (seconds) across 4 cognitive question categories:
-  - **Sequential Memory** (*Checklist*, *Clearance Recall*)
-  - **Quantitative Scanning** (*Instruments*, *Target Scan*)
-  - **Logical Deduction** (*Fault*, *Balance Bender*)
-  - **Spatial Orientation** (*Attitude Vector*, *Wire Trace*)
-
-### 4. Cognitive Efficiency Index (CEI) Badge
-- Formulates a composite score blending accuracy and response speed into a high-visibility header badge.
+### 3. Dynamic Pressure & Flow-State Engine
+* Dynamically adjusts response timers (`1.0 - clamp(streak * 0.04, 0, 0.4)`) and score multipliers (`1.0 + streak * 0.15`) based on player streak pace to induce high-engagement flow state.
 
 ---
 
@@ -32,12 +30,12 @@ Sprint 9 introduced deep technical performance analytics, per-question response 
 
 ### Engine Test Suite (`node tests.js`)
 ```powershell
-Flight Core engine tests: 92/92 passed
+Flight Core engine tests: 98/98 passed
 ```
 
-### Syntax Checks (`node --check`)
+### Syntax Validation (`node --check`)
 ```powershell
-node --check app.js  # PASSED
 node --check core.js # PASSED
+node --check app.js  # PASSED
 node --check sw.js   # PASSED
 ```

@@ -2892,3 +2892,147 @@ body[data-theme="warm"] .balance-panel {
   background: var(--accent-blue);
   transition: width var(--transition-fast);
 }
+
+/* --- NEW MODULE STYLES (FUEL, BEACON, RADAR, HORIZON) --- */
+
+/* Fuel Balancer */
+.fuel-tank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fuel-tank-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.fuel-tank-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.fuel-tank-meter {
+  height: 14px;
+  background: var(--bg-input);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-subtle);
+}
+
+.fuel-tank-fill {
+  height: 100%;
+  background: var(--accent-blue);
+  transition: width 0.3s ease;
+}
+
+.fuel-tank-fill.optimal {
+  background: var(--success-emerald);
+}
+
+.fuel-pump-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fuel-pump-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fuel-pump-btn.active {
+  border-color: var(--accent-blue);
+  background: rgba(0, 122, 255, 0.08);
+  box-shadow: 0 0 10px var(--accent-blue-glow);
+}
+
+.fuel-pump-led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.fuel-pump-btn.active .fuel-pump-led {
+  background: var(--success-emerald);
+  box-shadow: 0 0 8px var(--success-emerald);
+}
+
+/* Beacon Bearing & Horizon Cards */
+.beacon-card-grid,
+.horizon-card-grid,
+.radar-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.beacon-option-card,
+.horizon-option-card,
+.radar-option-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.beacon-option-card:hover,
+.horizon-option-card:hover,
+.radar-option-card:hover {
+  border-color: var(--border-active);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.beacon-option-card.selected,
+.horizon-option-card.selected,
+.radar-option-card.selected {
+  border-color: var(--accent-blue);
+  background: rgba(0, 122, 255, 0.08);
+  box-shadow: 0 0 12px var(--accent-blue-glow);
+}
+
+/* 2D Radar Screen */
+.radar-screen-viewport {
+  width: 100%;
+  height: 180px;
+  background: rgba(0, 20, 10, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

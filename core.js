@@ -76,7 +76,7 @@
   // ---- module metadata and skill families ----
 
   const SKILL_FAMILIES = ["logical", "spatial", "visual", "memory", "advanced"];
-  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "attitude", "intercept"];
+  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "attitude", "intercept", "fuel", "beacon", "radar", "horizon"];
 
   const MODULE_METADATA = {
     checklist: { label: "Checklist", skillFamily: "memory", skillLabel: "Memory" },
@@ -90,7 +90,10 @@
     attitude: { label: "Attitude Vector", skillFamily: "spatial", skillLabel: "Spatial" },
     beacon: { label: "Beacon Bearing", skillFamily: "spatial", skillLabel: "Spatial" },
     intercept: { label: "Aero Intercept", skillFamily: "advanced", skillLabel: "Advanced" },
-    capacity: { label: "Cockpit Capacity", skillFamily: "advanced", skillLabel: "Advanced" }
+    capacity: { label: "Cockpit Capacity", skillFamily: "advanced", skillLabel: "Advanced" },
+    fuel: { label: "Fuel Balancer", skillFamily: "logical", skillLabel: "Logical" },
+    radar: { label: "Radar Separation", skillFamily: "advanced", skillLabel: "Advanced" },
+    horizon: { label: "Horizon Scan", skillFamily: "spatial", skillLabel: "Spatial" }
   };
 
   function titleCaseFamily(key) {
@@ -951,6 +954,170 @@
     `;
   }
 
+  // ---- dynamic flow-state pressure engine ----
+
+  function computeFlowStateParams(streak) {
+    const s = safeNumber(streak, 0, { min: 0, max: 99 });
+    const timerFactor = Math.max(0.6, 1.0 - Math.min(s, 10) * 0.04);
+    const scoreMultiplier = Math.round((1.0 + s * 0.15) * 100) / 100;
+    return { streak: s, timerFactor, scoreMultiplier };
+  }
+
+  // ---- new module generators: fuel, beacon, radar, horizon ----
+
+  function generateFuel(level, rng) {
+    rng = rng || Math.random;
+    const targetMin = 40;
+    const targetMax = 60;
+    const p1State = rng() > 0.5;
+    const p2State = rng() > 0.5;
+    const crossState = rng() > 0.5;
+
+    const targetA = 50;
+    const targetB = 50;
+    const flow1 = 12;
+    const flow2 = 12;
+    const flowCross = 6;
+
+    let initMainA = targetA - (p1State ? flow1 : 0) + (crossState ? flowCross : 0);
+    let initMainB = targetB - (p2State ? flow2 : 0) - (crossState ? flowCross : 0);
+
+    initMainA = safeNumber(initMainA, 40, { min: 20, max: 70 });
+    initMainB = safeNumber(initMainB, 40, { min: 20, max: 70 });
+
+    const pumps = [
+      { id: "p1", label: "PUMP 1 (AUX A -> MAIN A)", flow: flow1 },
+      { id: "p2", label: "PUMP 2 (AUX B -> MAIN B)", flow: flow2 },
+      { id: "cross", label: "CROSSFEED (MAIN A <-> MAIN B)", flow: flowCross }
+    ];
+
+    return {
+      tanks: { mainA: initMainA, mainB: initMainB, auxA: 75, auxB: 75 },
+      targetMin,
+      targetMax,
+      pumps,
+      expectedPumps: { p1: p1State, p2: p2State, cross: crossState }
+    };
+  }
+
+  function fuelAccuracy(expectedPumps, userPumps) {
+    const exp = expectedPumps || {};
+    const usr = userPumps || {};
+    const keys = ["p1", "p2", "cross"];
+    let match = 0;
+    keys.forEach(k => {
+      if (Boolean(exp[k]) === Boolean(usr[k])) match++;
+    });
+    return Math.round((match / keys.length) * 100);
+  }
+
+  function generateBeacon(level, rng) {
+    rng = rng || Math.random;
+    const headings = [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360];
+    const rbiAngles = [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+
+    const heading = headings[Math.floor(rng() * headings.length)];
+    const rbi = rbiAngles[Math.floor(rng() * rbiAngles.length)];
+    const bearing = (heading + rbi) % 360 || 360;
+
+    const quadNames = ["AHEAD-RIGHT", "BEHIND-RIGHT", "BEHIND-LEFT", "AHEAD-LEFT"];
+    let targetQuadIdx = 0;
+    if (rbi > 0 && rbi < 90) targetQuadIdx = 0;
+    else if (rbi >= 90 && rbi < 180) targetQuadIdx = 1;
+    else if (rbi >= 180 && rbi < 270) targetQuadIdx = 2;
+    else targetQuadIdx = 3;
+
+    const options = [
+      { id: "opt0", label: `Bearing ${bearing}° (${quadNames[targetQuadIdx]})`, isCorrect: true },
+      { id: "opt1", label: `Bearing ${(bearing + 90) % 360 || 360}° (${quadNames[(targetQuadIdx + 1) % 4]})`, isCorrect: false },
+      { id: "opt2", label: `Bearing ${(bearing + 180) % 360 || 360}° (${quadNames[(targetQuadIdx + 2) % 4]})`, isCorrect: false },
+      { id: "opt3", label: `Bearing ${(bearing + 270) % 360 || 360}° (${quadNames[(targetQuadIdx + 3) % 4]})`, isCorrect: false }
+    ];
+
+    const shuffled = shuffle(options, rng);
+    const expectedId = shuffled.find(o => o.isCorrect).id;
+
+    return {
+      heading,
+      rbi,
+      bearing,
+      options: shuffled,
+      expectedId
+    };
+  }
+
+  function beaconAccuracy(expectedId, inputId) {
+    return String(expectedId) === String(inputId) ? 100 : 0;
+  }
+
+  function generateRadar(level, rng) {
+    rng = rng || Math.random;
+    const blips = [
+      { id: "ALPHA", callsign: "FLT 101", x: 60, y: 70, alt: 10000, speed: 250, heading: 90 },
+      { id: "BRAVO", callsign: "FLT 204", x: 140, y: 70, alt: 10000, speed: 250, heading: 270 },
+      { id: "CHARLIE", callsign: "FLT 309", x: 100, y: 150, alt: 14000, speed: 280, heading: 0 }
+    ];
+
+    const options = [
+      { id: "turn_alpha", label: "FLT 101: Turn Right 30° to Clear Conflict", isCorrect: true },
+      { id: "climb_charlie", label: "FLT 309: Climb to 16,000 FT", isCorrect: false },
+      { id: "descend_bravo", label: "FLT 204: Descend to 8,000 FT", isCorrect: false },
+      { id: "maintain", label: "Maintain Current Vectors (No Action)", isCorrect: false }
+    ];
+
+    const shuffled = shuffle(options, rng);
+    const expectedId = shuffled.find(o => o.isCorrect).id;
+
+    return {
+      blips,
+      conflictPair: ["FLT 101", "FLT 204"],
+      options: shuffled,
+      expectedId
+    };
+  }
+
+  function radarAccuracy(expectedId, inputId) {
+    return String(expectedId) === String(inputId) ? 100 : 0;
+  }
+
+  function generateHorizon(level, rng) {
+    rng = rng || Math.random;
+    const pitches = [15, -15, 20, -20];
+    const rolls = [30, -30, 45, -45];
+
+    const pitch = pitches[Math.floor(rng() * pitches.length)];
+    const roll = rolls[Math.floor(rng() * rolls.length)];
+
+    const pLabel = pitch > 0 ? `Nose Up +${pitch}°` : `Nose Down ${Math.abs(pitch)}°`;
+    const rLabel = roll > 0 ? `Right Bank +${roll}°` : `Left Bank ${Math.abs(roll)}°`;
+    const targetLabel = `${pLabel}, ${rLabel}`;
+
+    const options = [
+      { id: "opt_target", pitch, roll, label: targetLabel, isCorrect: true },
+      { id: "opt_invert_p", pitch: -pitch, roll, label: `${pitch > 0 ? `Nose Down ${pitch}°` : `Nose Up +${Math.abs(pitch)}°`}, ${rLabel}`, isCorrect: false },
+      { id: "opt_invert_r", pitch, roll: -roll, label: `${pLabel}, ${roll > 0 ? `Left Bank ${roll}°` : `Right Bank +${Math.abs(roll)}°`}`, isCorrect: false },
+      { id: "opt_level", pitch: 0, roll: 0, label: "Wings Level, Zero Pitch (0°, 0°)", isCorrect: false }
+    ];
+
+    const shuffled = shuffle(options, rng);
+    const expectedId = shuffled.find(o => o.isCorrect).id;
+
+    return {
+      pitch,
+      roll,
+      options: shuffled,
+      expectedId
+    };
+  }
+
+  function horizonAccuracy(expectedId, inputId) {
+    return String(expectedId) === String(inputId) ? 100 : 0;
+  }
+
+  function generateSkillRadarSVG(skillAverages) {
+    return generateRadarSVG(skillAverages);
+  }
+
   return {
     MAX_LEVEL,
     SKILL_FAMILIES,
@@ -995,11 +1162,21 @@
     interceptAccuracy,
     generateAttitude,
     attitudeAccuracy,
+    generateFuel,
+    fuelAccuracy,
+    generateBeacon,
+    beaconAccuracy,
+    generateRadar,
+    radarAccuracy,
+    generateHorizon,
+    horizonAccuracy,
+    computeFlowStateParams,
     computePilotRank,
     evaluateAchievements,
     evaluateProAccess,
     analyzeTechnicalPerformance,
     generateRadarSVG,
+    generateSkillRadarSVG,
     generateTimingHistogramSVG
   };
 });

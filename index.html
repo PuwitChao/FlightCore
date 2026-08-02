@@ -227,6 +227,22 @@
                   <span class="select-indicator"></span>
                   <span style="font-size: 0.78rem; font-weight: 600;">Fault</span>
                 </div>
+                <div class="module-select-card" data-module="fuel" id="select-fuel">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Fuel Balancer</span>
+                </div>
+                <div class="module-select-card" data-module="beacon" id="select-beacon">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Beacon Bearing</span>
+                </div>
+                <div class="module-select-card" data-module="radar" id="select-radar">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Radar Sep</span>
+                </div>
+                <div class="module-select-card" data-module="horizon" id="select-horizon">
+                  <span class="select-indicator"></span>
+                  <span style="font-size: 0.78rem; font-weight: 600;">Horizon Scan</span>
+                </div>
               </div>
             </div>
 
@@ -517,6 +533,30 @@
                 <!-- JS Injected Options -->
               </div>
             </div>
+          </div>
+
+          <!-- Fuel test slot -->
+          <div id="test-fuel" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; letter-spacing: 0.3px;">DYNAMIC FUEL TANK BALANCER</p>
+            <div id="fuel-display-container"></div>
+          </div>
+
+          <!-- Beacon test slot -->
+          <div id="test-beacon" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; letter-spacing: 0.3px;">RELATIVE BEARING INDICATOR (RBI) & BEACON MATRIX</p>
+            <div id="beacon-display-container"></div>
+          </div>
+
+          <!-- Radar test slot -->
+          <div id="test-radar" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; letter-spacing: 0.3px;">2D RADAR SEPARATION & TRAJECTORY CONFLICT RESOLUTION</p>
+            <div id="radar-display-container"></div>
+          </div>
+
+          <!-- Horizon test slot -->
+          <div id="test-horizon" style="display: none; width: 100%;">
+            <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; letter-spacing: 0.3px;">ATTITUDE HORIZON SCAN & 3D POSTURE SELECTION</p>
+            <div id="horizon-display-container"></div>
           </div>
         </div>
 

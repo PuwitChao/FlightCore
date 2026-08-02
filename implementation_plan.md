@@ -1,117 +1,105 @@
-# FlightCore Technical Performance Analytics, Visual Charts & UI Polish Plan
+# FlightCore Module Expansion & Anti-AI-Slop Premium UI Plan
 
-## Executive Summary
-
-The goal of this sprint is to add deep technical performance analytics, per-question response timing breakdown, cognitive question-style error analytics, and **lightweight, pure SVG visual data charts** (Spider Radar Chart, Timing Histogram, and Cognitive Style Comparison Bars) to FlightCore while performing a complete UI, theme, typography, color, and positioning polish across all 7 themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
+This plan details the implementation of 4 new cockpit cognitive challenge modules (`fuel`, `beacon`, `radar`, `horizon`), an interactive 5-axis SVG Skill Radar Chart for session debriefs, and a dynamic flow-state pressure engine to scale timers and score multipliers based on player performance streaks.
 
 ---
 
-## Strict UI Consistency & Aesthetics Guarantee
+## Anti-AI-Slop & Premium Cockpit UI Design Guarantee
 
-To ensure no element looks or feels out of place:
+To ensure all new game UIs feel like authentic, state-of-the-art cockpit instrumentation rather than generic "AI-slop":
 
-1. **Harmonious Multi-Theme Coloring**:
-   - All chart elements, axis lines, radar polygons, histogram bars, and text badges will strictly consume CSS variable tokens (`var(--bg-card)`, `var(--border-subtle)`, `var(--border-active)`, `var(--accent-blue)`, `var(--accent-cyan)`, `var(--accent-amber)`, `var(--success-emerald)`, `var(--error-rose)`).
-   - Automatic 100% theme inheritance across all 7 built-in themes.
-2. **Typography & Font Hierarchy**:
-   - Clean alignment with `--font-sans` (`Inter` typography system).
-   - Symmetrical padding, generous letter-spacing for eyebrow copy (`letter-spacing: 0.5px; font-weight: 700; font-size: 0.65rem;`), and legible numerical readouts.
-3. **Cockpit Geometry & UI Positioning**:
-   - Card containers use uniform `--radius-md` (14px) and `--radius-sm` (10px) with identical padding.
-   - Perfectly centered SVG viewports with responsive grid fallbacks for mobile (<380px), tablet, and desktop cockpit layouts.
-4. **Anti-AI-Slop Tactile Polish**:
-   - Subtle glowing borders (`box-shadow: 0 0 10px var(--accent-blue-glow)`), backdrop blurs (`backdrop-filter: blur(12px)`), and smooth micro-transitions (`transition: all var(--transition-fast)`).
-
----
-
-## Technical Architecture & Visual Data Charts
-
-### 1. Pure SVG 5-Axis Skill Radar Chart (`#debrief-radar-chart`)
-- **Concept**: A 5-point polygonal spider chart comparing target benchmark (80%) against actual player accuracy across the 5 skill families: `Memory`, `Visual`, `Spatial`, `Logical`, `Advanced`.
-- **Implementation**: Pure SVG element generated in `core.js` / `app.js` using polar coordinate calculations:
-  \(x = cx + r \times \cos(\theta), \quad y = cy + r \times \sin(\theta)\)
-
-### 2. Response Time Histogram & Timing Chart (`#debrief-timing-chart`)
-- **Concept**: A bar chart displaying exact response time (seconds) for each round (R01 through R08), color-coded by accuracy grade:
-  - Green/Emerald: 100% Perfect
-  - Amber: Partial / Saved
-  - Rose/Red: Missed / Failed
-- **Mean Pace Line**: Overlay dashed line indicating average response time per prompt.
-
-### 3. Cognitive Style Comparison Meters (`#debrief-style-meters`)
-- **Concept**: Comparative progress meters showing accuracy % and average response speed (seconds) across 4 cognitive question styles:
-  - `Sequential Memory` (Checklist, Clearance)
-  - `Quantitative Scanning` (Instruments, Target Scan)
-  - `Logical Deduction` (Fault, Balance Bender)
-  - `Spatial Orientation` (Attitude Vector, Wire Trace)
+1. **Tactile Interactive States**: All buttons, toggle switches, map cards, and blip selectors feature explicit hover, focus, and active pressed states using subtle glow box-shadows (`box-shadow: 0 0 12px var(--accent-blue-glow)`), active borders, and CSS micro-transitions (`transition: all var(--transition-fast)`).
+2. **Typography & Metric Layouts**: Monospace telemetry readouts use crisp numerical spacing with subtle uppercase tracking for eyebrow copy (`letter-spacing: 0.5px; font-weight: 700; font-size: 0.65rem;`).
+3. **Harmonious Multi-Theme Integration**: Every visual element (tanks, dials, radar sweep grid, attitude spheres, radar chart polygons) consumes standard CSS custom property tokens (`var(--bg-card)`, `var(--border-subtle)`, `var(--border-active)`, `var(--accent-blue)`, `var(--accent-cyan)`, `var(--accent-amber)`, `var(--success-emerald)`, `var(--error-rose)`) across all 7 built-in themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
+4. **Cockpit Geometry & Precision Vector Graphics**:
+   * **Fuel Balancer (`fuel`)**: Vector fluid tank gauges with dynamic volume bars, fill percentage indicators, animated green/amber pipe flow arrows, and tactile pump toggle switches.
+   * **Beacon Bearing / RBI (`beacon`)**: Crisp 360-degree Gyro Compass dial with cardinal directions (N, E, S, W), needle vector, and 4 top-down VOR map quadrant cards.
+   * **2D Radar Separation (`radar`)**: Phosphor-grid radar screen with concentric distance rings (3nm, 6nm, 9nm), animated rotating radar sweep line, blip altitude/speed data tags, and red/amber hazard vector lines.
+   * **Attitude Horizon Scan (`horizon`)**: Authentic Horizon Ball SVG with sky blue / ground amber division, pitch ladder (+10°, +20°, -10°, -20°), roll bank pointer, and 4 vector aircraft 3D posture thumbnails.
+   * **5-Axis SVG Radar Chart**: Polished SVG spider web grid with labeled domain vertices, benchmark polygon overlay, and player skill polygon with subtle glow fill.
+5. **No Emoji Policy**: Zero emojis in UI copy, code comments, or documentation.
 
 ---
 
 ## Proposed Changes
 
-### Core Engine & Analytics (`core.js`)
+### Pure Engine Logic & Module Generators (`core.js`)
 
 #### [MODIFY] [core.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/core.js)
-- Add `analyzeTechnicalPerformance(rounds)` pure helper function:
-  - **Response Timing**: Computes average, fastest, and slowest response times per question/round (ms), and assigns a speed cadence grade (*Lightning Fast*, *Optimal Cadence*, *Deliberate Pace*, *Hesitant*).
-  - **Question-Style Analytics**: Aggregates accuracy %, response speed, mistake count, and total prompts across cognitive question styles.
-  - **SVG Chart Math Helpers**: Polar coordinate math helper `generateRadarPolygon(skillAverages)` and histogram SVG builder `generateTimingHistogram(rounds)`.
-  - **Cognitive Efficiency Index (CEI)**: Formulates an overall score blending accuracy and speed.
+* **Module Metadata & Registry**: Register `fuel` (Logical/Advanced), `beacon` (Spatial), `radar` (Advanced/Spatial), and `horizon` (Spatial/Visual) in `MODULE_METADATA` and `CHALLENGE_MODULE_KEYS`.
+* **Fuel Flow Balancer Engine (`generateFuelChallenge`, `fuelAccuracy`)**:
+  * Generate 4 tank states (Main Tank A, Main Tank B, Aux Tank A, Aux Tank B).
+  * Calculate pump flow rates, target fuel windows (40-60 gal), and pump toggle validation.
+* **Beacon Bearing RBI Engine (`generateBeaconChallenge`, `beaconAccuracy`)**:
+  * Generate Gyro Compass Heading (000°-359°) and Relative Bearing Indicator (RBI) angle (000°-359°).
+  * Compute magnetic bearing to station and generate 4 top-down VOR map quadrant options (1 correct, 3 plausible distractors).
+* **2D Radar Separation Engine (`generateRadarChallenge`, `radarAccuracy`)**:
+  * Generate 3 radar aircraft blips with 2D positions, vector headings, speeds, and altitudes.
+  * Deterministically set 1 conflict pair on an impending collision trajectory within 10 seconds.
+* **Horizon Pitch & Roll Scan Engine (`generateHorizonChallenge`, `horizonAccuracy`)**:
+  * Generate pitch (-30° to +30°) and bank/roll (-45° to +45°) parameters for an Attitude Indicator.
+  * Generate 4 aircraft posture card options (1 matching target, 3 distinct attitude variations).
+* **Dynamic Flow-State Engine (`computeFlowStateParams`)**:
+  * Compute timer duration scaling `(1.0 - clamp(streak * 0.04, 0, 0.4))` and streak multiplier progression.
+* **5-Axis SVG Skill Radar Chart Engine (`generateSkillRadarSVG`)**:
+  * Compute polar coordinates for 5 skill family axes (`logical`, `spatial`, `visual`, `memory`, `advanced`) and return clean SVG markup.
 
 ---
 
-### Automated Tests (`tests.js`)
+### Automated Unit Tests (`tests.js`)
 
 #### [MODIFY] [tests.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/tests.js)
-- Add unit tests for `analyzeTechnicalPerformance` and SVG geometry helpers:
-  - Test response timing calculations (average, fastest, slowest).
-  - Test cognitive question-style breakdown accuracy & response speeds.
-  - Test SVG radar polygon point generation and histogram scaling.
+* Add unit test suites for all 4 new generators and validators (`fuel`, `beacon`, `radar`, `horizon`).
+* Test dynamic flow-state pressure math across streaks 0 to 20+.
+* Test 5-axis SVG skill radar chart polar coordinate calculations.
+* Ensure all 92+ assertions remain 100% green.
 
 ---
 
-### UI Styling & Aesthetics (`styles.css`)
+### UI Styling & Themes (`styles.css`)
 
 #### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-- Add professional cockpit telemetry UI card primitives and SVG chart styling:
-  - `.telemetry-analytics-card` (Dark glass container with subtle glowing borders).
-  - `.radar-chart-svg` & `.radar-polygon` (Polygonal web, axis grid lines, and filled performance polygon).
-  - `.timing-histogram-svg` & `.histogram-bar` (Interactive bar chart with hover tooltips).
-  - `.cei-badge` (Glow badge for Cognitive Efficiency Index).
+* Add styles for Fuel Flow Balancer tank gauges, pipe connectors, and pump toggle switches with active LED states.
+* Add styles for Beacon Bearing RBI dial, compass card, and VOR map quadrant cards.
+* Add styles for 2D Radar screen canvas/SVG, blip markers, altitude tags, and conflict alert vectors.
+* Add styles for Horizon Ball indicator gauge and 3D posture selection cards.
+* Add styles for 5-axis SVG spider radar chart and legend badges.
 
 ---
 
-### Markup & Component Containers (`index.html`)
+### Markup Containers (`index.html`)
 
 #### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-- Add `#debrief-technical-analytics` section inside `#screen-debrief`:
-  - Radar Chart Container
-  - Timing Histogram Container
-  - Cognitive Style Progress Meters Container
+* Add game module container markup for `#module-fuel`, `#module-beacon`, `#module-radar`, `#module-horizon`.
+* Add 5-axis SVG Skill Radar Chart container inside `#screen-debrief`.
 
 ---
 
-### Controller & Rendering Glue (`app.js`)
+### Controller Glue & Module Renderers (`app.js`)
 
 #### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-- Wire `analyzeTechnicalPerformance` into `showDebriefScreen()` and render the SVG radar chart, timing histogram, and cognitive style meters.
-- Ensure 100% theme consistency across dark, light, mono, sage, warm, amber, and stealth themes.
-
----
-
-## User Review Required
-
-> [!NOTE]
-> **Zero Dependencies & Full Theme Integration**: SVG graphs are rendered using native SVG markup generated by pure functions in `core.js`, maintaining offline PWA fast load times without any third-party JS packages, and dynamically styling via theme tokens.
+* Add UI rendering logic and event handlers for the 4 new modules (`renderFuel`, `renderBeacon`, `renderRadar`, `renderHorizon`).
+* Wire flow-state timer scaling into `startModuleRound()`.
+* Wire `generateSkillRadarSVG` into `showDebriefScreen()`.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- Execute `node tests.js` to verify analytics and SVG chart generation assertions.
-- Execute `node --check app.js`, `node --check core.js`, `node --check sw.js` for syntax validation.
+* Run unit test suite:
+  ```powershell
+  node tests.js
+  ```
+* Run JavaScript syntax checks:
+  ```powershell
+  node --check core.js
+  node --check app.js
+  node --check sw.js
+  ```
 
 ### Manual Verification
-- Complete a Mock Run (8 rounds) and inspect the SVG Radar Chart, Response Time Histogram, and Cognitive Style Meters on the debrief screen.
-- Test across theme toggles (Dark, Light, Amber, Stealth).
+* Test playing each of the 4 new modules (`fuel`, `beacon`, `radar`, `horizon`) in Practice mode and Mock Run.
+* Complete a full session to verify the 5-axis SVG Skill Radar Chart on the debrief modal.
+* Test responsiveness across mobile, tablet, and widescreen desktop.
+* Verify clean rendering across all 7 color themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).

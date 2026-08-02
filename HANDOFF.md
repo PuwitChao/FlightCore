@@ -1,27 +1,28 @@
-# Handoff: Performance Analytics & Verification Audit
+# Handoff: Module Expansion & Flow-State Sprint
 
-**Generated**: 2026-08-02 00:18 +07:00
+**Generated**: 2026-08-02 16:05 +07:00
 **Branch**: main
 **Status**: Ready for Review
 
 ## Loop Telemetry
 - **Active Subtask**: Closeout audit, verification, and session handoff
 - **Current Iteration**: 1/1
-- **Healing Actions Taken**: None required (`node tests.js` 92/92 passed cleanly)
+- **Healing Actions Taken**: Fixed `sessionCompetencies` test expectation to include 14 module keys (`node tests.js` 98/98 passed cleanly)
 
 ## Goal
-Implement deep technical performance analytics, per-question response timing tracking, cognitive question style error analysis, and native SVG data charts (5-axis spider radar & timing histogram) with 100% multi-theme polish, followed by security, verification, and debug audits.
+Implement 4 new cockpit cognitive challenge modules (`fuel`, `beacon`, `radar`, `horizon`), an interactive 5-axis SVG Skill Radar Chart for session debriefs, and a dynamic flow-state pressure engine to scale timers and score multipliers based on player performance streaks.
 
 ## Completed
-- [x] Added `analyzeTechnicalPerformance(rounds)` in `core.js` for per-question timing, style breakdowns, and Cognitive Efficiency Index (CEI) scoring.
-- [x] Added `generateRadarSVG` polar chart math generator in `core.js`.
-- [x] Added `generateTimingHistogramSVG` bar chart generator in `core.js`.
-- [x] Extended `tests.js` engine test suite from 89 to 92 green assertions.
-- [x] Added CSS styling for `.cei-badge`, `.radar-chart-svg`, `.timing-histogram-svg`, and `.style-progress-fill` in `styles.css`.
-- [x] Integrated Technical Telemetry card container in `index.html`.
-- [x] Wired `renderTechnicalPerformanceAnalytics` into `finishSession()` in `app.js`.
-- [x] Ran security audit (`/security_audit`), verification (`/verify`), and system debug check (`/debug_expert`).
-- [x] Verified all syntax checks (`node --check`) and automated engine tests (`node tests.js`).
+- [x] Added module registration and metadata for `fuel`, `beacon`, `radar`, and `horizon` in `core.js`.
+- [x] Added `computeFlowStateParams(streak)` for dynamic timer and score multiplier scaling in `core.js`.
+- [x] Implemented pure logic generators and accuracy validators for `fuel`, `beacon`, `radar`, and `horizon` in `core.js`.
+- [x] Implemented 5-axis SVG Skill Radar Chart generator `generateSkillRadarSVG` in `core.js`.
+- [x] Extended `tests.js` engine test suite to 98 green assertions covering all new module generators and SVG math.
+- [x] Added CSS styling for fuel tanks, RBI compass dials, 2D radar screens, attitude horizon gauges, and 5-axis SVG radar charts in `styles.css`.
+- [x] Added HTML module container elements and debrief radar chart section in `index.html`.
+- [x] Implemented DOM renderers and touch/keyboard input handlers for `fuel`, `beacon`, `radar`, and `horizon` in `app.js`.
+- [x] Wired dynamic flow-state timer scaling into `startModuleRound()` and 5-axis SVG Skill Radar Chart into `showDebriefScreen()` in `app.js`.
+- [x] Completed full verification (`node tests.js` 98/98 passed, `node --check` clean).
 
 ## Not Yet Done
 - [ ] Next feature sprint / Roadmap item progression as specified in `ROADMAP.md`.
@@ -32,34 +33,39 @@ Implement deep technical performance analytics, per-question response timing tra
 ## Key Decisions
 | Decision | Rationale |
 |---|---|
-| Zero-Dependency Native SVG Math | Generating polar radar charts and histograms purely in `core.js` ensures zero runtime dependencies and instant rendering without bundle overhead. |
-| CSS Variable Theme Token Binding | Binding SVG paths and elements to `--bg-card`, `--accent-blue`, `--success-emerald`, etc. guarantees seamless rendering across all themes. |
+| Zero-Dependency Native SVG Math | Generating 5-axis radar charts and 2D radar screen graphics purely in `core.js` and `app.js` maintains fast load times and zero runtime overhead. |
+| Multi-Theme Token Binding | Binding SVG paths and module elements to `--bg-card`, `--accent-blue`, `--accent-cyan`, `--success-emerald`, etc. guarantees seamless rendering across all 7 built-in themes. |
+| Anti-AI-Slop Vector UI Guarantee | High-precision vector SVG tank displays, RBI compass dials, phosphor radar screens, and horizon spheres ensure authentic cockpit instrumentation look and feel. |
 
 ## Current State
-- **Working**: All game modules, session flows, performance analytics engine, native SVG data charts, 92/92 engine tests passing.
+- **Working**: All 14 game modules, session flows, performance analytics engine, native SVG data charts, 98/98 engine tests passing.
 - **Broken**: None.
 - **Uncommitted Changes**: Pending git commit and push.
 
 ## Files to Know
 | File | Why It Matters |
 |---|---|
-| `core.js` | Contains `FlightCore` game engine logic, `analyzeTechnicalPerformance`, radar chart math, and histogram SVG generators. |
-| `app.js` | UI renderer, DOM event bindings, `renderTechnicalPerformanceAnalytics`, and session state handlers. |
-| `tests.js` | Automated assertion suite (92 tests) covering all engine mechanics and SVG math. |
-| `styles.css` | Design system tokens and styling for analytics cards, radar SVG, histogram SVG, and badges. |
+| `core.js` | Contains `FlightCore` game engine logic, module generators (`generateFuel`, `generateBeacon`, `generateRadar`, `generateHorizon`), flow-state math, and SVG chart generators. |
+| `app.js` | UI renderer, DOM event bindings, module renderers (`renderFuelBoard`, `renderBeaconBoard`, `renderRadarBoard`, `renderHorizonBoard`), and session state handlers. |
+| `tests.js` | Automated assertion suite (98 tests) covering all engine mechanics and SVG math. |
+| `styles.css` | Design system tokens and styling for all module containers, radar SVG, and badges. |
+| `RESEARCH_GAME_EXPANSION.md` | Research analyst report detailing product roadmap and new module concepts. |
 
 ## Code Context
 ```javascript
 // core.js API signatures:
-window.FlightCore.analyzeTechnicalPerformance(rounds)
-window.FlightCore.generateRadarSVG(radarData, options)
-window.FlightCore.generateTimingHistogramSVG(timingHistogram, options)
+window.FlightCore.generateFuel(level, rng)
+window.FlightCore.generateBeacon(level, rng)
+window.FlightCore.generateRadar(level, rng)
+window.FlightCore.generateHorizon(level, rng)
+window.FlightCore.computeFlowStateParams(streak)
+window.FlightCore.generateSkillRadarSVG(skillAverages)
 ```
 
 ## Resume Instructions
-1. Run `node tests.js` to confirm all 92 assertions remain green.
-2. Run `node --check app.js` and `node --check core.js` for syntax validation.
-3. Review `ROADMAP.md` for the next planned feature milestone.
+1. Run `node tests.js` to confirm all 98 assertions remain green.
+2. Run `node --check app.js`, `node --check core.js`, and `node --check sw.js` for syntax validation.
+3. Review `ROADMAP.md` and `RESEARCH_GAME_EXPANSION.md` for the next planned feature milestone.
 
 ## Setup Required
 - No external packages or setup required. Standalone web app running pure HTML/CSS/JS.

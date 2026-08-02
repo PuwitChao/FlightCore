@@ -221,7 +221,7 @@
       { module: "checklist", accuracy: 50 },
       { module: "atc", accuracy: 25 }
     ];
-    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, attitude: 80, intercept: 80 });
+    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, attitude: 80, intercept: 80, fuel: 80, beacon: 80, radar: 80, horizon: 80 });
   });
 
   test("sessionModuleAccuracy: only includes played modules", () => {
@@ -484,7 +484,57 @@
       { round: 2, module: "instruments", accuracy: 50, responseMs: 3200 }
     ]);
     assert(histSVG.includes("<svg") && histSVG.includes("<rect"));
-  });  // ---- reporting ----
+  });
+
+  test("computeFlowStateParams: scales timer factor and score multiplier with streak", () => {
+    const s0 = FC.computeFlowStateParams(0);
+    assertEqual(s0.timerFactor, 1.0);
+    assertEqual(s0.scoreMultiplier, 1.0);
+
+    const s5 = FC.computeFlowStateParams(5);
+    assertEqual(s5.timerFactor, 0.8);
+    assertEqual(s5.scoreMultiplier, 1.75);
+  });
+
+  test("generateFuel & fuelAccuracy: produces valid fuel balancer challenges and scores pumps", () => {
+    const f = FC.generateFuel(1, FC.pickUnused ? null : () => 0.6);
+    assert(f.tanks && f.pumps.length === 3);
+    const perfectScore = FC.fuelAccuracy(f.expectedPumps, f.expectedPumps);
+    assertEqual(perfectScore, 100);
+    const zeroScore = FC.fuelAccuracy(f.expectedPumps, { p1: !f.expectedPumps.p1, p2: !f.expectedPumps.p2, cross: !f.expectedPumps.cross });
+    assertEqual(zeroScore, 0);
+  });
+
+  test("generateBeacon & beaconAccuracy: generates valid gyro compass & RBI bearings", () => {
+    const b = FC.generateBeacon(1, () => 0.5);
+    assert(b.heading > 0 && b.rbi > 0);
+    assert(b.options.length === 4);
+    assertEqual(FC.beaconAccuracy(b.expectedId, b.expectedId), 100);
+    assertEqual(FC.beaconAccuracy(b.expectedId, "wrong_id"), 0);
+  });
+
+  test("generateRadar & radarAccuracy: generates 2D radar conflict scenarios", () => {
+    const r = FC.generateRadar(1, () => 0.2);
+    assert(r.blips.length === 3);
+    assert(r.options.length === 4);
+    assertEqual(FC.radarAccuracy(r.expectedId, r.expectedId), 100);
+    assertEqual(FC.radarAccuracy(r.expectedId, "wrong_id"), 0);
+  });
+
+  test("generateHorizon & horizonAccuracy: generates attitude indicator pitch/roll challenges", () => {
+    const h = FC.generateHorizon(1, () => 0.4);
+    assert(h.pitch !== undefined && h.roll !== undefined);
+    assert(h.options.length === 4);
+    assertEqual(FC.horizonAccuracy(h.expectedId, h.expectedId), 100);
+    assertEqual(FC.horizonAccuracy(h.expectedId, "wrong_id"), 0);
+  });
+
+  test("generateSkillRadarSVG: produces valid 5-axis SVG spider radar chart", () => {
+    const svg = FC.generateSkillRadarSVG({ logical: 85, spatial: 90, visual: 75, memory: 95, advanced: 80 });
+    assert(svg.includes("<svg") && svg.includes("radar-chart-svg"));
+  });
+
+  // ---- reporting ----
   const passed = results.filter(r => r.ok).length;
   const failed = results.length - passed;
 
