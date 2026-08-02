@@ -1,95 +1,71 @@
-# FlightCore Professional Layout, UI De-Vibing & Bug Fix Plan
+# FlightCore Typography Standardization, Contrast Legibility & UI De-Vibing Plan
 
-This plan addresses layout responsiveness, text truncation, UI aesthetic de-vibing (removing neon glows in favor of a clean, plain, professional UI), resolving the start button runtime exception, removing the `radar` module, and auditing every game component layout (including `balance`).
+This plan addresses font consistency, illegible tiny text, contrast ratios, and "vibe-coded" aesthetics across the entire Flight Core application UI and landing pages.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Fluid Full-Screen & Plain Professional Aesthetics**:
-> 1. `.terminal-frame` will expand fluidly to fill 100% of the viewport width and height without rigid pixel caps.
-> 2. All text truncation (`text-overflow: ellipsis`) on module selection cards will be removed; cards will wrap text cleanly and maintain equal symmetrical sizing.
-> 3. All neon glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`) and glowing dots will be replaced with clean, plain, solid status borders and subtle muted indicators.
-> 4. The `radar` module will be completely purged from `core.js`, `app.js`, `index.html`, `styles.css`, and `tests.js`.
-> 5. The start button exception (`TypeError: Cannot read properties of null (reading 'pitch')`) will be fixed with robust generator wiring and fallback guards in `app.js`.
-> 6. All game module boards (`balance`, `checklist`, `instruments`, `atc`, `fault`, `wire`, `clearance`, `target`, `attitude`, `horizon`, `fuel`, `intercept`) will be audited for symmetrical, clean visual alignment.
+> **Key Aesthetic & Ergonomic Improvements**:
+> 1. **Dual Typography System**:
+>    - **UI & Controls (`--font-sans`)**: Integrated Google Font `Inter` for clean headings, body text, buttons, modals, and landing pages.
+>    - **Cockpit Telemetry & Data (`--font-mono`)**: Integrated Google Font `JetBrains Mono` for numeric readouts, digital gauges, altitude/airspeed figures, ATC callsigns, keypad displays, timer countdowns, and mathematical tokens.
+> 2. **Font Size Scale Overhaul (Legibility)**:
+>    - Micro font sizes (9px - 10px / `0.55rem` - `0.62rem`) used for labels, badges, instructions, and timestamps will be elevated to a minimum legible threshold of **`0.72rem` - `0.78rem` (~11.5px - 12.5px)** with proper font-weights and letter-spacing.
+>    - Body text, buttons, cards, and input terminals will be standardized to **`0.88rem` - `0.95rem` (~14px - 15px)**.
+> 3. **Contrast Ratio Audit (WCAG AAA Legibility)**:
+>    - Contrast values across all 7 color themes (OLED Dark, Light, Mono, Sage, Warm, Amber, Stealth) will be upgraded.
+>    - Muted text colors (`--text-muted`) will be brightened on dark themes (`#94A3B8` Slate-400 instead of dim `#64748B`) and darkened on light/warm themes (`#475569` Slate-600 / `#57534E` Stone-600).
+> 4. **De-Vibing Visual Polish**:
+>    - Remove aggressive arcade/neon glows, pulse shadows, and clashing gradients in favor of clean, solid, high-precision aerospace instrument borders and subtle status affordances.
 
 ---
 
 ## Proposed Changes
 
-### Pure Engine & Metadata (`core.js`)
-
-#### [MODIFY] [core.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/core.js)
-* **Remove Radar Module**: Purge `"radar"` from `CHALLENGE_MODULE_KEYS` and `MODULE_METADATA`. Remove `generateRadar` and `radarAccuracy`.
-* **Safe State Guard**: Ensure `generateAttitude` and `generateHorizon` always return non-null, fully formed state objects even under edge-case level inputs.
-
----
-
-### Controller & Module Handlers (`app.js`)
-
-#### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-* **Fix Start Exception Bug**:
-  * In `startRound()`, ensure EVERY module key (`checklist`, `instruments`, `atc`, `fault`, `balance`, `wire`, `clearance`, `target`, `attitude`, `intercept`, `fuel`, `beacon`, `horizon`) has an explicit generator branch so `currentRndExpected` is NEVER null.
-  * In `setupStudyScreen()`, add a defensive fallback check: if `currentRndExpected` is ever invalid, regenerate module data before invoking renderers (`renderAttitudeBoard`, `renderHorizonBoard`, etc.).
-* **Remove Radar Handlers**:
-  * Remove `renderRadarBoard`, `renderRadarTestLayout`, and `radar` evaluation branches in `submitTelemetry()`.
-* **Audit & Refine Game Layout Renderers**:
-  * `renderBalanceBoard`: Clean up scale alignment, equal spacing between rule panel and question panel, centered equality signs (`=`), and crisp shape token stacks.
-  * Audit all remaining renderers (`renderChecklistTestLayout`, `renderInstrumentsTestLayout`, `renderATCTestLayout`, `renderFaultTestLayout`, `renderWireBoard`, `renderClearanceChoices`, `renderTargetBoard`, `renderAttitudeBoard`, `renderHorizonBoard`, `renderFuelBoard`, `renderInterceptBoard`).
-
----
-
-### UI Styling & Layout (`styles.css`)
+### Core UI & Styles (`styles.css`)
 
 #### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-* **Fluid Full-Screen Layout**:
-  * Modify `.terminal-frame` to use `width: 100%; height: 100vh; max-width: 100%;` with smooth internal flex/grid layout so the app fills the browser window naturally.
-* **Text Truncation & Equal Card Sizing**:
-  * Update `.module-select-card`, `.module-family-list`, `.module-select-text` so text is never truncated (`white-space: normal; text-overflow: clip;`).
-  * Ensure module cards have equal min-height, symmetrical padding, and consistent column gaps.
-* **De-Vibe Aesthetic Polish**:
-  * Remove all heavy neon glow shadows (`box-shadow: 0 0 12px var(--accent-blue-glow)`).
-  * Replace glowing active dots with crisp 1px solid active borders and clean subtle status indicators.
-  * Clean up `.balance-board`, `.balance-panel`, `.balance-scale`, `.unknown-token` styling for clean, professional mathematical alignment.
+* **Font Token Setup**: Add `--font-mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', monospace;`.
+* **Theme Contrast Enhancements**: Update `--text-primary`, `--text-secondary`, `--text-muted` across default dark, light, mono, sage, warm, amber, and stealth themes to guarantee 7:1+ contrast on all card backgrounds.
+* **Typography Scale Adjustment**:
+  - Boost `.telemetry-label`, `.home-stat-label`, `.board-label`, `.module-family-heading`, `.module-select-text small`, `.onboarding-code-badge`, `.shortcut-badge`, `.gauge-shortcut-badge`, `.log-entry-date`, `.log-entry-badge`, `.type-tag`, `.cei-badge`, `.env-badge`, `.fault-step-title`, `.keypad-header-label`, `.module-instruction`, `.board-prompt`, `.module-stat-label`, `.module-stat-pct`, `.feedback-field`, `.atc-input-label`, `.pool-title`, `.wire-label` to `0.72rem` - `0.78rem`.
+  - Apply `--font-mono` to `.telemetry-value`, `.gauge-value-display`, `.keypad-header-value`, `.keypad-btn`, `.balance-scale`, `.input-terminal`, `.onboarding-code-badge`, `.home-stat-num`, and SVG wire labels.
+* **Remove Arcade/Vibe Glows**: Clean up drop-shadows, pulse glows, and neon borders on badges, dots, reticles, and cards for a sleek, authentic cockpit instrument look.
 
 ---
 
 ### Markup Structure (`index.html`)
 
 #### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-* Remove `#select-radar`, `#briefing-radar`, and `#test-radar` elements.
-* Adjust grid containers to support fluid full-screen responsive rendering.
+* **Google Fonts Import**: Update `<link>` in `<head>` to import both `Inter:wght@400;500;600;700` and `JetBrains+Mono:wght@500;600;700`.
 
 ---
 
-### Automated Tests (`tests.js`)
+### Landing Page (`landing/index.html` & `landing/styles.css`)
 
-#### [MODIFY] [tests.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/tests.js)
-* Remove `generateRadar` unit tests.
-* Update `sessionCompetencies` test expectation to match 13 module keys.
-* Add unit test verifying `startRound` module data generation for `attitude` and `horizon`.
+#### [MODIFY] [landing/index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/landing/index.html)
+#### [MODIFY] [landing/styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/landing/styles.css)
+* Ensure font stacks, contrast, and element sizing match the main application design system.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-* Execute unit test suite:
+* Run the existing engine test suite:
   ```powershell
   node tests.js
   ```
-* Execute syntax validation:
+* Run syntax checking on JavaScript files:
   ```powershell
-  node --check core.js
   node --check app.js
-  node --check sw.js
+  node --check core.js
   ```
 
-### Manual & UI Verification
-* Launch the app in a browser window to verify fluid full-screen responsiveness.
-* Inspect home screen module cards across widescreen desktop, tablet, and mobile viewports to confirm zero text truncation and equal card sizing.
-* Start a session selecting `Horizon Scan`, `Attitude`, `Balance Bender`, and all other modules to verify no JavaScript errors occur.
-* Verify `radar` module is completely removed.
-* Verify plain, professional, clean UI aesthetics without neon glow artifacts across all 7 color themes.
+### Manual Verification
+* Inspect text legibility across all 7 color themes (OLED Dark, Light, Mono, Sage, Warm, Amber, Stealth).
+* Verify typography consistency (`Inter` for UI, `JetBrains Mono` for telemetry & numbers).
+* Verify zero microscopic/unreadable font sizes on small/mobile screens.
+* Check contrast ratios with browser accessibility tools.

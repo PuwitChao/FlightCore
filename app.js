@@ -673,7 +673,6 @@ function renderBeaconBoard(data, includeChoices = true) {
 }
 
 
-
 function renderHorizonBoard(data, includeChoices = true) {
   return `
     <div class="aptitude-board horizon-board">

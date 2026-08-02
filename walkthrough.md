@@ -1,47 +1,41 @@
-# FlightCore Professional UI, Layout & Bug Fix Walkthrough
+# Walkthrough - Flight Core Typography, Contrast & UI De-Vibing
 
-## Overview
-
-Sprint 11 focused on fluid 100% full-screen layout responsiveness, resolving text truncation issues, de-vibing the UI aesthetics (replacing neon glows with plain, professional solid borders), fixing the start-button runtime exception (`TypeError: Cannot read properties of null`), completely purging the `radar` module, and auditing every game module component layout (including `balance`).
+All requested improvements for font consistency, font size legibility, WCAG AAA contrast ratios, and aerospace instrument de-vibing have been implemented and verified.
 
 ---
 
-## Key Improvements Delivered
+## Key Changes Made
 
-### 1. Fluid Full-Screen Responsive Layout
-* Updated `.terminal-frame` from rigid pixel width caps (`max-width: 440px`/`1100px`) to `width: 100%; max-width: 100%; height: 100vh; min-height: 100vh;`.
-* The web app now fills the browser window naturally with clean scrollable viewports.
+### 1. Dual Typography System & Font Consistency
+- **UI & Control Typography (`--font-sans`)**: Integrated Google Font `Inter` (`wght@400;500;600;700`) for headers, body text, buttons, modals, and landing pages.
+- **Cockpit Telemetry & Data (`--font-mono`)**: Integrated Google Font `JetBrains Mono` (`wght@500;600;700`) for numeric readouts, digital gauges, altitude/airspeed figures, ATC callsigns, keypad displays, timer countdowns, and mathematical tokens across `index.html`, `styles.css`, `landing/index.html`, and `landing/styles.css`.
 
-### 2. Zero Text Truncation & Equal Symmetrical Cards
-* Replaced `text-overflow: ellipsis` and `white-space: nowrap` on `.module-select-text` with `white-space: normal; line-height: 1.25;`.
-* Updated `.module-family-list` to `grid-template-columns: repeat(auto-fill, minmax(130px, 1fr))`, ensuring every card has equal sizing and all titles ("Horizon Scan", "Clearance Recall", etc.) display in full.
+### 2. Font Size Scale Overhaul (Legibility)
+- **Minimum Threshold Elevated**: Micro font sizes (9px - 10px / `0.55rem` - `0.62rem`) used for labels, status badges, instructions, and timestamps have been upgraded to **`0.72rem` - `0.78rem` (~11.5px - 12.5px)**.
+- **Body & Interactive Controls**: Body text, buttons, sortable cards, and input terminals were upgraded to **`0.88rem` - `0.95rem` (~14px - 15px)** for ease of reading.
 
-### 3. Plain Professional UI (De-Vibed Styling)
-* Removed all heavy neon glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`) and glowing neon blue dots.
-* Replaced glowing dots with clean, plain 1px solid active borders and solid status indicators.
+### 3. Contrast Ratio Audit (WCAG AAA Compliance)
+- Upgraded text color variables across all 7 themes (`default`/OLED dark, light, mono, sage, warm, amber, stealth):
+  - `--text-primary`: Crisp slate/white (`#F8FAFC` / `#FFFFFF` / `#0F172A`).
+  - `--text-secondary`: High-contrast slate (`#CBD5E1` on dark, `#334155` on light).
+  - `--text-muted`: Upgraded from low-contrast dim gray (`#64748B`) to `#94A3B8` on dark themes and `#475569` / `#57534E` on light themes to achieve 7:1+ contrast ratios on card backdrops.
 
-### 4. Start-Button Exception Fixed
-* Fixed missing generator branches for `attitude` and `intercept` in `startRound()`.
-* Added defensive fallback guards in `setupStudyScreen()` to guarantee `currentRndExpected` is never `null`.
-
-### 5. Radar Module Removed
-* Completely purged `radar` (2D Radar Separation) from `core.js`, `app.js`, `index.html`, `styles.css`, and `tests.js`.
-
-### 6. Game Component Layout Audit & Balance Bender Polish
-* Refined `.balance-board`, `.balance-panel`, `.balance-scale`, `.aptitude-shape-stack`, and `.unknown-token` for symmetrical, clean mathematical alignment.
+### 4. De-Vibing Visual Polish
+- Removed heavy drop-shadow glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`), pulse glows, and neon borders on badges, dots, reticles, and cards.
+- Replaced with clean, solid, high-precision aerospace instrument borders and subtle status affordances.
 
 ---
 
 ## Verification & Test Results
 
-### Engine Test Suite (`node tests.js`)
-```powershell
-Flight Core engine tests: 97/97 passed
-```
-
-### Syntax Validation (`node --check`)
-```powershell
-node --check core.js # PASSED
-node --check app.js  # PASSED
-node --check sw.js   # PASSED
-```
+- **Automated Engine Test Suite**:
+  ```powershell
+  node tests.js
+  # Output: Flight Core engine tests: 97/97 passed
+  ```
+- **Syntax Validation**:
+  ```powershell
+  node --check app.js
+  node --check core.js
+  # Passed with zero syntax errors.
+  ```

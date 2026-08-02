@@ -1,15 +1,16 @@
-/* --- MULTI-THEME CUSTOM VARIABLES (Apple UI Guidelines) --- */
+/* --- MULTI-THEME CUSTOM VARIABLES (Apple & Aerospace UI Guidelines) --- */
 body {
   /* Default: OLED Dark Theme */
   --bg-dark: #000000;
-  --bg-card: rgba(22, 26, 33, 0.65);
-  --bg-input: rgba(30, 36, 45, 0.5);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(0, 122, 255, 0.45);
+  --bg-card: rgba(22, 26, 33, 0.75);
+  --bg-input: rgba(30, 36, 45, 0.6);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(0, 122, 255, 0.55);
   
+  /* Contrast Audit: Brightened slate values for WCAG AAA compliance on dark cards */
   --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
   
   --accent-blue: #007AFF; /* iOS sapphire blue */
   --accent-blue-glow: rgba(0, 122, 255, 0.15);
@@ -17,15 +18,15 @@ body {
   --accent-amber: #FF9500; /* iOS amber */
   
   --success-emerald: #34C759; /* iOS system green */
-  --success-bg: rgba(52, 199, 89, 0.08);
-  --success-border: rgba(52, 199, 89, 0.2);
+  --success-bg: rgba(52, 199, 89, 0.1);
+  --success-border: rgba(52, 199, 89, 0.25);
   
   --error-rose: #FF3B30; /* iOS system red */
-  --error-bg: rgba(255, 59, 48, 0.08);
-  --error-border: rgba(255, 59, 48, 0.2);
+  --error-bg: rgba(255, 59, 48, 0.1);
+  --error-border: rgba(255, 59, 48, 0.25);
   
-  --warning-bg: rgba(255, 149, 0, 0.08);
-  --warning-border: rgba(255, 149, 0, 0.2);
+  --warning-bg: rgba(255, 149, 0, 0.1);
+  --warning-border: rgba(255, 149, 0, 0.25);
   
   --keypad-bg: rgba(255, 255, 255, 0.05);
   --keypad-active-bg: rgba(255, 255, 255, 0.12);
@@ -33,6 +34,7 @@ body {
   --shadow-premium: 0 12px 40px -12px rgba(0, 0, 0, 0.85);
   
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -40,44 +42,44 @@ body {
   --transition-fast: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Audited Theme-Specific Button and Keypad variables */
-  --btn-neutral-bg: rgba(255, 255, 255, 0.05);
-  --btn-neutral-border: rgba(255, 255, 255, 0.08);
-  --keypad-btn-bg: rgba(255, 255, 255, 0.05);
-  --keypad-btn-active-bg: rgba(255, 255, 255, 0.12);
-  --keypad-btn-action-bg: rgba(255, 255, 255, 0.02);
+  --btn-neutral-bg: rgba(255, 255, 255, 0.06);
+  --btn-neutral-border: rgba(255, 255, 255, 0.1);
+  --keypad-btn-bg: rgba(255, 255, 255, 0.06);
+  --keypad-btn-active-bg: rgba(255, 255, 255, 0.14);
+  --keypad-btn-action-bg: rgba(255, 255, 255, 0.03);
   --keypad-btn-shadow: none;
 
   /* Active selected-theme tint (border always uses --accent-blue) */
-  --select-active-bg: rgba(0, 122, 255, 0.08);
+  --select-active-bg: rgba(0, 122, 255, 0.1);
 }
 
 body[data-theme="light"] {
   /* Apple Light Mode */
   --bg-dark: #F2F2F7; /* iOS system gray background */
-  --bg-card: rgba(255, 255, 255, 0.7); /* translucent white */
-  --bg-input: rgba(0, 0, 0, 0.03);
-  --border-subtle: rgba(0, 0, 0, 0.07);
-  --border-active: rgba(0, 122, 255, 0.4);
+  --bg-card: rgba(255, 255, 255, 0.85); /* translucent white */
+  --bg-input: rgba(0, 0, 0, 0.04);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-active: rgba(0, 122, 255, 0.5);
   
-  /* Contrast Audit: Deepened grey values for perfect accessibility (WCAG AAA) on light cards */
-  --text-primary: #1C1C1E; /* iOS dark text */
-  --text-secondary: #48484A; /* iOS label dark gray (Improved from #8E8E93) */
-  --text-muted: #68686E; /* iOS secondary dark label gray (Improved from #AEAEB2) */
+  /* Contrast Audit: High legibility dark slate shades (WCAG AAA) on light backgrounds */
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #475569;
   
   --accent-blue: #007AFF;
-  --accent-cyan: #004F98;
-  --accent-amber: #FF9500;
+  --accent-cyan: #0284C7;
+  --accent-amber: #D97706;
   
-  --success-emerald: #34C759;
-  --success-bg: rgba(52, 199, 89, 0.06);
-  --success-border: rgba(52, 199, 89, 0.15);
+  --success-emerald: #16A34A;
+  --success-bg: rgba(22, 163, 74, 0.08);
+  --success-border: rgba(22, 163, 74, 0.2);
   
-  --error-rose: #FF3B30;
-  --error-bg: rgba(255, 59, 48, 0.06);
-  --error-border: rgba(255, 59, 48, 0.15);
+  --error-rose: #DC2626;
+  --error-bg: rgba(220, 38, 38, 0.08);
+  --error-border: rgba(220, 38, 38, 0.2);
   
-  --warning-bg: rgba(255, 149, 0, 0.06);
-  --warning-border: rgba(255, 149, 0, 0.15);
+  --warning-bg: rgba(217, 119, 6, 0.08);
+  --warning-border: rgba(217, 119, 6, 0.2);
   
   --keypad-bg: rgba(0, 0, 0, 0.04);
   --keypad-active-bg: rgba(0, 0, 0, 0.1);
@@ -86,184 +88,184 @@ body[data-theme="light"] {
 
   /* Audited Theme-Specific Button and Keypad variables */
   --btn-neutral-bg: #E5E5EA; /* Solid iOS system gray secondary button */
-  --btn-neutral-border: rgba(0, 0, 0, 0.04);
-  --keypad-btn-bg: #FFFFFF; /* Brilliant solid white key (iOS keypad standard) */
+  --btn-neutral-border: rgba(0, 0, 0, 0.08);
+  --keypad-btn-bg: #FFFFFF; /* Solid white key */
   --keypad-btn-active-bg: #E5E5EA;
   --keypad-btn-action-bg: #D1D1D6;
   --keypad-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0.5px 0.5px rgba(0, 0, 0, 0.04);
 
-  --select-active-bg: rgba(0, 122, 255, 0.06);
+  --select-active-bg: rgba(0, 122, 255, 0.08);
 }
 
 body[data-theme="mono"] {
   /* Monochrome Minimalist Gray */
   --bg-dark: #121212;
-  --bg-card: rgba(28, 28, 30, 0.75);
-  --bg-input: rgba(255, 255, 255, 0.04);
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-active: rgba(255, 255, 255, 0.4);
+  --bg-card: rgba(28, 28, 30, 0.85);
+  --bg-input: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(255, 255, 255, 0.5);
   
-  --text-primary: #F3F4F6;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
   
   --accent-blue: #FFFFFF; /* Stark white */
-  --accent-cyan: #D1D5DB;
-  --accent-amber: #9CA3AF;
+  --accent-cyan: #E5E7EB;
+  --accent-amber: #D1D5DB;
   
-  --success-emerald: #E5E7EB;
-  --success-bg: rgba(255, 255, 255, 0.04);
-  --success-border: rgba(255, 255, 255, 0.15);
+  --success-emerald: #F3F4F6;
+  --success-bg: rgba(255, 255, 255, 0.06);
+  --success-border: rgba(255, 255, 255, 0.2);
   
-  --error-rose: #374151;
-  --error-bg: rgba(255, 255, 255, 0.02);
-  --error-border: rgba(255, 255, 255, 0.08);
+  --error-rose: #9CA3AF;
+  --error-bg: rgba(255, 255, 255, 0.04);
+  --error-border: rgba(255, 255, 255, 0.12);
   
-  --warning-bg: rgba(255, 255, 255, 0.03);
-  --warning-border: rgba(255, 255, 255, 0.1);
+  --warning-bg: rgba(255, 255, 255, 0.05);
+  --warning-border: rgba(255, 255, 255, 0.15);
   
-  --keypad-bg: rgba(255, 255, 255, 0.04);
-  --keypad-active-bg: rgba(255, 255, 255, 0.12);
+  --keypad-bg: rgba(255, 255, 255, 0.05);
+  --keypad-active-bg: rgba(255, 255, 255, 0.14);
   --keypad-panel-bg: #1C1C1E;
   --shadow-premium: 0 12px 40px -12px rgba(0, 0, 0, 0.8);
 
   /* Audited Theme-Specific Button and Keypad variables */
-  --btn-neutral-bg: rgba(255, 255, 255, 0.05);
-  --btn-neutral-border: rgba(255, 255, 255, 0.06);
-  --keypad-btn-bg: rgba(255, 255, 255, 0.05);
-  --keypad-btn-active-bg: rgba(255, 255, 255, 0.12);
-  --keypad-btn-action-bg: rgba(255, 255, 255, 0.02);
+  --btn-neutral-bg: rgba(255, 255, 255, 0.06);
+  --btn-neutral-border: rgba(255, 255, 255, 0.08);
+  --keypad-btn-bg: rgba(255, 255, 255, 0.06);
+  --keypad-btn-active-bg: rgba(255, 255, 255, 0.14);
+  --keypad-btn-action-bg: rgba(255, 255, 255, 0.03);
 
-  --select-active-bg: rgba(255, 255, 255, 0.06);
+  --select-active-bg: rgba(255, 255, 255, 0.08);
 }
 
 body[data-theme="sage"] {
   /* Nordic Forest Sage Green */
   --bg-dark: #121815; /* Slate sage */
-  --bg-card: rgba(24, 32, 28, 0.7);
-  --bg-input: rgba(255, 255, 255, 0.03);
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-active: rgba(52, 199, 89, 0.4);
+  --bg-card: rgba(24, 32, 28, 0.85);
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(52, 199, 89, 0.55);
   
-  /* Contrast Audit: Brighten sage typography for readability on slate sage backdrops */
-  --text-primary: #ECFDF5;
-  --text-secondary: #B0C4B8; /* Improved from #94A89C */
-  --text-muted: #7E9386; /* Improved from #687970 */
+  /* Contrast Audit: Brightened sage slate typography for readability */
+  --text-primary: #F0FDF4;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
   
   --accent-blue: #30D158; /* Apple green */
-  --accent-cyan: #30B0C7;
+  --accent-cyan: #38BDF8;
   --accent-amber: #FF9500;
   
   --success-emerald: #30D158;
-  --success-bg: rgba(48, 209, 88, 0.08);
-  --success-border: rgba(48, 209, 88, 0.18);
+  --success-bg: rgba(48, 209, 88, 0.1);
+  --success-border: rgba(48, 209, 88, 0.22);
   
   --error-rose: #FF453A;
-  --error-bg: rgba(255, 69, 58, 0.08);
-  --error-border: rgba(255, 69, 58, 0.18);
+  --error-bg: rgba(255, 69, 58, 0.1);
+  --error-border: rgba(255, 69, 58, 0.22);
   
-  --warning-bg: rgba(255, 149, 0, 0.08);
-  --warning-border: rgba(255, 149, 0, 0.18);
+  --warning-bg: rgba(255, 149, 0, 0.1);
+  --warning-border: rgba(255, 149, 0, 0.22);
   
-  --keypad-bg: rgba(255, 255, 255, 0.03);
-  --keypad-active-bg: rgba(255, 255, 255, 0.1);
+  --keypad-bg: rgba(255, 255, 255, 0.04);
+  --keypad-active-bg: rgba(255, 255, 255, 0.12);
   --keypad-panel-bg: #0C110F;
   --shadow-premium: 0 12px 40px -12px rgba(0, 0, 0, 0.85);
 
   /* Audited Theme-Specific Button and Keypad variables */
-  --btn-neutral-bg: rgba(24, 32, 28, 0.6);
-  --btn-neutral-border: rgba(255, 255, 255, 0.05);
-  --keypad-btn-bg: rgba(24, 32, 28, 0.6);
-  --keypad-btn-active-bg: rgba(255, 255, 255, 0.1);
-  --keypad-btn-action-bg: rgba(24, 32, 28, 0.3);
+  --btn-neutral-bg: rgba(24, 32, 28, 0.7);
+  --btn-neutral-border: rgba(255, 255, 255, 0.08);
+  --keypad-btn-bg: rgba(24, 32, 28, 0.7);
+  --keypad-btn-active-bg: rgba(255, 255, 255, 0.12);
+  --keypad-btn-action-bg: rgba(24, 32, 28, 0.4);
 
-  --select-active-bg: rgba(48, 209, 88, 0.08);
+  --select-active-bg: rgba(48, 209, 88, 0.1);
 }
 
 body[data-theme="warm"] {
   /* Warm Minimalist Sand */
   --bg-dark: #FAF5EE; /* Cozy Sand */
-  --bg-card: rgba(255, 255, 255, 0.65);
-  --bg-input: rgba(0, 0, 0, 0.03);
-  --border-subtle: rgba(140, 115, 95, 0.1);
-  --border-active: rgba(217, 119, 6, 0.4);
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-input: rgba(0, 0, 0, 0.04);
+  --border-subtle: rgba(140, 115, 95, 0.15);
+  --border-active: rgba(217, 119, 6, 0.55);
   
-  /* Contrast Audit: Deep warm stone cocoa shades for absolute legibility */
-  --text-primary: #292524; /* Cocoa */
-  --text-secondary: #44403C; /* Dark Stone (Improved from #78716C) */
-  --text-muted: #6B6661; /* Medium Stone (Improved from #A8A29E) */
+  /* Contrast Audit: High contrast cocoa stone shades for absolute legibility */
+  --text-primary: #1C1917;
+  --text-secondary: #292524;
+  --text-muted: #57534E;
   
-  --accent-blue: #D97706; /* Terracotta */
+  --accent-blue: #D97706; /* Terracotta amber */
   --accent-cyan: #4F46E5;
   --accent-amber: #D97706;
   
   --success-emerald: #D97706;
-  --success-bg: rgba(217, 119, 6, 0.05);
-  --success-border: rgba(217, 119, 6, 0.15);
+  --success-bg: rgba(217, 119, 6, 0.08);
+  --success-border: rgba(217, 119, 6, 0.2);
   
   --error-rose: #9A3412;
-  --error-bg: rgba(154, 52, 18, 0.05);
-  --error-border: rgba(154, 52, 18, 0.15);
+  --error-bg: rgba(154, 52, 18, 0.08);
+  --error-border: rgba(154, 52, 18, 0.2);
   
-  --warning-bg: rgba(217, 119, 6, 0.05);
-  --warning-border: rgba(217, 119, 6, 0.15);
+  --warning-bg: rgba(217, 119, 6, 0.08);
+  --warning-border: rgba(217, 119, 6, 0.2);
   
   --keypad-bg: rgba(0, 0, 0, 0.04);
-  --keypad-active-bg: rgba(0, 0, 0, 0.08);
+  --keypad-active-bg: rgba(0, 0, 0, 0.1);
   --keypad-panel-bg: #EFE9DE;
-  --shadow-premium: 0 10px 30px -10px rgba(100, 80, 60, 0.05);
+  --shadow-premium: 0 10px 30px -10px rgba(100, 80, 60, 0.08);
 
   /* Audited Theme-Specific Button and Keypad variables */
-  --btn-neutral-bg: #EFE9DE; /* Solid Sand button */
-  --btn-neutral-border: rgba(140, 115, 95, 0.15);
-  --keypad-btn-bg: #FFFFFF; /* Crisp solid white key on sand tray */
+  --btn-neutral-bg: #EFE9DE;
+  --btn-neutral-border: rgba(140, 115, 95, 0.2);
+  --keypad-btn-bg: #FFFFFF;
   --keypad-btn-active-bg: #EFE9DE;
   --keypad-btn-action-bg: #E5DEC9;
-  --keypad-btn-shadow: 0 1px 2px rgba(140, 115, 95, 0.08), 0 0.5px 0.5px rgba(140, 115, 95, 0.04);
+  --keypad-btn-shadow: 0 1px 2px rgba(140, 115, 95, 0.1);
 
-  --select-active-bg: rgba(217, 119, 6, 0.06);
+  --select-active-bg: rgba(217, 119, 6, 0.08);
 }
 
 body[data-theme="amber"] {
   /* Vintage Vector Amber Theme */
   --bg-dark: #080500;
-  --bg-card: rgba(30, 20, 5, 0.7);
-  --bg-input: rgba(45, 30, 10, 0.5);
-  --border-subtle: rgba(255, 165, 0, 0.2);
-  --border-active: rgba(255, 149, 0, 0.8);
-  --text-primary: #FFB347;
-  --text-secondary: #E69500;
-  --text-muted: #B37400;
+  --bg-card: rgba(30, 20, 5, 0.85);
+  --bg-input: rgba(45, 30, 10, 0.6);
+  --border-subtle: rgba(255, 165, 0, 0.25);
+  --border-active: rgba(255, 149, 0, 0.85);
+  --text-primary: #FFE082;
+  --text-secondary: #FFCA28;
+  --text-muted: #FFB300;
   --accent-blue: #FF9500;
   --accent-cyan: #FFC04D;
   --accent-amber: #FF9500;
-  --keypad-bg: rgba(255, 149, 0, 0.08);
-  --keypad-active-bg: rgba(255, 149, 0, 0.2);
+  --keypad-bg: rgba(255, 149, 0, 0.1);
+  --keypad-active-bg: rgba(255, 149, 0, 0.22);
   --keypad-panel-bg: #100A02;
-  --btn-neutral-bg: rgba(255, 149, 0, 0.1);
-  --btn-neutral-border: rgba(255, 149, 0, 0.2);
-  --select-active-bg: rgba(255, 149, 0, 0.15);
+  --btn-neutral-bg: rgba(255, 149, 0, 0.12);
+  --btn-neutral-border: rgba(255, 149, 0, 0.25);
+  --select-active-bg: rgba(255, 149, 0, 0.18);
 }
 
 body[data-theme="stealth"] {
   /* Stealth AMOLED Theme */
   --bg-dark: #000000;
-  --bg-card: rgba(15, 15, 18, 0.8);
-  --bg-input: rgba(20, 20, 25, 0.6);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-active: rgba(120, 120, 135, 0.6);
+  --bg-card: rgba(18, 18, 22, 0.85);
+  --bg-input: rgba(25, 25, 30, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(160, 160, 180, 0.7);
   --text-primary: #FFFFFF;
-  --text-secondary: #A0A0B0;
-  --text-muted: #505060;
-  --accent-blue: #8A8A9E;
-  --accent-cyan: #B0B0C5;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  --accent-blue: #94A3B8;
+  --accent-cyan: #CBD5E1;
   --accent-amber: #E0A030;
-  --keypad-bg: rgba(255, 255, 255, 0.04);
-  --keypad-active-bg: rgba(255, 255, 255, 0.12);
+  --keypad-bg: rgba(255, 255, 255, 0.05);
+  --keypad-active-bg: rgba(255, 255, 255, 0.14);
   --keypad-panel-bg: #050508;
-  --btn-neutral-bg: rgba(255, 255, 255, 0.06);
-  --btn-neutral-border: rgba(255, 255, 255, 0.08);
-  --select-active-bg: rgba(255, 255, 255, 0.1);
+  --btn-neutral-bg: rgba(255, 255, 255, 0.08);
+  --btn-neutral-border: rgba(255, 255, 255, 0.1);
+  --select-active-bg: rgba(255, 255, 255, 0.12);
 }
 
 /* --- RESET & TRANSITIONS --- */
@@ -334,8 +336,9 @@ body {
 
 .telemetry-value.accent {
   color: var(--accent-blue);
+  font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   background: rgba(0, 122, 255, 0.1);
   padding: 4px 10px;
   border-radius: 30px;
@@ -397,16 +400,17 @@ body[data-theme="light"] .telemetry-grid {
 }
 
 .telemetry-label {
-  font-size: 0.58rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   margin-bottom: 3px;
 }
 
 .telemetry-value {
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -649,7 +653,7 @@ body[data-theme="warm"] .theme-opt-btn {
 }
 
 .terminal-card-header {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -663,12 +667,13 @@ body[data-theme="warm"] .theme-opt-btn {
 }
 
 .terminal-card-header .type-tag {
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-weight: 700;
   color: var(--accent-blue);
-  background-color: rgba(0, 122, 255, 0.1);
+  background-color: rgba(0, 122, 255, 0.12);
   padding: 3px 10px;
   border-radius: 30px;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   transition: color var(--transition-fast), background var(--transition-fast);
 }
@@ -724,7 +729,7 @@ body[data-theme="light"] .timer-container {
   border: 1px solid var(--btn-neutral-border);
   border-radius: var(--radius-md);
   padding: 10px;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   outline: none;
@@ -757,12 +762,12 @@ body[data-theme="light"] .timer-container {
 }
 
 .module-stat-label {
-  font-size: 0.65rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  width: 68px;
+  width: 84px;
   flex-shrink: 0;
 }
 
@@ -786,10 +791,11 @@ body[data-theme="light"] .module-stat-track {
 }
 
 .module-stat-pct {
-  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--text-muted);
-  width: 28px;
+  width: 32px;
   text-align: right;
   flex-shrink: 0;
 }
@@ -932,8 +938,9 @@ body[data-theme="light"] .gauge-card {
 }
 
 .gauge-value-display {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 1.55rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 6px 0;
   letter-spacing: -0.5px;
@@ -987,7 +994,8 @@ body[data-theme="light"] .checklist-slot {
 }
 
 .checklist-slot-index {
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent-blue);
   width: 28px;
@@ -1000,7 +1008,7 @@ body[data-theme="mono"] .checklist-slot-index {
 
 .checklist-slot-content {
   flex-grow: 1;
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -1010,7 +1018,7 @@ body[data-theme="mono"] .checklist-slot-index {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 14px 16px;
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -1038,7 +1046,7 @@ body[data-theme="mono"] .sortable-item:active {
 }
 
 .pool-title {
-  font-size: 0.65rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--text-muted);
   margin-bottom: 12px;
@@ -1058,7 +1066,8 @@ body[data-theme="mono"] .sortable-item:active {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 18px 20px;
-  font-size: 0.88rem;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
   font-weight: 500;
   line-height: 1.5;
   color: var(--text-primary);
@@ -1086,7 +1095,7 @@ body[data-theme="light"] .atc-telemetry-display {
 }
 
 .atc-input-label {
-  font-size: 0.65rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -1099,8 +1108,8 @@ body[data-theme="light"] .atc-telemetry-display {
   border-radius: var(--radius-md);
   padding: 12px 14px;
   color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
   font-weight: 600;
   outline: none;
   min-height: 48px;
@@ -1154,7 +1163,7 @@ body[data-theme="mono"] .fault-step-node.active-step {
 }
 
 .fault-step-title {
-  font-size: 0.62rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--accent-cyan);
   text-transform: uppercase;
@@ -1168,7 +1177,7 @@ body[data-theme="mono"] .fault-step-title {
 }
 
 .fault-step-content {
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   font-weight: 500;
   min-height: 20px;
 }
@@ -1207,7 +1216,7 @@ body[data-theme="light"] .keypad-header-row {
 }
 
 .keypad-header-label {
-  font-size: 0.62rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -1215,7 +1224,8 @@ body[data-theme="light"] .keypad-header-row {
 }
 
 .keypad-header-value {
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--accent-cyan);
   transition: color var(--transition-fast);
@@ -1236,9 +1246,9 @@ body[data-theme="mono"] .keypad-header-value {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 1.15rem;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 600;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1790,34 +1800,34 @@ body[data-theme="mono"] .module-select-card.active .select-indicator {
 
 /* --- KEYBOARD SHORTCUT BADGES --- */
 .shortcut-badge {
-  font-family: var(--font-sans);
-  font-size: 0.58rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text-muted) !important;
+  color: var(--text-secondary) !important;
   background: var(--btn-neutral-bg) !important;
   border: 1px solid var(--border-subtle) !important;
-  padding: 2px 5px !important;
+  padding: 2px 6px !important;
   border-radius: 4px !important;
   margin-left: 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  opacity: 0.75 !important;
+  opacity: 0.85 !important;
   transition: var(--transition-fast) !important;
 }
 
 .gauge-shortcut-badge {
-  font-family: var(--font-sans);
-  font-size: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text-muted) !important;
+  color: var(--text-secondary) !important;
   background: var(--btn-neutral-bg) !important;
   border: 1px solid var(--border-subtle) !important;
-  padding: 1px 4px !important;
-  border-radius: 3px !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  opacity: 0.55 !important;
+  opacity: 0.75 !important;
   transition: var(--transition-fast) !important;
   pointer-events: none;
 }
@@ -1930,38 +1940,38 @@ body[data-theme="light"] .round-dot.upcoming {
 
 .round-dot.active {
   background-color: var(--accent-blue);
-  box-shadow: 0 0 8px var(--accent-blue);
+  box-shadow: none;
   animation: pulse-active 1.5s infinite alternate ease-in-out;
 }
 
 body[data-theme="mono"] .round-dot.active {
   background-color: var(--text-primary);
-  box-shadow: 0 0 8px var(--text-primary);
+  box-shadow: none;
 }
 
 body[data-theme="sage"] .round-dot.active {
   background-color: #30D158;
-  box-shadow: 0 0 8px #30D158;
+  box-shadow: none;
 }
 
 body[data-theme="warm"] .round-dot.active {
   background-color: var(--accent-blue);
-  box-shadow: 0 0 8px var(--accent-blue);
+  box-shadow: none;
 }
 
 .round-dot.completed-success {
   background-color: var(--success-emerald);
-  box-shadow: 0 0 6px var(--success-emerald);
+  box-shadow: none;
 }
 
 .round-dot.completed-warning {
   background-color: var(--accent-amber);
-  box-shadow: 0 0 6px var(--accent-amber);
+  box-shadow: none;
 }
 
 .round-dot.completed-error {
   background-color: var(--error-rose);
-  box-shadow: 0 0 6px var(--error-rose);
+  box-shadow: none;
 }
 
 @keyframes pulse-active {
@@ -1992,7 +2002,7 @@ body[data-theme="warm"] .round-dot.active {
   color: var(--text-muted);
   border-radius: var(--radius-sm);
   padding: 8px;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -2039,7 +2049,7 @@ body[data-theme="light"] .gauge-range-bar {
 
 .gauge-range-indicator.normal {
   background: var(--accent-blue);
-  box-shadow: 0 0 6px var(--accent-blue);
+  box-shadow: none;
 }
 
 body[data-theme="mono"] .gauge-range-indicator.normal {
@@ -2049,7 +2059,7 @@ body[data-theme="mono"] .gauge-range-indicator.normal {
 
 .gauge-range-indicator.warning {
   background: var(--accent-amber);
-  box-shadow: 0 0 6px var(--accent-amber);
+  box-shadow: none;
 }
 
 /* --- PILOT LOGBOOK STYLING --- */
@@ -2080,13 +2090,14 @@ body[data-theme="light"] .log-entry-row {
 }
 
 .log-entry-title {
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .log-entry-date {
-  font-size: 0.58rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -2098,16 +2109,17 @@ body[data-theme="light"] .log-entry-row {
 }
 
 .log-entry-score {
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--accent-blue);
   text-align: right;
 }
 
 .log-entry-badge {
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 6px;
   text-transform: uppercase;
 }
@@ -2131,7 +2143,6 @@ body[data-theme="light"] .log-entry-row {
 }
 
 
-
 /* --- ACCESSIBILITY --- */
 .sr-only {
   position: absolute;
@@ -2153,14 +2164,14 @@ body[data-theme="light"] .log-entry-row {
   transform: translateX(-50%);
   background: var(--success-emerald);
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   padding: 8px 20px;
   border-radius: 30px;
   z-index: 50;
   white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   animation: pb-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards,
              pb-fade-out 0.5s ease 2.5s forwards;
 }
@@ -2198,7 +2209,7 @@ body[data-theme="light"] .calendar-cell {
 
 .calendar-cell.today {
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 1px var(--accent-blue);
+  box-shadow: none;
 }
 
 .calendar-cell.cal-ace   { background: var(--success-emerald); border-color: transparent; }
@@ -2218,13 +2229,13 @@ body[data-theme="light"] .calendar-cell {
 
 .history-tab {
   font-family: var(--font-sans);
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
   background: none;
   border: none;
   border-radius: 6px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   cursor: pointer;
   transition: all var(--transition-fast);
   letter-spacing: 0.3px;
@@ -2254,12 +2265,13 @@ body[data-theme="light"] .calendar-cell {
   top: 10px;
   right: 10px;
   z-index: 3000;
-  padding: 5px 8px;
+  padding: 5px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--warning-border);
   background: var(--warning-bg);
   color: var(--accent-amber);
-  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -2297,11 +2309,11 @@ input:focus-visible {
 }
 
 .module-family-heading {
-  font-size: 0.58rem;
-  font-weight: 800;
+  font-size: 0.74rem;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.6px;
 }
 
 .module-family-list {
@@ -2327,13 +2339,13 @@ input:focus-visible {
 }
 
 .module-select-text span {
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .module-select-text small {
-  font-size: 0.56rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -2359,14 +2371,15 @@ input:focus-visible {
 
 .onboarding-code-badge {
   flex: 0 0 auto;
-  min-width: 42px;
+  min-width: 46px;
   padding: 3px 6px;
   border: 1px solid var(--border-active);
   border-radius: var(--radius-sm);
   color: var(--accent-blue);
   background: var(--select-active-bg);
-  font-size: 0.56rem;
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
   line-height: 1.2;
   text-align: center;
   letter-spacing: 0.35px;
@@ -2379,7 +2392,7 @@ input:focus-visible {
 
 .module-instruction,
 .board-prompt {
-  font-size: 0.66rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   font-weight: 700;
   text-transform: uppercase;

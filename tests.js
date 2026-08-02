@@ -343,7 +343,6 @@
   });
   // Regression: original implementation could infinite-loop when the distractor
   // pool can't satisfy the count. With a single fault there are no "other"
-  // items, so this must terminate and simply yield no distractors.
   test("generateFault: terminates with degenerate single-item pool", () => {
     assertNoThrow(() => {
       const d = FC.generateFault([{ symptom: "S", system: "SYS", action: "ACT" }], 3, [], seeded(1));
