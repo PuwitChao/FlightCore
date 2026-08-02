@@ -221,7 +221,7 @@
       { module: "checklist", accuracy: 50 },
       { module: "atc", accuracy: 25 }
     ];
-    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, attitude: 80, intercept: 80, fuel: 80, beacon: 80, radar: 80, horizon: 80 });
+    assertDeep(FC.sessionCompetencies(rounds, 80), { checklist: 75, instruments: 80, atc: 25, fault: 80, balance: 80, wire: 80, clearance: 80, target: 80, attitude: 80, intercept: 80, fuel: 80, beacon: 80, horizon: 80 });
   });
 
   test("sessionModuleAccuracy: only includes played modules", () => {
@@ -511,14 +511,6 @@
     assert(b.options.length === 4);
     assertEqual(FC.beaconAccuracy(b.expectedId, b.expectedId), 100);
     assertEqual(FC.beaconAccuracy(b.expectedId, "wrong_id"), 0);
-  });
-
-  test("generateRadar & radarAccuracy: generates 2D radar conflict scenarios", () => {
-    const r = FC.generateRadar(1, () => 0.2);
-    assert(r.blips.length === 3);
-    assert(r.options.length === 4);
-    assertEqual(FC.radarAccuracy(r.expectedId, r.expectedId), 100);
-    assertEqual(FC.radarAccuracy(r.expectedId, "wrong_id"), 0);
   });
 
   test("generateHorizon & horizonAccuracy: generates attitude indicator pitch/roll challenges", () => {

@@ -1,105 +1,95 @@
-# FlightCore Module Expansion & Anti-AI-Slop Premium UI Plan
+# FlightCore Professional Layout, UI De-Vibing & Bug Fix Plan
 
-This plan details the implementation of 4 new cockpit cognitive challenge modules (`fuel`, `beacon`, `radar`, `horizon`), an interactive 5-axis SVG Skill Radar Chart for session debriefs, and a dynamic flow-state pressure engine to scale timers and score multipliers based on player performance streaks.
+This plan addresses layout responsiveness, text truncation, UI aesthetic de-vibing (removing neon glows in favor of a clean, plain, professional UI), resolving the start button runtime exception, removing the `radar` module, and auditing every game component layout (including `balance`).
 
 ---
 
-## Anti-AI-Slop & Premium Cockpit UI Design Guarantee
+## User Review Required
 
-To ensure all new game UIs feel like authentic, state-of-the-art cockpit instrumentation rather than generic "AI-slop":
-
-1. **Tactile Interactive States**: All buttons, toggle switches, map cards, and blip selectors feature explicit hover, focus, and active pressed states using subtle glow box-shadows (`box-shadow: 0 0 12px var(--accent-blue-glow)`), active borders, and CSS micro-transitions (`transition: all var(--transition-fast)`).
-2. **Typography & Metric Layouts**: Monospace telemetry readouts use crisp numerical spacing with subtle uppercase tracking for eyebrow copy (`letter-spacing: 0.5px; font-weight: 700; font-size: 0.65rem;`).
-3. **Harmonious Multi-Theme Integration**: Every visual element (tanks, dials, radar sweep grid, attitude spheres, radar chart polygons) consumes standard CSS custom property tokens (`var(--bg-card)`, `var(--border-subtle)`, `var(--border-active)`, `var(--accent-blue)`, `var(--accent-cyan)`, `var(--accent-amber)`, `var(--success-emerald)`, `var(--error-rose)`) across all 7 built-in themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
-4. **Cockpit Geometry & Precision Vector Graphics**:
-   * **Fuel Balancer (`fuel`)**: Vector fluid tank gauges with dynamic volume bars, fill percentage indicators, animated green/amber pipe flow arrows, and tactile pump toggle switches.
-   * **Beacon Bearing / RBI (`beacon`)**: Crisp 360-degree Gyro Compass dial with cardinal directions (N, E, S, W), needle vector, and 4 top-down VOR map quadrant cards.
-   * **2D Radar Separation (`radar`)**: Phosphor-grid radar screen with concentric distance rings (3nm, 6nm, 9nm), animated rotating radar sweep line, blip altitude/speed data tags, and red/amber hazard vector lines.
-   * **Attitude Horizon Scan (`horizon`)**: Authentic Horizon Ball SVG with sky blue / ground amber division, pitch ladder (+10°, +20°, -10°, -20°), roll bank pointer, and 4 vector aircraft 3D posture thumbnails.
-   * **5-Axis SVG Radar Chart**: Polished SVG spider web grid with labeled domain vertices, benchmark polygon overlay, and player skill polygon with subtle glow fill.
-5. **No Emoji Policy**: Zero emojis in UI copy, code comments, or documentation.
+> [!IMPORTANT]
+> **Fluid Full-Screen & Plain Professional Aesthetics**:
+> 1. `.terminal-frame` will expand fluidly to fill 100% of the viewport width and height without rigid pixel caps.
+> 2. All text truncation (`text-overflow: ellipsis`) on module selection cards will be removed; cards will wrap text cleanly and maintain equal symmetrical sizing.
+> 3. All neon glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`) and glowing dots will be replaced with clean, plain, solid status borders and subtle muted indicators.
+> 4. The `radar` module will be completely purged from `core.js`, `app.js`, `index.html`, `styles.css`, and `tests.js`.
+> 5. The start button exception (`TypeError: Cannot read properties of null (reading 'pitch')`) will be fixed with robust generator wiring and fallback guards in `app.js`.
+> 6. All game module boards (`balance`, `checklist`, `instruments`, `atc`, `fault`, `wire`, `clearance`, `target`, `attitude`, `horizon`, `fuel`, `intercept`) will be audited for symmetrical, clean visual alignment.
 
 ---
 
 ## Proposed Changes
 
-### Pure Engine Logic & Module Generators (`core.js`)
+### Pure Engine & Metadata (`core.js`)
 
 #### [MODIFY] [core.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/core.js)
-* **Module Metadata & Registry**: Register `fuel` (Logical/Advanced), `beacon` (Spatial), `radar` (Advanced/Spatial), and `horizon` (Spatial/Visual) in `MODULE_METADATA` and `CHALLENGE_MODULE_KEYS`.
-* **Fuel Flow Balancer Engine (`generateFuelChallenge`, `fuelAccuracy`)**:
-  * Generate 4 tank states (Main Tank A, Main Tank B, Aux Tank A, Aux Tank B).
-  * Calculate pump flow rates, target fuel windows (40-60 gal), and pump toggle validation.
-* **Beacon Bearing RBI Engine (`generateBeaconChallenge`, `beaconAccuracy`)**:
-  * Generate Gyro Compass Heading (000°-359°) and Relative Bearing Indicator (RBI) angle (000°-359°).
-  * Compute magnetic bearing to station and generate 4 top-down VOR map quadrant options (1 correct, 3 plausible distractors).
-* **2D Radar Separation Engine (`generateRadarChallenge`, `radarAccuracy`)**:
-  * Generate 3 radar aircraft blips with 2D positions, vector headings, speeds, and altitudes.
-  * Deterministically set 1 conflict pair on an impending collision trajectory within 10 seconds.
-* **Horizon Pitch & Roll Scan Engine (`generateHorizonChallenge`, `horizonAccuracy`)**:
-  * Generate pitch (-30° to +30°) and bank/roll (-45° to +45°) parameters for an Attitude Indicator.
-  * Generate 4 aircraft posture card options (1 matching target, 3 distinct attitude variations).
-* **Dynamic Flow-State Engine (`computeFlowStateParams`)**:
-  * Compute timer duration scaling `(1.0 - clamp(streak * 0.04, 0, 0.4))` and streak multiplier progression.
-* **5-Axis SVG Skill Radar Chart Engine (`generateSkillRadarSVG`)**:
-  * Compute polar coordinates for 5 skill family axes (`logical`, `spatial`, `visual`, `memory`, `advanced`) and return clean SVG markup.
+* **Remove Radar Module**: Purge `"radar"` from `CHALLENGE_MODULE_KEYS` and `MODULE_METADATA`. Remove `generateRadar` and `radarAccuracy`.
+* **Safe State Guard**: Ensure `generateAttitude` and `generateHorizon` always return non-null, fully formed state objects even under edge-case level inputs.
 
 ---
 
-### Automated Unit Tests (`tests.js`)
-
-#### [MODIFY] [tests.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/tests.js)
-* Add unit test suites for all 4 new generators and validators (`fuel`, `beacon`, `radar`, `horizon`).
-* Test dynamic flow-state pressure math across streaks 0 to 20+.
-* Test 5-axis SVG skill radar chart polar coordinate calculations.
-* Ensure all 92+ assertions remain 100% green.
-
----
-
-### UI Styling & Themes (`styles.css`)
-
-#### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-* Add styles for Fuel Flow Balancer tank gauges, pipe connectors, and pump toggle switches with active LED states.
-* Add styles for Beacon Bearing RBI dial, compass card, and VOR map quadrant cards.
-* Add styles for 2D Radar screen canvas/SVG, blip markers, altitude tags, and conflict alert vectors.
-* Add styles for Horizon Ball indicator gauge and 3D posture selection cards.
-* Add styles for 5-axis SVG spider radar chart and legend badges.
-
----
-
-### Markup Containers (`index.html`)
-
-#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-* Add game module container markup for `#module-fuel`, `#module-beacon`, `#module-radar`, `#module-horizon`.
-* Add 5-axis SVG Skill Radar Chart container inside `#screen-debrief`.
-
----
-
-### Controller Glue & Module Renderers (`app.js`)
+### Controller & Module Handlers (`app.js`)
 
 #### [MODIFY] [app.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/app.js)
-* Add UI rendering logic and event handlers for the 4 new modules (`renderFuel`, `renderBeacon`, `renderRadar`, `renderHorizon`).
-* Wire flow-state timer scaling into `startModuleRound()`.
-* Wire `generateSkillRadarSVG` into `showDebriefScreen()`.
+* **Fix Start Exception Bug**:
+  * In `startRound()`, ensure EVERY module key (`checklist`, `instruments`, `atc`, `fault`, `balance`, `wire`, `clearance`, `target`, `attitude`, `intercept`, `fuel`, `beacon`, `horizon`) has an explicit generator branch so `currentRndExpected` is NEVER null.
+  * In `setupStudyScreen()`, add a defensive fallback check: if `currentRndExpected` is ever invalid, regenerate module data before invoking renderers (`renderAttitudeBoard`, `renderHorizonBoard`, etc.).
+* **Remove Radar Handlers**:
+  * Remove `renderRadarBoard`, `renderRadarTestLayout`, and `radar` evaluation branches in `submitTelemetry()`.
+* **Audit & Refine Game Layout Renderers**:
+  * `renderBalanceBoard`: Clean up scale alignment, equal spacing between rule panel and question panel, centered equality signs (`=`), and crisp shape token stacks.
+  * Audit all remaining renderers (`renderChecklistTestLayout`, `renderInstrumentsTestLayout`, `renderATCTestLayout`, `renderFaultTestLayout`, `renderWireBoard`, `renderClearanceChoices`, `renderTargetBoard`, `renderAttitudeBoard`, `renderHorizonBoard`, `renderFuelBoard`, `renderInterceptBoard`).
+
+---
+
+### UI Styling & Layout (`styles.css`)
+
+#### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
+* **Fluid Full-Screen Layout**:
+  * Modify `.terminal-frame` to use `width: 100%; height: 100vh; max-width: 100%;` with smooth internal flex/grid layout so the app fills the browser window naturally.
+* **Text Truncation & Equal Card Sizing**:
+  * Update `.module-select-card`, `.module-family-list`, `.module-select-text` so text is never truncated (`white-space: normal; text-overflow: clip;`).
+  * Ensure module cards have equal min-height, symmetrical padding, and consistent column gaps.
+* **De-Vibe Aesthetic Polish**:
+  * Remove all heavy neon glow shadows (`box-shadow: 0 0 12px var(--accent-blue-glow)`).
+  * Replace glowing active dots with crisp 1px solid active borders and clean subtle status indicators.
+  * Clean up `.balance-board`, `.balance-panel`, `.balance-scale`, `.unknown-token` styling for clean, professional mathematical alignment.
+
+---
+
+### Markup Structure (`index.html`)
+
+#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
+* Remove `#select-radar`, `#briefing-radar`, and `#test-radar` elements.
+* Adjust grid containers to support fluid full-screen responsive rendering.
+
+---
+
+### Automated Tests (`tests.js`)
+
+#### [MODIFY] [tests.js](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/tests.js)
+* Remove `generateRadar` unit tests.
+* Update `sessionCompetencies` test expectation to match 13 module keys.
+* Add unit test verifying `startRound` module data generation for `attitude` and `horizon`.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-* Run unit test suite:
+* Execute unit test suite:
   ```powershell
   node tests.js
   ```
-* Run JavaScript syntax checks:
+* Execute syntax validation:
   ```powershell
   node --check core.js
   node --check app.js
   node --check sw.js
   ```
 
-### Manual Verification
-* Test playing each of the 4 new modules (`fuel`, `beacon`, `radar`, `horizon`) in Practice mode and Mock Run.
-* Complete a full session to verify the 5-axis SVG Skill Radar Chart on the debrief modal.
-* Test responsiveness across mobile, tablet, and widescreen desktop.
-* Verify clean rendering across all 7 color themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
+### Manual & UI Verification
+* Launch the app in a browser window to verify fluid full-screen responsiveness.
+* Inspect home screen module cards across widescreen desktop, tablet, and mobile viewports to confirm zero text truncation and equal card sizing.
+* Start a session selecting `Horizon Scan`, `Attitude`, `Balance Bender`, and all other modules to verify no JavaScript errors occur.
+* Verify `radar` module is completely removed.
+* Verify plain, professional, clean UI aesthetics without neon glow artifacts across all 7 color themes.

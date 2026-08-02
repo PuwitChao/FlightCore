@@ -435,10 +435,14 @@ function generateInterceptData() {
   return FlightCore.generateIntercept(level);
 }
 
+function generateAttitudeData() {
+  return FlightCore.generateAttitude(level);
+}
+
 function ensureAptitudeContainers() {
   const briefingParent = document.getElementById("briefing-checklist")?.parentElement;
   const testParent = document.getElementById("test-checklist")?.parentElement;
-  const modules = ["balance", "wire", "clearance", "target", "intercept", "attitude", "fuel", "beacon", "radar", "horizon"];
+  const modules = ["balance", "wire", "clearance", "target", "intercept", "attitude", "fuel", "beacon", "horizon"];
   modules.forEach(mod => {
     if (briefingParent && !document.getElementById(`briefing-${mod}`)) {
       const div = document.createElement("div");
@@ -458,7 +462,7 @@ function ensureAptitudeContainers() {
 }
 
 function hideModuleBlocks(prefix) {
-  ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept", "attitude", "fuel", "beacon", "radar", "horizon"].forEach(mod => {
+  ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "intercept", "attitude", "fuel", "beacon", "horizon"].forEach(mod => {
     const el = document.getElementById(`${prefix}-${mod}`);
     if (el) el.style.display = "none";
   });
@@ -668,30 +672,7 @@ function renderBeaconBoard(data, includeChoices = true) {
   `;
 }
 
-function renderRadarBoard(data, includeChoices = true) {
-  return `
-    <div class="aptitude-board radar-board">
-      <div class="board-prompt">Identify trajectory conflict and issue vector resolution.</div>
-      <div class="radar-screen-viewport">
-        <svg viewBox="0 0 200 200" width="100%" height="160">
-          <circle cx="100" cy="100" r="40" fill="none" stroke="var(--border-subtle)" stroke-dasharray="2 2" />
-          <circle cx="100" cy="100" r="80" fill="none" stroke="var(--border-subtle)" stroke-dasharray="2 2" />
-          ${data.blips.map(b => `
-            <circle cx="${b.x}" cy="${b.y}" r="4" fill="var(--accent-cyan)" />
-            <text x="${b.x + 6}" y="${b.y + 3}" font-size="7" font-weight="700" fill="var(--accent-cyan)">${b.callsign}</text>
-          `).join("")}
-        </svg>
-      </div>
-    </div>
-    ${includeChoices ? `<div class="radar-options-grid">
-      ${data.options.map(opt => `
-        <div class="radar-option-card ${currentRndInput === opt.id ? 'selected' : ''}" data-choice="${opt.id}">
-          <span style="font-size: 0.75rem; font-weight: 700;">${opt.label}</span>
-        </div>
-      `).join("")}
-    </div>` : ""}
-  `;
-}
+
 
 function renderHorizonBoard(data, includeChoices = true) {
   return `
@@ -800,14 +781,16 @@ function startRound() {
     currentRndExpected = generateClearanceData();
   } else if (module === "target") {
     currentRndExpected = generateTargetData();
+  } else if (module === "attitude") {
+    currentRndExpected = generateAttitudeData();
+  } else if (module === "intercept") {
+    currentRndExpected = generateInterceptData();
   } else if (module === "horizon") {
     currentRndExpected = FlightCore.generateHorizon(level);
   } else if (module === "fuel") {
     currentRndExpected = FlightCore.generateFuel(level);
   } else if (module === "beacon") {
     currentRndExpected = FlightCore.generateBeacon(level);
-  } else if (module === "radar") {
-    currentRndExpected = FlightCore.generateRadar(level);
   }
   
   setupStudyScreen(module);
@@ -820,6 +803,24 @@ function startRound() {
 
 function setupStudyScreen(module) {
   isTimerPaused = false;
+  
+  // Defensive state guard to guarantee currentRndExpected is never null
+  if (!currentRndExpected) {
+    if (module === "attitude") currentRndExpected = generateAttitudeData();
+    else if (module === "horizon") currentRndExpected = FlightCore.generateHorizon(level);
+    else if (module === "fuel") currentRndExpected = FlightCore.generateFuel(level);
+    else if (module === "beacon") currentRndExpected = FlightCore.generateBeacon(level);
+    else if (module === "intercept") currentRndExpected = generateInterceptData();
+    else if (module === "target") currentRndExpected = generateTargetData();
+    else if (module === "balance") currentRndExpected = generateBalanceData();
+    else if (module === "checklist") currentRndExpected = generateChecklistData();
+    else if (module === "instruments") currentRndExpected = generateInstrumentsData();
+    else if (module === "atc") currentRndExpected = generateATCData();
+    else if (module === "fault") currentRndExpected = generateFaultData();
+    else if (module === "wire") currentRndExpected = generateWireData();
+    else if (module === "clearance") currentRndExpected = generateClearanceData();
+  }
+
   const pauseIcon = document.getElementById("study-pause-icon");
   if (pauseIcon) {
     pauseIcon.innerHTML = `
@@ -936,14 +937,6 @@ function setupStudyScreen(module) {
     if (el) {
       el.style.display = "block";
       el.innerHTML = renderBeaconBoard(currentRndExpected, false);
-    }
-  }
-  else if (module === "radar") {
-    titleEl.textContent = "2D RADAR SEPARATION SCAN";
-    const el = document.getElementById("briefing-radar");
-    if (el) {
-      el.style.display = "block";
-      el.innerHTML = renderRadarBoard(currentRndExpected, false);
     }
   }
   else if (module === "horizon") {
@@ -1169,12 +1162,6 @@ function commenceTest() {
     document.getElementById("test-beacon").style.display = "block";
     currentRndInput = null;
     renderBeaconTestLayout();
-  }
-  else if (activeModule === "radar") {
-    labelEl.textContent = "RADAR TRAJECTORY CLEARANCE";
-    document.getElementById("test-radar").style.display = "block";
-    currentRndInput = null;
-    renderRadarTestLayout();
   }
   else if (activeModule === "horizon") {
     labelEl.textContent = "3D POSTURE SELECTION";
@@ -1953,11 +1940,6 @@ function submitTelemetry() {
     accuracy = FlightCore.beaconAccuracy(currentRndExpected.expectedId, currentRndInput);
     breakdownRows.push({ field: "Beacon Bearing", expected: currentRndExpected.expectedId, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
     discrepancyLogItem = accuracy < 100 ? "Relative bearing vector mismatch" : null;
-  }
-  else if (activeModule === "radar") {
-    accuracy = FlightCore.radarAccuracy(currentRndExpected.expectedId, currentRndInput);
-    breakdownRows.push({ field: "Radar Conflict Vector", expected: currentRndExpected.expectedId, input: currentRndInput || "[OMITTED]", correct: accuracy === 100 });
-    discrepancyLogItem = accuracy < 100 ? "Radar trajectory separation conflict" : null;
   }
   else if (activeModule === "horizon") {
     accuracy = FlightCore.horizonAccuracy(currentRndExpected.expectedId, currentRndInput);

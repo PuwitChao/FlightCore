@@ -1,24 +1,25 @@
-# FlightCore Module Expansion & Flow-State Sprint Tasklist
+# FlightCore Professional UI, Layout & Bug Fix Tasklist
 
-## Sprint 10: 4 New Cognitive Modules, 5-Axis SVG Skill Radar & Dynamic Flow-State Engine
+## Sprint 11: Fluid Full-Screen Layout, Plain Professional UI, Bug Fixes & Radar Removal
 
-### Phase 1: Pure Engine Logic & Unit Tests (`core.js` & `tests.js`)
-- [x] `[Subtask 10.1]` Register new module metadata (`fuel`, `beacon`, `radar`, `horizon`) and add dynamic flow-state pressure calculation `computeFlowStateParams` in `core.js`.
-- [x] `[Subtask 10.2]` Implement pure logic generator and accuracy validator for `fuel` (Fuel Flow & Pump Balancer) in `core.js`.
-- [x] `[Subtask 10.3]` Implement pure logic generator and accuracy validator for `beacon` (Beacon Bearing / RBI) in `core.js`.
-- [x] `[Subtask 10.4]` Implement pure logic generator and accuracy validator for `radar` (2D Radar Separation) in `core.js`.
-- [x] `[Subtask 10.5]` Implement pure logic generator and accuracy validator for `horizon` (Horizon Pitch & Roll Scan) in `core.js`.
-- [x] `[Subtask 10.6]` Implement 5-axis SVG Skill Radar Chart generator `generateSkillRadarSVG` in `core.js`.
-- [x] `[Subtask 10.7]` Add unit tests in `tests.js` for all 4 new module engines, flow-state pressure scaling, and skill radar chart math. Verify all assertions pass.
+### Phase 1: Pure Engine Cleanup & Bug Prevention (`core.js` & `tests.js`)
+- [x] `[Subtask 11.1]` Purge `radar` from `CHALLENGE_MODULE_KEYS` and `MODULE_METADATA`, and remove `generateRadar` and `radarAccuracy` in `core.js`.
+- [x] `[Subtask 11.2]` Update `tests.js` engine test suite (remove radar tests, update module key expectations, add attitude/horizon state validation).
 
-### Phase 2: UI Styling & Markup (`styles.css` & `index.html`)
-- [x] `[Subtask 10.8]` Add CSS primitives and responsive theme styling for `fuel`, `beacon`, `radar`, `horizon`, and 5-axis SVG radar chart in `styles.css`.
-- [x] `[Subtask 10.9]` Add HTML module container elements and debrief radar chart section in `index.html`.
+### Phase 2: Markup Cleanup & Container Adjustment (`index.html`)
+- [x] `[Subtask 11.3]` Remove `#select-radar`, `#briefing-radar`, and `#test-radar` elements from `index.html`.
 
-### Phase 3: Controller Glue & Module Renderers (`app.js`)
-- [x] `[Subtask 10.10]` Implement DOM renderers and touch/keyboard input handlers for `fuel`, `beacon`, `radar`, and `horizon` in `app.js`.
-- [x] `[Subtask 10.11]` Wire dynamic flow-state timer scaling into `startModuleRound()` and 5-axis SVG Skill Radar Chart into `showDebriefScreen()` in `app.js`.
+### Phase 3: Fluid Layout & Plain Professional UI Styling (`styles.css`)
+- [x] `[Subtask 11.4]` Update `.terminal-frame` and container classes in `styles.css` for fluid 100% full-screen layout.
+- [x] `[Subtask 11.5]` Remove text truncation (`text-overflow: ellipsis`) and enforce equal card sizing on `.module-select-card`, `.module-family-list`, `.module-select-text`.
+- [x] `[Subtask 11.6]` Strip out all neon glow shadows (`box-shadow: 0 0 12px var(--accent-blue-glow)`) and replace glowing dots with clean, plain, solid active borders.
+- [x] `[Subtask 11.7]` Audit and refine CSS styling for `balance` (`.balance-board`, `.balance-scale`, `.balance-panel`, `.unknown-token`) for symmetrical mathematical alignment.
 
-### Phase 4: Automated Verification & Documentation
-- [x] `[Subtask 10.12]` Execute automated tests (`node tests.js`) and syntax checks (`node --check app.js`, `node --check core.js`, `node --check sw.js`).
-- [x] `[Subtask 10.13]` Update project documentation files (`README.md`, `HANDOFF.md`, `lessons_learned.md`, `walkthrough.md`).
+### Phase 4: Controller Glue, Exception Fix & Module Audit (`app.js`)
+- [x] `[Subtask 11.8]` Fix start button exception in `app.js` by adding explicit generator branches for `attitude` and `intercept` in `startRound()`, with null-check fallback guards in `setupStudyScreen()`.
+- [x] `[Subtask 11.9]` Remove `radar` rendering and evaluation handlers from `app.js`.
+- [x] `[Subtask 11.10]` Audit all game component renderers (`balance`, `checklist`, `instruments`, `atc`, `fault`, `wire`, `clearance`, `target`, `attitude`, `horizon`, `fuel`, `intercept`) to ensure clean rendering and zero visual defects.
+
+### Phase 5: Verification & Documentation
+- [x] `[Subtask 11.11]` Execute automated test suite (`node tests.js`) and syntax checks (`node --check app.js`, `node --check core.js`, `node --check sw.js`).
+- [x] `[Subtask 11.12]` Update project documentation files (`README.md`, `HANDOFF.md`, `lessons_learned.md`, `walkthrough.md`).

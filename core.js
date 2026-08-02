@@ -76,7 +76,7 @@
   // ---- module metadata and skill families ----
 
   const SKILL_FAMILIES = ["logical", "spatial", "visual", "memory", "advanced"];
-  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "attitude", "intercept", "fuel", "beacon", "radar", "horizon"];
+  const CHALLENGE_MODULE_KEYS = ["checklist", "instruments", "atc", "fault", "balance", "wire", "clearance", "target", "attitude", "intercept", "fuel", "beacon", "horizon"];
 
   const MODULE_METADATA = {
     checklist: { label: "Checklist", skillFamily: "memory", skillLabel: "Memory" },
@@ -92,7 +92,6 @@
     intercept: { label: "Aero Intercept", skillFamily: "advanced", skillLabel: "Advanced" },
     capacity: { label: "Cockpit Capacity", skillFamily: "advanced", skillLabel: "Advanced" },
     fuel: { label: "Fuel Balancer", skillFamily: "logical", skillLabel: "Logical" },
-    radar: { label: "Radar Separation", skillFamily: "advanced", skillLabel: "Advanced" },
     horizon: { label: "Horizon Scan", skillFamily: "spatial", skillLabel: "Spatial" }
   };
 
@@ -1050,36 +1049,6 @@
     return String(expectedId) === String(inputId) ? 100 : 0;
   }
 
-  function generateRadar(level, rng) {
-    rng = rng || Math.random;
-    const blips = [
-      { id: "ALPHA", callsign: "FLT 101", x: 60, y: 70, alt: 10000, speed: 250, heading: 90 },
-      { id: "BRAVO", callsign: "FLT 204", x: 140, y: 70, alt: 10000, speed: 250, heading: 270 },
-      { id: "CHARLIE", callsign: "FLT 309", x: 100, y: 150, alt: 14000, speed: 280, heading: 0 }
-    ];
-
-    const options = [
-      { id: "turn_alpha", label: "FLT 101: Turn Right 30° to Clear Conflict", isCorrect: true },
-      { id: "climb_charlie", label: "FLT 309: Climb to 16,000 FT", isCorrect: false },
-      { id: "descend_bravo", label: "FLT 204: Descend to 8,000 FT", isCorrect: false },
-      { id: "maintain", label: "Maintain Current Vectors (No Action)", isCorrect: false }
-    ];
-
-    const shuffled = shuffle(options, rng);
-    const expectedId = shuffled.find(o => o.isCorrect).id;
-
-    return {
-      blips,
-      conflictPair: ["FLT 101", "FLT 204"],
-      options: shuffled,
-      expectedId
-    };
-  }
-
-  function radarAccuracy(expectedId, inputId) {
-    return String(expectedId) === String(inputId) ? 100 : 0;
-  }
-
   function generateHorizon(level, rng) {
     rng = rng || Math.random;
     const pitches = [15, -15, 20, -20];
@@ -1166,8 +1135,6 @@
     fuelAccuracy,
     generateBeacon,
     beaconAccuracy,
-    generateRadar,
-    radarAccuracy,
     generateHorizon,
     horizonAccuracy,
     computeFlowStateParams,
