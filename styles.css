@@ -1,4 +1,4 @@
-/* --- MULTI-THEME CUSTOM VARIABLES (Apple & Aerospace UI Guidelines) --- */
+/* --- LEGACY MULTI-THEME BASE VARIABLES (effective CI override is Bauhaus layer below) --- */
 body {
   /* Default: OLED Dark Theme */
   --bg-dark: #000000;
@@ -54,7 +54,7 @@ body {
 }
 
 body[data-theme="light"] {
-  /* Apple Light Mode */
+  /* Legacy Light Mode */
   --bg-dark: #F2F2F7; /* iOS system gray background */
   --bg-card: rgba(255, 255, 255, 0.85); /* translucent white */
   --bg-input: rgba(0, 0, 0, 0.04);
@@ -152,7 +152,7 @@ body[data-theme="sage"] {
   --text-secondary: #CBD5E1;
   --text-muted: #94A3B8;
   
-  --accent-blue: #30D158; /* Apple green */
+  --accent-blue: #30D158; /* system green */
   --accent-cyan: #38BDF8;
   --accent-amber: #FF9500;
   
@@ -800,7 +800,7 @@ body[data-theme="light"] .module-stat-track {
   flex-shrink: 0;
 }
 
-/* --- BUTTONS (Apple capsule/pill design) --- */
+/* --- BUTTONS (legacy base, overridden by Bauhaus layer) --- */
 .btn {
   font-family: var(--font-sans);
   background: var(--btn-neutral-bg);
@@ -820,7 +820,7 @@ body[data-theme="light"] .module-stat-track {
   transition: all var(--transition-fast);
 }
 
-/* --- ABORT BUTTON (Apple styling) --- */
+/* --- ABORT BUTTON (legacy base, overridden by Bauhaus layer) --- */
 .abort-btn {
   font-family: var(--font-sans);
   background-color: var(--error-bg);
@@ -3038,187 +3038,158 @@ body[data-theme="warm"] .balance-panel {
   border-color: var(--accent-blue);
   background: var(--select-active-bg);
 }
-/* --- APPLE HUMAN INTERFACE GUIDELINES ---
-   Calm surfaces, semantic system colors, generous touch targets, and
-   restrained elevation replace the previous high-contrast treatment. */
+/* --- BAUHAUS NEO-BRUTALIST CI OVERRIDE ---
+   Warm paper, hard ink outlines, primary-color blocks, and direct
+   tactile feedback. Accessibility rules stay aligned with WCAG and
+   platform UI guidance for focus, target size, and reduced motion. */
 :root {
-  --apple-blue: #0a84ff;
-  --apple-blue-light: #007aff;
-  --apple-indigo: #5e5ce6;
-  --apple-green: #30d158;
-  --apple-red: #ff453a;
-  --apple-orange: #ff9f0a;
-  --apple-bg-dark: #0b0d10;
-  --apple-surface-dark: #151a24;
-  --apple-elevated-dark: #1c222c;
-  --apple-bg-light: #f2f2f7;
-  --apple-surface-light: #ffffff;
-  --apple-elevated-light: #e5e5ea;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
-}
-
-body {
-  --bg-dark: var(--apple-bg-dark);
-  --bg-card: var(--apple-surface-dark);
-  --bg-input: var(--apple-elevated-dark);
-  --border-subtle: rgba(255, 255, 255, 0.16);
-  --border-active: var(--apple-blue);
-  --text-primary: #f5f5f7;
-  --text-secondary: #d1d1d6;
-  --text-muted: #8e8e93;
-  --accent-blue: var(--apple-blue);
-  --accent-blue-glow: rgba(10, 132, 255, 0.18);
-  --accent-cyan: #64d2ff;
-  --accent-amber: var(--apple-orange);
-  --success-emerald: var(--apple-green);
-  --success-bg: rgba(48, 209, 88, 0.14);
-  --success-border: rgba(48, 209, 88, 0.55);
-  --error-rose: var(--apple-red);
-  --error-bg: rgba(255, 69, 58, 0.14);
-  --error-border: rgba(255, 69, 58, 0.55);
-  --warning-bg: rgba(255, 159, 10, 0.14);
-  --warning-border: rgba(255, 159, 10, 0.55);
-  --btn-neutral-bg: rgba(255, 255, 255, 0.06);
-  --btn-neutral-border: rgba(255, 255, 255, 0.18);
-  --keypad-btn-bg: var(--apple-elevated-dark);
-  --keypad-btn-active-bg: rgba(10, 132, 255, 0.2);
-  --keypad-btn-action-bg: rgba(255, 255, 255, 0.05);
-  --select-active-bg: rgba(10, 132, 255, 0.15);
-  --shadow-premium: 0 8px 24px rgba(0, 0, 0, 0.22);
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 10px;
-  --transition-fast: 0.2s ease;
-}
-
-body[data-theme="light"] {
-  --bg-dark: var(--apple-bg-light);
-  --bg-card: var(--apple-surface-light);
-  --bg-input: var(--apple-elevated-light);
-  --border-subtle: #d1d1d6;
-  --border-active: var(--apple-blue-light);
-  --text-primary: #1c1c1e;
-  --text-secondary: #3a3a3c;
-  --text-muted: #6c6c70;
-  --accent-blue: var(--apple-blue-light);
-  --accent-cyan: #007aff;
-  --accent-amber: #ff9500;
-  --btn-neutral-bg: #ffffff;
-  --btn-neutral-border: #d1d1d6;
-  --keypad-btn-bg: #ffffff;
-  --keypad-btn-active-bg: rgba(0, 122, 255, 0.12);
-  --keypad-btn-action-bg: #e5e5ea;
-  --select-active-bg: rgba(0, 122, 255, 0.1);
-  --shadow-premium: 0 6px 18px rgba(0, 0, 0, 0.08);
-}
-
-body[data-theme="warm"] {
-  --bg-dark: #f4f0ec;
-  --bg-card: #fffdf9;
-  --bg-input: #ebe6e1;
-  --border-subtle: #d8d1c9;
-  --border-active: #ff9500;
-  --text-primary: #1c1c1e;
-  --text-secondary: #3a3a3c;
-  --text-muted: #6c6c70;
-  --accent-blue: #ff9500;
-  --accent-cyan: #007aff;
-  --accent-amber: #ff9500;
-  --btn-neutral-bg: #fffdf9;
-  --btn-neutral-border: #d8d1c9;
-  --keypad-btn-bg: #fffdf9;
-  --keypad-btn-active-bg: rgba(255, 149, 0, 0.12);
-  --keypad-btn-action-bg: #ebe6e1;
-  --select-active-bg: rgba(255, 149, 0, 0.12);
-  --shadow-premium: 0 6px 18px rgba(70, 50, 30, 0.08);
-}
-
-body[data-theme="mono"] {
-  --bg-dark: #111113;
-  --bg-card: #1c1c1e;
-  --bg-input: #2c2c2e;
-  --border-subtle: rgba(255, 255, 255, 0.18);
-  --border-active: #8e8e93;
-  --text-primary: #f5f5f7;
-  --text-secondary: #d1d1d6;
-  --text-muted: #8e8e93;
-  --accent-blue: #d1d1d6;
-  --accent-cyan: #aeaeb2;
-  --accent-amber: #aeaeb2;
-  --btn-neutral-bg: #2c2c2e;
-  --btn-neutral-border: rgba(255, 255, 255, 0.18);
-  --keypad-btn-bg: #2c2c2e;
-  --keypad-btn-active-bg: rgba(255, 255, 255, 0.14);
-  --keypad-btn-action-bg: #1c1c1e;
-  --select-active-bg: rgba(255, 255, 255, 0.12);
-}
-
-body[data-theme="sage"] {
-  --bg-dark: #0f1b16;
-  --bg-card: #16241e;
-  --bg-input: #1d3027;
-  --border-subtle: rgba(216, 255, 230, 0.18);
-  --border-active: var(--apple-green);
-  --text-primary: #f0fdf4;
-  --text-secondary: #d1e7d8;
-  --text-muted: #9bb7a4;
-  --accent-blue: var(--apple-green);
-  --accent-cyan: #64d2ff;
-  --accent-amber: #ff9f0a;
-  --btn-neutral-bg: #1d3027;
-  --btn-neutral-border: rgba(216, 255, 230, 0.18);
-  --keypad-btn-bg: #1d3027;
-  --keypad-btn-active-bg: rgba(48, 209, 88, 0.18);
-  --keypad-btn-action-bg: #16241e;
-  --select-active-bg: rgba(48, 209, 88, 0.15);
-}
-
-body[data-theme="amber"] {
-  --bg-dark: #100b06;
-  --bg-card: #1e140c;
-  --bg-input: #2a1b0e;
-  --border-subtle: rgba(255, 214, 160, 0.18);
-  --border-active: var(--apple-orange);
-  --text-primary: #fff4e5;
-  --text-secondary: #f5d7b0;
-  --text-muted: #c3a27b;
-  --accent-blue: var(--apple-orange);
-  --accent-cyan: #64d2ff;
-  --accent-amber: var(--apple-orange);
-  --btn-neutral-bg: #2a1b0e;
-  --btn-neutral-border: rgba(255, 214, 160, 0.18);
-  --keypad-btn-bg: #2a1b0e;
-  --keypad-btn-active-bg: rgba(255, 159, 10, 0.18);
-  --keypad-btn-action-bg: #1e140c;
-  --select-active-bg: rgba(255, 159, 10, 0.15);
-}
-
-body[data-theme="stealth"] {
-  --bg-dark: #000000;
-  --bg-card: #121216;
-  --bg-input: #1c1c20;
-  --border-subtle: rgba(255, 255, 255, 0.14);
-  --border-active: var(--apple-blue);
-  --text-primary: #f5f5f7;
-  --text-secondary: #d1d1d6;
-  --text-muted: #8e8e93;
-  --accent-blue: var(--apple-blue);
-  --accent-cyan: #64d2ff;
-  --accent-amber: var(--apple-orange);
-  --btn-neutral-bg: #1c1c20;
-  --btn-neutral-border: rgba(255, 255, 255, 0.14);
-  --keypad-btn-bg: #1c1c20;
-  --keypad-btn-active-bg: rgba(10, 132, 255, 0.18);
-  --keypad-btn-action-bg: #121216;
-  --select-active-bg: rgba(10, 132, 255, 0.14);
+  color-scheme: light;
+  --bg-paper: #f4f0e8;
+  --bg-card-solid: #faf7f2;
+  --ink: #222222;
+  --muted-ink: #555555;
+  --paper-grid: #ded7ca;
+  --bauhaus-yellow: #ffd000;
+  --bauhaus-red: #e63946;
+  --bauhaus-green: #10b981;
+  --bauhaus-blue: #2563eb;
+  --font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
+  --neo-border-card: 2.5px solid var(--ink);
+  --neo-border-control: 2px solid var(--ink);
+  --neo-offset-card: 3px 3px 0 0 var(--ink);
+  --neo-offset-control: 2.5px 2.5px 0 0 var(--ink);
+  --neo-offset-yellow: 2px 2px 0 0 var(--bauhaus-yellow);
+  --neo-transition: 120ms ease;
 }
 
 body,
-button,
-input,
-select,
-textarea {
+body[data-theme='dark'],
+body[data-theme='light'],
+body[data-theme='mono'],
+body[data-theme='sage'],
+body[data-theme='warm'],
+body[data-theme='amber'],
+body[data-theme='stealth'] {
+  --bg-dark: var(--bg-paper);
+  --bg-card: var(--bg-card-solid);
+  --bg-input: #f4f0e8;
+  --border-subtle: var(--ink);
+  --border-active: var(--ink);
+  --text-primary: var(--ink);
+  --text-secondary: #333333;
+  --text-muted: var(--muted-ink);
+  --accent-blue: var(--bauhaus-blue);
+  --accent-blue-glow: transparent;
+  --accent-cyan: var(--bauhaus-blue);
+  --accent-amber: var(--bauhaus-yellow);
+  --success-emerald: var(--bauhaus-green);
+  --success-bg: #dcfce7;
+  --success-border: var(--ink);
+  --error-rose: var(--bauhaus-red);
+  --error-bg: #ffe3e6;
+  --error-border: var(--ink);
+  --warning-bg: #fff3b0;
+  --warning-border: var(--ink);
+  --btn-neutral-bg: var(--bg-card-solid);
+  --btn-neutral-border: var(--ink);
+  --keypad-bg: var(--bg-paper);
+  --keypad-active-bg: var(--bauhaus-yellow);
+  --keypad-panel-bg: var(--bg-card-solid);
+  --keypad-btn-bg: var(--bg-card-solid);
+  --keypad-btn-active-bg: var(--bauhaus-yellow);
+  --keypad-btn-action-bg: #fff3b0;
+  --keypad-btn-shadow: var(--neo-offset-control);
+  --select-active-bg: var(--bauhaus-yellow);
+  --shadow-premium: var(--neo-offset-card);
+  --radius-lg: 0;
+  --radius-md: 0;
+  --radius-sm: 0;
+  --transition-fast: var(--neo-transition);
+  background:
+    linear-gradient(90deg, rgba(34, 34, 34, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(34, 34, 34, 0.035) 1px, transparent 1px),
+    var(--bg-paper) !important;
+  background-size: 28px 28px;
+  color: var(--ink);
   font-family: var(--font-sans);
+}
+
+body[data-theme='light'] { --select-active-bg: var(--bauhaus-yellow); }
+body[data-theme='mono'] { --select-active-bg: var(--ink); --accent-blue: var(--ink); }
+body[data-theme='sage'] { --select-active-bg: var(--bauhaus-green); --accent-blue: var(--bauhaus-green); }
+body[data-theme='warm'] { --select-active-bg: #ffe3e6; --accent-blue: var(--bauhaus-red); }
+
+body[data-theme='mono'] .segment-btn.active,
+body[data-theme='mono'] .module-select-card.active,
+body[data-theme='mono'] .theme-opt-btn.active,
+body[data-theme='mono'] .answer-tile.active {
+  color: #ffffff !important;
+}
+
+.terminal-frame {
+  max-width: 1440px;
+  border-left: var(--neo-border-card);
+  border-right: var(--neo-border-card);
+  background: transparent;
+  box-shadow: none;
+}
+
+.dashboard-header,
+.custom-keypad-panel,
+.theme-selector-card,
+.terminal-card,
+.telemetry-grid,
+.timer-container,
+.gauge-card,
+.checklist-slot,
+.sortable-item,
+.atc-telemetry-display,
+.input-terminal,
+.fault-step-node,
+.debrief-summary-card,
+.home-stat-box,
+.module-select-card,
+.log-entry-row,
+.calendar-cell,
+.balance-panel,
+.fuel-tank-card,
+.fuel-pump-btn,
+.beacon-option-card,
+.horizon-option-card,
+.achievement-card,
+.pro-feature-card,
+.aptitude-board,
+.wire-board,
+.segment-control,
+.answer-tile {
+  background: var(--bg-card-solid) !important;
+  border: var(--neo-border-card) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--neo-offset-card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.dashboard-header {
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  box-shadow: 0 3px 0 0 var(--ink) !important;
+  padding: 14px 20px 12px;
+}
+
+.viewport-content,
+.screen-container {
+  background: transparent !important;
+}
+
+.segment-control {
+  padding: 4px !important;
+  background: var(--bg-card-solid) !important;
+  border: var(--neo-border-control) !important;
+  box-shadow: var(--neo-offset-control) !important;
 }
 
 h1,
@@ -3229,152 +3200,209 @@ h3,
 .module-family-heading,
 .module-instruction,
 .board-prompt,
-.btn,
 .segment-btn,
 .theme-opt-btn,
 .session-len-btn,
+.btn,
 .answer-tile,
-.abort-btn {
+.abort-btn,
+.theme-selector-header span {
+  color: var(--ink);
   font-family: var(--font-display);
-  text-transform: none;
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .system-title {
-  letter-spacing: 0.01em;
-}
-
-.system-title-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 2px 8px;
-  background: var(--select-active-bg);
-  color: var(--accent-blue);
-  border: 1px solid var(--border-active);
-  border-radius: 7px;
-  box-shadow: none;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.terminal-frame {
-  max-width: 1440px;
-  border: 0;
-}
-
-.dashboard-header {
-  padding: 14px 20px 12px;
-  border-bottom: 1px solid var(--border-subtle);
-  gap: 12px;
-}
-
-.telemetry-grid,
-.terminal-card,
-.theme-selector-card,
-.aptitude-board,
-.balance-panel,
-.module-select-card,
-.fuel-tank-card,
-.fuel-pump-btn,
-.beacon-option-card,
-.horizon-option-card,
-.achievement-card,
-.pro-feature-card,
-.waitlist-card {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-premium);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-.terminal-card {
-  padding: 20px;
+  font-size: 1.05rem;
+  line-height: 1.1;
 }
 
 .terminal-card-header {
-  color: var(--text-primary);
-  letter-spacing: 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: var(--neo-border-control) !important;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
 }
 
+.terminal-card-header .type-tag,
+.type-tag,
+.onboarding-code-badge,
+.env-badge,
+.pilot-rank-badge,
+.cei-badge,
+.pro-badge,
+.shortcut-badge,
+.gauge-shortcut-badge,
+.log-entry-badge,
+.system-title-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  color: var(--ink) !important;
+  background: var(--bauhaus-yellow) !important;
+  border: var(--neo-border-control) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--neo-offset-yellow) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+body[data-theme='sage'] .type-tag,
+body[data-theme='sage'] .system-title-badge,
+body[data-theme='sage'] .pilot-rank-badge { background: var(--bauhaus-green) !important; color: var(--ink) !important; }
+body[data-theme='warm'] .type-tag,
+body[data-theme='warm'] .system-title-badge,
+body[data-theme='warm'] .pilot-rank-badge { background: #ffe3e6 !important; color: #7f1d1d !important; box-shadow: 2px 2px 0 0 var(--bauhaus-red) !important; }
+body[data-theme='mono'] .type-tag,
+body[data-theme='mono'] .system-title-badge,
+body[data-theme='mono'] .pilot-rank-badge { background: var(--ink) !important; color: #ffffff !important; }
+
 .btn,
-.answer-tile,
+.abort-btn,
 .session-len-btn,
 .theme-opt-btn,
-.module-select-card,
-.segment-btn,
+.theme-toggle-btn,
 .history-tab,
-.theme-toggle-btn {
-  border-radius: var(--radius-sm);
+.keypad-btn,
+.fuel-pump-btn,
+.beacon-option-card,
+.horizon-option-card,
+.segment-btn,
+input,
+select,
+textarea {
+  min-height: 44px;
+  color: var(--ink) !important;
+  background: var(--bg-card-solid) !important;
+  border: var(--neo-border-control) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--neo-offset-control) !important;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: transform var(--neo-transition), box-shadow var(--neo-transition), background-color var(--neo-transition), color var(--neo-transition);
 }
 
-.btn,
-.answer-tile,
-.session-len-btn,
-.theme-opt-btn {
-  border-width: 1px;
-  box-shadow: none;
+.btn:hover,
+.abort-btn:hover,
+.session-len-btn:hover,
+.theme-opt-btn:hover,
+.theme-toggle-btn:hover,
+.history-tab:hover,
+.keypad-btn:hover,
+.fuel-pump-btn:hover,
+.beacon-option-card:hover,
+.horizon-option-card:hover,
+.segment-btn:hover {
+  background: var(--bauhaus-yellow) !important;
+  color: var(--ink) !important;
+}
+
+.btn:active,
+.abort-btn:active,
+.session-len-btn:active,
+.theme-opt-btn:active,
+.theme-toggle-btn:active,
+.history-tab:active,
+.keypad-btn:active,
+.fuel-pump-btn:active,
+.beacon-option-card:active,
+.horizon-option-card:active,
+.segment-btn:active,
+.answer-tile:active,
+.module-select-card:active {
+  transform: translate(1.5px, 1.5px) !important;
+  box-shadow: 1px 1px 0 0 var(--ink) !important;
 }
 
 .btn-primary,
 .btn-primary:hover,
-.btn-primary:focus-visible {
-  background-color: var(--accent-blue);
-  border-color: var(--accent-blue);
-  color: #ffffff;
-}
-
-.btn-success {
-  background-color: var(--success-emerald);
-  border-color: var(--success-emerald);
-  color: #ffffff;
-}
-
-.btn-danger {
-  background-color: var(--error-rose);
-  border-color: var(--error-rose);
-  color: #ffffff;
-}
-
-.btn:active,
-.answer-tile:active,
-.theme-opt-btn:active,
-.session-len-btn:active {
-  transform: scale(0.98);
-  box-shadow: none;
-}
-
-.module-select-card.active,
+.btn-primary:focus-visible,
+.keypad-btn.action.enter,
+.segment-btn.active,
+.session-len-btn.active,
+.history-tab.active,
 .theme-opt-btn.active,
-.answer-tile.active,
-.segment-btn.active {
-  border-color: var(--accent-blue);
-  background: var(--select-active-bg);
-  color: var(--text-primary);
-  box-shadow: none;
+.module-select-card.active,
+.answer-tile.active {
+  background: var(--select-active-bg) !important;
+  border-color: var(--ink) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--neo-offset-yellow) !important;
 }
 
-.module-select-card.active .select-indicator {
-  background-color: var(--accent-blue);
-  border-color: var(--accent-blue);
-  box-shadow: none;
+.btn-danger,
+.abort-btn,
+#btn-purge-confirm,
+#btn-abort-confirm,
+#btn-error-reset {
+  background: #ffe3e6 !important;
+  color: #7f1d1d !important;
+  box-shadow: 2.5px 2.5px 0 0 var(--bauhaus-red) !important;
+}
+
+.btn-success,
+#btn-abort-restart {
+  background: var(--bauhaus-green) !important;
+  color: var(--ink) !important;
 }
 
 .theme-toggle-btn {
-  border: 1px solid var(--border-subtle);
-  background: var(--btn-neutral-bg);
-  color: var(--text-secondary);
-  box-shadow: none;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
 }
 
-.theme-toggle-btn:hover,
-.theme-toggle-btn:active {
-  background: var(--select-active-bg);
-  color: var(--accent-blue);
+.theme-close-btn,
+.theme-option-btn {
+  border: var(--neo-border-control) !important;
+  border-radius: 0 !important;
+  background: var(--bg-card-solid) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--neo-offset-control) !important;
+}
+
+.theme-selector-overlay,
+.briefing-paused-overlay {
+  background: rgba(34, 34, 34, 0.38) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-opt-indicator,
+.select-indicator,
+.round-dot,
+.chevron,
+.gauge-range-indicator,
+.mark-circle,
+.mark-square,
+.competency-bar-fill,
+.module-stat-fill,
+.timer-bar {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.module-select-card.active .select-indicator,
+.round-dot.active,
+.round-dot.correct,
+.gauge-range-indicator.normal,
+.competency-bar-fill,
+.module-stat-fill,
+.timer-bar {
+  background: var(--select-active-bg) !important;
+  border-color: var(--ink) !important;
+}
+
+.round-dot.incorrect,
+.gauge-range-indicator.danger {
+  background: var(--bauhaus-red) !important;
 }
 
 .telemetry-value,
@@ -3388,124 +3416,221 @@ h3,
 .wire-label,
 .env-badge,
 .type-tag,
-.log-entry-score {
-  font-family: var(--font-mono);
+.log-entry-score,
+.preview-panel strong {
+  font-family: var(--font-mono) !important;
+  font-weight: 800;
+}
+
+.telemetry-label,
+.home-stat-label,
+.board-label,
+.module-stat-label,
+.module-stat-pct,
+.feedback-field,
+.atc-input-label,
+.pool-title,
+.log-entry-date,
+.module-select-text small {
+  color: var(--muted-ink) !important;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .telemetry-value.accent,
-.type-tag,
-.onboarding-code-badge,
-.env-badge {
-  color: var(--accent-blue);
-  background: var(--select-active-bg);
-  border: 1px solid var(--border-active);
-  border-radius: 7px;
+.home-stat-num,
+.gauge-value-display,
+.keypad-header-value,
+#debrief-score,
+strong[style*='accent-blue'] {
+  color: var(--accent-blue) !important;
 }
 
-.screen-glow-success,
-.screen-glow-error,
-.screen-glow-warning {
-  box-shadow: none !important;
-}
-
-.wire-board {
-  overflow: visible;
-}
-
-.wire-board .board-prompt {
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  background: var(--bg-input);
+p,
+li,
+.debrief-table,
+.log-entry-row,
+.module-select-text span {
   color: var(--text-secondary);
 }
 
-.wire-path {
-  stroke-linecap: round;
-  stroke-linejoin: round;
+[style*='border-radius'] {
+  border-radius: 0 !important;
 }
 
-.wire-path.wire-active {
-  stroke: var(--accent-blue);
+[style*='background: linear-gradient'],
+[style*='background: rgba(255,255,255'],
+[style*='background: rgba(255, 255, 255'] {
+  background: var(--bg-input) !important;
 }
 
-.wire-bridge-mask,
-.wire-bridge {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
+.competency-bar-track,
+.module-stat-track,
+.gauge-range-bar {
+  background: #e7dfd2 !important;
+  border: var(--neo-border-control) !important;
+  border-radius: 0 !important;
+  overflow: hidden;
+}
+
+.wire-path.wire-active,
+.wire-bridge-active {
+  stroke: var(--accent-blue) !important;
 }
 
 .wire-bridge-mask {
-  stroke: var(--bg-input);
-  stroke-width: 5.4;
-}
-
-.wire-bridge {
-  stroke-width: 2.4;
-}
-
-.wire-bridge-active {
-  stroke: var(--accent-blue);
-}
-
-.wire-bridge-muted {
-  stroke: var(--text-secondary);
-  opacity: 0.55;
-}
-
-.wire-label {
-  font-size: 7px;
-  fill: var(--text-secondary);
-}
-
-.wire-label.wire-query {
-  fill: var(--accent-blue);
+  stroke: var(--bg-card-solid) !important;
 }
 
 button:focus-visible,
 [tabindex]:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent-blue) 45%, transparent);
-  outline-offset: 2px;
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--bauhaus-yellow) !important;
+  outline-offset: 3px;
+  box-shadow: var(--neo-offset-control) !important;
 }
 
+.screen-glow-success,
+.screen-glow-error,
+.screen-glow-warning,
 .pilot-rank-badge,
 .achievement-card.unlocked,
 .cei-badge,
-.pro-badge {
-  box-shadow: none;
-}
-
-.segment-btn.active,
-.btn-primary:active {
-  background: color-mix(in srgb, var(--accent-blue) 86%, #000000);
-  color: #ffffff;
-}
-
-/* Keep compact telemetry and feedback labels readable at Apple-style density. */
-.abort-btn,
-.feedback-field,
-.board-label,
-.intercept-readouts span,
-.pilot-rank-badge,
 .pro-badge,
-.style-breakdown-metrics,
-.fuel-tank-header {
-  font-size: 0.72rem;
+.gauge-card.active-step,
+.fault-step-node.active-step,
+.sortable-item:active,
+.calendar-cell.has-session,
+.beacon-option-card.correct,
+.horizon-option-card.correct {
+  box-shadow: var(--neo-offset-card) !important;
 }
 
-/* The segment control has legacy inline styles; the blue tint is the selected state. */
-.segment-btn.active {
-  background: var(--select-active-bg) !important;
-  color: var(--text-primary) !important;
+@media (min-width: 680px) {
+  .terminal-frame {
+    border-top: var(--neo-border-card);
+    border-bottom: var(--neo-border-card);
+    box-shadow: 4px 4px 0 0 var(--ink) !important;
+  }
 }
 
 @media (max-width: 700px) {
-  .system-title-badge {
-    display: none;
+  .terminal-frame {
+    border-left: 0;
+    border-right: 0;
   }
+
+  .dashboard-header {
+    padding-inline: 12px;
+  }
+
+  .theme-toggle-btn {
+    width: 34px;
+    min-width: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* --- USER CUSTOM ACCENT OVERRIDE --- */
+body[data-custom-accent='true'] {
+  --select-active-bg: var(--custom-accent-bg);
+  --accent-blue: var(--custom-accent-readable);
+  --accent-cyan: var(--custom-accent-readable);
+  --accent-amber: var(--custom-accent-bg);
+  --neo-offset-yellow: 2px 2px 0 0 var(--custom-accent-raw);
+}
+
+body[data-custom-accent='true'] .segment-btn.active,
+body[data-custom-accent='true'] .session-len-btn.active,
+body[data-custom-accent='true'] .history-tab.active,
+body[data-custom-accent='true'] .theme-opt-btn.active,
+body[data-custom-accent='true'] .module-select-card.active,
+body[data-custom-accent='true'] .answer-tile.active,
+body[data-custom-accent='true'] .keypad-btn.action.enter {
+  background: var(--custom-accent-bg) !important;
+  color: var(--custom-accent-text) !important;
+  box-shadow: 2px 2px 0 0 var(--custom-accent-raw) !important;
+}
+
+body[data-custom-accent='true'] .type-tag,
+body[data-custom-accent='true'] .system-title-badge,
+body[data-custom-accent='true'] .pilot-rank-badge,
+body[data-custom-accent='true'] .telemetry-value.accent {
+  background: var(--custom-accent-bg) !important;
+  color: var(--custom-accent-text) !important;
+  box-shadow: 2px 2px 0 0 var(--custom-accent-raw) !important;
+}
+
+.custom-accent-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-accent-header,
+.custom-accent-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.custom-accent-header {
+  justify-content: space-between;
+}
+
+.custom-accent-header label {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.custom-accent-controls {
+  flex-wrap: wrap;
+}
+
+#custom-accent-input {
+  width: 52px;
+  min-width: 52px;
+  height: 44px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.accent-swatch-btn {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: var(--swatch-color) !important;
+  border: var(--neo-border-control) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--neo-offset-control) !important;
+  cursor: pointer;
+}
+
+.accent-swatch-btn.active {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: 2px 2px 0 0 var(--swatch-color) !important;
+}
+
+.custom-accent-reset {
+  flex: 1 1 92px;
+  min-width: 92px;
 }

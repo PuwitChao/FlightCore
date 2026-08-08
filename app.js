@@ -760,6 +760,20 @@ function shuffle(array) {
 // 6. SCREEN SYSTEM (Transitions & Setup)
 // ==========================================
 
+function focusPlayArea(screenId) {
+  const isActiveSession = screenId === "screen-study" || screenId === "screen-test" || screenId === "screen-feedback";
+  if (!isActiveSession) return;
+  const viewport = document.getElementById("main-viewport");
+  const activeScreen = document.getElementById(screenId);
+  if (viewport) viewport.scrollTop = 0;
+  requestAnimationFrame(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const focusTarget = activeScreen || viewport;
+    if (focusTarget && typeof focusTarget.scrollIntoView === "function") {
+      focusTarget.scrollIntoView({ block: "start", inline: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+    }
+  });
+}
 function showScreen(screenId) {
   const screens = ["screen-home", "screen-study", "screen-test", "screen-feedback", "screen-debrief"];
   screens.forEach(s => {
@@ -785,6 +799,7 @@ function showScreen(screenId) {
 
   // Automatically toggle abort header based on screen
   updateHeaderControls(screenId);
+  focusPlayArea(screenId);
 }
 
 function updateSidebarLiveStats() {
@@ -2913,8 +2928,137 @@ function initAbortSystem() {
 }
 
 // ==========================================
-// 13. MULTI-THEME SYSTEM (Apple Aesthetics)
+// 13. THEME AND ACCENT SYSTEM
 // ==========================================
+function normalizeAccentHex(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  const short = raw.match(/^#([0-9a-fA-F]{3})$/);
+  if (short) {
+    return `#${short[1].split("").map(ch => ch + ch).join("")}`.toLowerCase();
+  }
+  const full = raw.match(/^#([0-9a-fA-F]{6})$/);
+  return full ? `#${full[1].toLowerCase()}` : null;
+}
+
+function hexToRgb(hex) {
+  const clean = normalizeAccentHex(hex);
+  if (!clean) return null;
+  return {
+    r: parseInt(clean.slice(1, 3), 16),
+    g: parseInt(clean.slice(3, 5), 16),
+    b: parseInt(clean.slice(5, 7), 16)
+  };
+}
+
+function rgbToHex(rgb) {
+  const toHex = value => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0");
+  return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
+}
+
+function mixHex(hex, targetHex, amount) {
+  const base = hexToRgb(hex);
+  const target = hexToRgb(targetHex);
+  if (!base || !target) return hex;
+  return rgbToHex({
+    r: base.r + (target.r - base.r) * amount,
+    g: base.g + (target.g - base.g) * amount,
+    b: base.b + (target.b - base.b) * amount
+  });
+}
+
+function relativeLuminance(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 0;
+  const channel = value => {
+    const srgb = value / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : Math.pow((srgb + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
+}
+
+function contrastRatio(hexA, hexB) {
+  const a = relativeLuminance(hexA);
+  const b = relativeLuminance(hexB);
+  const lighter = Math.max(a, b);
+  const darker = Math.min(a, b);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function resolveAccentPalette(hex) {
+  const raw = normalizeAccentHex(hex) || "#ffd000";
+  let bg = raw;
+  let text = contrastRatio(bg, "#222222") >= contrastRatio(bg, "#ffffff") ? "#222222" : "#ffffff";
+  if (contrastRatio(bg, text) < 4.5) {
+    const target = text === "#ffffff" ? "#000000" : "#ffffff";
+    for (let step = 0.08; step <= 0.8 && contrastRatio(bg, text) < 4.5; step += 0.08) {
+      bg = mixHex(raw, target, step);
+      text = contrastRatio(bg, "#222222") >= contrastRatio(bg, "#ffffff") ? "#222222" : "#ffffff";
+    }
+  }
+  const readableOnPaper = contrastRatio(raw, "#f4f0e8") >= 4.5 ? raw : "#222222";
+  return { raw, bg, text, readableOnPaper };
+}
+
+function updateCustomAccentControls(rawAccent) {
+  const input = document.getElementById("custom-accent-input");
+  const status = document.getElementById("custom-accent-status");
+  const normalized = normalizeAccentHex(rawAccent);
+  if (input) input.value = normalized || "#ffd000";
+  if (status) status.textContent = normalized ? normalized.toUpperCase() : "Default";
+  document.querySelectorAll(".accent-swatch-btn[data-accent-color]").forEach(btn => {
+    const isActive = normalizeAccentHex(btn.getAttribute("data-accent-color")) === normalized;
+    btn.classList.toggle("active", Boolean(normalized && isActive));
+    btn.setAttribute("aria-pressed", normalized && isActive ? "true" : "false");
+  });
+}
+
+function applyCustomAccent(rawAccent, options = {}) {
+  const { persist = true, emit = true } = options;
+  const normalized = normalizeAccentHex(rawAccent);
+  if (!normalized) {
+    document.body.removeAttribute("data-custom-accent");
+    ["--custom-accent-raw", "--custom-accent-bg", "--custom-accent-text", "--custom-accent-readable"].forEach(name => {
+      document.body.style.removeProperty(name);
+    });
+    if (persist) safeStorageRemove("flightcore_custom_accent");
+    updateCustomAccentControls(null);
+    if (emit) Telemetry.emit("settings_changed", { setting: "custom_accent", value: "default" });
+    return;
+  }
+  const palette = resolveAccentPalette(normalized);
+  document.body.setAttribute("data-custom-accent", "true");
+  document.body.style.setProperty("--custom-accent-raw", palette.raw);
+  document.body.style.setProperty("--custom-accent-bg", palette.bg);
+  document.body.style.setProperty("--custom-accent-text", palette.text);
+  document.body.style.setProperty("--custom-accent-readable", palette.readableOnPaper);
+  if (persist) safeStorageSet("flightcore_custom_accent", palette.raw);
+  updateCustomAccentControls(palette.raw);
+  if (emit) Telemetry.emit("settings_changed", { setting: "custom_accent", value: palette.raw });
+}
+
+function initCustomAccentControls() {
+  const input = document.getElementById("custom-accent-input");
+  const reset = document.getElementById("btn-accent-reset");
+  if (input) {
+    input.addEventListener("input", () => {
+      playSound("click");
+      applyCustomAccent(input.value);
+    });
+  }
+  document.querySelectorAll(".accent-swatch-btn[data-accent-color]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      playSound("click");
+      applyCustomAccent(btn.getAttribute("data-accent-color"));
+    });
+  });
+  if (reset) {
+    reset.addEventListener("click", () => {
+      playSound("click");
+      applyCustomAccent(null);
+    });
+  }
+}
 function initThemeSystem() {
   const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
   let savedTheme = getSafeStorageValue("flightcore_theme", null);
@@ -2923,6 +3067,8 @@ function initThemeSystem() {
     savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }
   setTheme(savedTheme);
+  applyCustomAccent(getSafeStorageValue("flightcore_custom_accent", null), { persist: false, emit: false });
+  initCustomAccentControls();
   
   // Bind toggle button to show selector
   const btnToggle = document.getElementById("btn-theme-toggle");
@@ -2954,7 +3100,7 @@ function initThemeSystem() {
   }
   
   // Bind option buttons
-  const optButtons = document.querySelectorAll(".theme-opt-btn");
+  const optButtons = document.querySelectorAll(".theme-opt-btn[data-theme-val]");
   optButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       const themeVal = btn.getAttribute("data-theme-val");
@@ -3796,8 +3942,9 @@ function updatePilotRankHUD() {
   const rank = FlightCore.computePilotRank({ totalSessions: history.length, highScore });
   const badgeEl = document.getElementById("hud-rank-badge");
   if (badgeEl) {
-    badgeEl.textContent = rank.badge;
+    badgeEl.textContent = rank.title.toUpperCase();
     badgeEl.title = `Pilot Rank: ${rank.title} (${rank.req})`;
+    badgeEl.setAttribute("aria-label", `Pilot rank: ${rank.title}`);
   }
 }
 

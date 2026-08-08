@@ -1,53 +1,55 @@
-# Handoff: Apple HIG Visual Refresh & Wire Trace Overpasses
+# Handoff: Bauhaus Neo-Brutalist UI Alignment & Session Focus Fix
 
 **Generated**: 2026-08-09
 **Branch**: main
-**Status**: Committed and pushed to origin/main (`7a8489f`)
+**Upstream**: origin/main
+**Status**: Verified and ready for closeout commit/push. Final commit hash is in Git history after wrap-up.
 
 ## Goal
-Refresh the Flight Core visual system toward Apple Human Interface Guidelines, replace yellow emphasis with calm neutral/blue surfaces, and make Wire Trace crossings explicit overpasses with deterministic bridge rendering.
+Align Flight Core with the referenced Bauhaus neo-brutalist design system while preserving accessibility and professional UI behavior, then address follow-up UI issues from in-app screenshots.
 
 ## Completed
-- [x] Replaced the previous yellow/neobrutalist treatment with Apple-aligned system typography, neutral surfaces, semantic system colors, blue active states, soft elevation, and touch-friendly radii across the main app and landing page.
-- [x] Updated browser/PWA theme metadata and icon colors to the neutral/blue palette; retained the COCKPIT brand badge and service-worker cache `v5`.
-- [x] Replaced user-facing global error stack output with a bounded, secret-aware recovery message while keeping detailed diagnostics in the console.
-- [x] Guarded boot-time, settings, telemetry, onboarding, purge/reset, and Pro Pass storage access for private-mode/quota failures.
-- [x] Guarded optional keypad/session/debrief DOM bindings and clipboard access so partial DOMs and unavailable browser APIs degrade cleanly.
-- [x] Added core `safeErrorMessage` coverage and a zero-dependency app-layer VM suite for storage and error-boundary failures.
-- [x] Preserved unrelated pre-existing worktree edits and kept the closeout scope limited to this task.
-- [x] Added deterministic Wire Trace crossing metadata, SVG bridge masks/arches, accessible prompt/title copy, and regression coverage for overpasses.
+- [x] Replaced the effective Apple HIG visual override with Bauhaus neo-brutalist tokens: warm paper canvas, light card surface, ink borders/text, sharp geometry, hard offset shadows, and primary accent blocks.
+- [x] Updated the landing page to the same Bauhaus CI and removed the dark gradient/glass styling.
+- [x] Imported `Space Grotesk` alongside `Inter` and `JetBrains Mono`; updated app theme metadata to the warm paper color.
+- [x] Renamed visible theme options to Bauhaus-aligned labels while preserving existing stored theme keys.
+- [x] Fixed the blank toolbar button by adding a real default speaker SVG in markup.
+- [x] Replaced unclear pilot-rank abbreviation display (`STU`) with full rank titles and accessible labels.
+- [x] Removed the visible disclaimer text from the main app and landing page per user request.
+- [x] Added a custom accent color picker with Bauhaus swatches, reset control, persistence in `localStorage`, and contrast-aware foreground/background adjustment.
+- [x] Scoped theme option binding to actual theme buttons so non-theme actions such as purge history do not call `setTheme(null)`.
+- [x] Added play-area focus management so starting/restarting/transitioning into active session screens scrolls the user back to the study/test/feedback area instead of leaving the page at the bottom.
+- [x] Updated `implementation_plan.md` and `task.md` to reflect the Bauhaus UI work.
 
 ## Verification
 - `node --check app.js` passed.
 - `node --check core.js` passed.
-- `node --check sw.js` passed.
-- `node --check tests_app_error_handling.js` passed.
 - `node tests.js` passed: **103/103**.
 - `node tests_app_error_handling.js` passed: **4/4**.
-- `manifest.json` JSON validation passed.
 - `git diff --check` passed with normal Windows CRLF warnings only.
-- Static error audit found no silent empty catches, no remaining top-level direct listener dereferences, and no unguarded app storage call sites outside the safe wrappers.
+- Local static server check returned `200` for `http://127.0.0.1:8765/index.html` and `http://127.0.0.1:8765/landing/index.html` during implementation; final closeout rechecked the main page at `200`.
 
 ## Open / Manual Follow-up
-- Browser visual QA across desktop/tablet/mobile and all selectable themes remains manual follow-up. The prior workspace handoff records browser automation as blocked by the Windows ACL environment; no automated browser claim is made here.
-- No known automated test or syntax failures remain.
+- Browser screenshot automation remains unavailable in this environment because Playwright/Puppeteer are not installed and prior browser-control/screenshot tooling was not exposed. Visual review was based on the in-app browser state, user screenshots, static checks, and local HTTP checks.
+- If a future session has browser automation, manually verify custom accent selection, play-area scroll focus, and responsive layout across desktop/mobile widths.
 
 ## Files to Know
 | File | Why It Matters |
 |---|---|
-| `styles.css` | Apple HIG-aligned tokens, typography, borders, shadows, layout primitives, wire bridges, and readability floor. |
-| `landing/styles.css` | Apple HIG-aligned landing-page surfaces and controls. |
-| `app.js` | Global error boundary, safe storage wrappers, guarded DOM bindings, telemetry and clipboard recovery. |
-| `core.js` | Pure engine helpers including `safeErrorMessage`. |
-| `tests.js` | Existing pure-engine suite, now including safe-error behavior. |
-| `tests_app_error_handling.js` | Node VM suite for app boot/storage/error-boundary resilience. |
-| `SESSION_LOG.md` | Durable session record. |
+| `styles.css` | Effective Bauhaus CI override, custom accent override, focus/contrast/touch target styling. |
+| `landing/styles.css` | Bauhaus landing-page visual system. |
+| `index.html` | Font import, rank label, speaker icon fallback, custom accent controls, disclaimer removal. |
+| `app.js` | Custom accent persistence/contrast logic, full rank HUD labels, active-session scroll focus. |
+| `implementation_plan.md` | Orchestrated UI alignment plan. |
+| `task.md` | Completed checklist for the UI alignment task. |
+| `SESSION_LOG.md` | Durable closeout log. |
 
 ## Resume Instructions
-1. Confirm `git status --short --branch` is clean and `main` matches `origin/main`.
-2. If browser access is available, run manual visual QA across the CI theme surfaces and responsive breakpoints.
-3. Continue from the next roadmap milestone in `ROADMAP.md`.
+1. Confirm `git status --short --branch` is clean and `main` is even with `origin/main`.
+2. Open `http://127.0.0.1:8765/index.html` or serve the static app with `python -m http.server` if the prior server is not running.
+3. Test the theme modal custom accent picker, then click `START SESSION` from the bottom of the home dashboard and confirm the play area scrolls back into focus.
+4. Continue from `ROADMAP.md` if no UI follow-up remains.
 
 ## Setup Required
-- Standalone web app; no build tool or dependency installation required.
-- Run `node tests.js` and `node tests_app_error_handling.js` for the local regression gate.
+- Static PWA; no build step or dependency installation required.
+- Regression gate: `node --check app.js`, `node --check core.js`, `node tests.js`, and `node tests_app_error_handling.js`.

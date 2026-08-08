@@ -114,3 +114,27 @@ Reworked the main app and landing page away from the yellow-heavy CI treatment t
 ### Handoff
 
 Implementation committed as `7a8489f` (`feat(ui): refresh theme and wire trace crossings`) and pushed to `origin/main`.
+## 2026-08-09 - Bauhaus Neo-Brutalist UI Alignment & Session Focus Fix
+
+### Summary
+Aligned Flight Core with the referenced Bauhaus neo-brutalist design system, then addressed follow-up UI issues from screenshots and play-flow testing. The app now uses warm paper surfaces, hard ink borders, sharp rectangular controls, Space Grotesk display typography, custom accent selection, clearer rank labeling, and active-session scroll focus.
+
+### Code Changes
+- Added a Bauhaus CI override in `styles.css` and rebuilt `landing/styles.css` around the same visual language.
+- Updated `index.html` font imports, PWA theme color, theme labels/indicators, speaker fallback icon, pilot rank initial label, and custom accent controls.
+- Removed the visible disclaimer from both the main app and landing page.
+- Added custom accent normalization, persistence, contrast adjustment, swatch/reset controls, and scoped theme-button binding in `app.js`.
+- Replaced rank abbreviation display with full rank titles and ARIA labels.
+- Added active-session scroll focus so starting or transitioning into study/test/feedback returns the viewport to the play area.
+- Updated `implementation_plan.md`, `task.md`, and `HANDOFF.md` for durable continuity.
+
+### Verification
+- `node --check app.js` passed.
+- `node --check core.js` passed.
+- `node tests.js` passed: **103/103**.
+- `node tests_app_error_handling.js` passed: **4/4**.
+- `git diff --check` passed with normal Windows CRLF warnings only.
+- Local HTTP checks returned `200` for the main app and landing page during implementation; final closeout rechecked the main app at `200`.
+
+### Remaining Manual Work
+- Manual browser QA for the custom accent picker, responsive breakpoints, and session-start scroll behavior remains useful because automated browser screenshot tooling is unavailable in this environment.

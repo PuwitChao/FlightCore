@@ -6,13 +6,13 @@
   <title>Flight Core - Cockpit Challenge Game</title>
   <meta name="description" content="A cockpit-inspired memory and pattern-recognition challenge game for aviation and simulation enthusiasts.">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0b0d10">
+  <meta name="theme-color" content="#f4f0e8">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Flight Core">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -28,7 +28,7 @@
           <button class="abort-btn" id="btn-session-abort" style="display: none;">ABORT</button>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span class="pilot-rank-badge" id="hud-rank-badge" title="Pilot Rank">STU</span>
+          <span class="pilot-rank-badge" id="hud-rank-badge" title="Pilot Rank: Student" aria-label="Pilot rank: Student">STUDENT</span>
           <button class="theme-toggle-btn" id="btn-achievements-toggle" title="Pilot Achievements">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="8" r="7" />
@@ -41,9 +41,7 @@
             </svg>
           </button>
           <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound" aria-label="Toggle sound">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sound-icon">
-              <!-- Injected via JS -->
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sound-icon" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" /></svg>
           </button>
           <button class="theme-toggle-btn" id="btn-theme-toggle" title="Select Theme">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -123,11 +121,6 @@
               Solve checklists, recall instrument readings, process radio clearances, and diagnose emergency faults across 8-round cycles. Difficulty scales dynamically based on your correct streak.
             </p>
           </div>
-
-          <!-- Home Screen Disclaimer -->
-          <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.4; font-style: italic; margin-top: -6px; margin-bottom: 16px; text-align: center; border-left: 2px solid var(--border-subtle); padding-left: 8px;">
-            Flight Core is a cockpit-inspired memory game. It is not real aviation instruction, not regulatory study material, and not for real-world aviation use.
-          </p>
 
           <div class="home-stats-summary" id="home-stats-summary-viewport">
             <div class="home-stat-box">
@@ -812,27 +805,40 @@
         </div>
         <div class="theme-options-grid">
           <button class="theme-opt-btn" data-theme-val="dark">
-            <span class="theme-opt-indicator" style="background-color: #000000; border: 1px solid rgba(255,255,255,0.2);"></span>
-            <span class="theme-opt-label">OLED Dark</span>
+            <span class="theme-opt-indicator" style="background-color: #f4f0e8; border: 2px solid #222222;"></span>
+            <span class="theme-opt-label">Paper Deck</span>
           </button>
           <button class="theme-opt-btn" data-theme-val="light">
-            <span class="theme-opt-indicator" style="background-color: #FCFCFC; border: 1px solid rgba(0,0,0,0.15);"></span>
-            <span class="theme-opt-label">Apple Light</span>
+            <span class="theme-opt-indicator" style="background-color: #ffd000; border: 2px solid #222222;"></span>
+            <span class="theme-opt-label">Yellow Signal</span>
           </button>
           <button class="theme-opt-btn" data-theme-val="mono">
-            <span class="theme-opt-indicator" style="background: linear-gradient(135deg, #121212 50%, #F3F4F6 50%); border: 1px solid rgba(255,255,255,0.15);"></span>
-            <span class="theme-opt-label">Monochrome</span>
+            <span class="theme-opt-indicator" style="background: linear-gradient(135deg, #222222 50%, #faf7f2 50%); border: 2px solid #222222;"></span>
+            <span class="theme-opt-label">Ink Mono</span>
           </button>
           <button class="theme-opt-btn" data-theme-val="sage">
-            <span class="theme-opt-indicator" style="background-color: #121815; border: 1px solid #30D158;"></span>
-            <span class="theme-opt-label">Nordic Sage</span>
+            <span class="theme-opt-indicator" style="background-color: #10b981; border: 2px solid #222222;"></span>
+            <span class="theme-opt-label">Green Systems</span>
           </button>
           <button class="theme-opt-btn" data-theme-val="warm">
-            <span class="theme-opt-indicator" style="background-color: #FAF5EE; border: 1px solid #D97706;"></span>
-            <span class="theme-opt-label">Warm Sand</span>
+            <span class="theme-opt-indicator" style="background-color: #e63946; border: 2px solid #222222;"></span>
+            <span class="theme-opt-label">Red Alert</span>
           </button>
         </div>
-        <div class="terminal-card" style="margin-top: 12px; margin-bottom: 8px; padding: 12px;">
+        <div class="custom-accent-panel terminal-card" style="margin-top: 12px; margin-bottom: 8px; padding: 12px;">
+          <div class="custom-accent-header">
+            <label for="custom-accent-input">Custom Accent</label>
+            <span class="type-tag" id="custom-accent-status">Default</span>
+          </div>
+          <div class="custom-accent-controls">
+            <input type="color" id="custom-accent-input" value="#ffd000" aria-label="Choose custom accent color">
+            <button class="accent-swatch-btn" type="button" data-accent-color="#ffd000" aria-label="Use yellow accent" style="--swatch-color: #ffd000;"></button>
+            <button class="accent-swatch-btn" type="button" data-accent-color="#2563eb" aria-label="Use blue accent" style="--swatch-color: #2563eb;"></button>
+            <button class="accent-swatch-btn" type="button" data-accent-color="#10b981" aria-label="Use green accent" style="--swatch-color: #10b981;"></button>
+            <button class="accent-swatch-btn" type="button" data-accent-color="#e63946" aria-label="Use red accent" style="--swatch-color: #e63946;"></button>
+            <button class="theme-opt-btn custom-accent-reset" type="button" id="btn-accent-reset">Reset</button>
+          </div>
+        </div>        <div class="terminal-card" style="margin-top: 12px; margin-bottom: 8px; padding: 12px;">
           <label for="toggle-telemetry" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
             <span style="display: flex; flex-direction: column; gap: 3px;">
               <span style="font-size: 0.75rem; color: var(--text-primary); font-weight: 700;">Anonymous product events</span>
