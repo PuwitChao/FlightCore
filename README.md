@@ -23,6 +23,7 @@ Open `index.html` directly in a browser, or serve the folder with any static fil
 
 ```powershell
 node tests.js
+node tests_app_error_handling.js
 node --check app.js
 ```
 
@@ -36,6 +37,7 @@ The test suite exercises the pure engine in `core.js` and currently runs without
 - `app.js` - DOM controller, session flow, localStorage persistence, telemetry stub, module renderers, and UI events.
 - `sw.js` - Offline cache for local static assets with future API/config bypasses.
 - `tests.js` and `tests.html` - Zero-dependency engine tests.
+- `tests_app_error_handling.js` - Node VM coverage for app boot, storage, and error-boundary resilience.
 - `config.example.js` - Runtime config template. Copy to ignored `config.js` for real env values.
 - `APTITUDE_MODULE_RESEARCH.md` - Research-backed product direction and backlog.
 - `docs/aptitude_module_contract.md` - Module lifecycle, data contract, UI rules, and verification gate.
@@ -54,6 +56,7 @@ node --check app.js
 node --check core.js
 node --check sw.js
 node tests.js
+node tests_app_error_handling.js
 ```
 
 For copy compliance, scan against the avoid-list maintained in `ROADMAP.md` and keep public copy positioned as a cockpit-inspired game, not pilot training or exam preparation.

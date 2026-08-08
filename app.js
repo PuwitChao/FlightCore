@@ -13,12 +13,16 @@ function handleGlobalError(err) {
   console.error("Global Fault Intercepted:", err);
   const overlay = document.getElementById("error-boundary-overlay");
   const logEl = document.getElementById("error-boundary-log");
-  if (overlay && logEl) {
-    logEl.textContent = `${err ? err.name : "Error"}: ${err ? err.message : "Unknown error"}\n\nStack:\n${err ? err.stack : "Not available"}`;
-    overlay.style.display = "flex";
-  }
-}
+  if (!overlay || !logEl || overlay.dataset.errorActive === "true") return;
 
+  const fallback = "The app encountered an unexpected error. Reload to continue.";
+  const safeMessage = window.FlightCore && typeof window.FlightCore.safeErrorMessage === "function"
+    ? window.FlightCore.safeErrorMessage(err, fallback)
+    : fallback;
+  logEl.textContent = `SYSTEM ERROR\n\n${safeMessage}`;
+  overlay.dataset.errorActive = "true";
+  overlay.style.display = "flex";
+}
 // HTML Escaping Helper to Prevent XSS
 function escapeHTML(str) {
   if (str === null || str === undefined) return "";
@@ -30,9 +34,18 @@ function escapeHTML(str) {
 }
 
 // Safe LocalStorage Loading Utilities
+function getSafeStorageValue(key, defaultValue = null) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? defaultValue : value;
+  } catch (e) {
+    console.warn(`Error reading localStorage key "${key}":`, e);
+    return defaultValue;
+  }
+}
 function getSafeStorageInt(key, defaultValue) {
   try {
-    const val = localStorage.getItem(key);
+    const val = getSafeStorageValue(key, null);
     if (val === null) return defaultValue;
     const parsed = parseInt(val, 10);
     return isNaN(parsed) ? defaultValue : parsed;
@@ -44,7 +57,7 @@ function getSafeStorageInt(key, defaultValue) {
 
 function getSafeStorageFloat(key, defaultValue) {
   try {
-    const val = localStorage.getItem(key);
+    const val = getSafeStorageValue(key, null);
     if (val === null) return defaultValue;
     const parsed = parseFloat(val);
     return isNaN(parsed) ? defaultValue : parsed;
@@ -56,7 +69,7 @@ function getSafeStorageFloat(key, defaultValue) {
 
 function getSafeStorageHistory() {
   try {
-    const raw = localStorage.getItem("flightcore_history");
+    const raw = getSafeStorageValue("flightcore_history", null);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -70,6 +83,11 @@ function getSafeStorageHistory() {
 // 1. DATA POOLS (RNG pools to minimize repetition)
 // ==========================================
 
+function bindClick(id, handler) {
+  const element = document.getElementById(id);
+  if (element) element.addEventListener("click", handler);
+  return element;
+}
 const CHECKLIST_POOLS = [
   {
     name: "APU Ignition Cycle",
@@ -200,10 +218,10 @@ let recentlyPlayedModules = []; // Holds last 2 modules to implement "No 3x Repe
 const PROTOTYPE_MODULE_KEYS = ["intercept"];
 const DEFAULT_SELECTED_MODULES = FlightCore.CHALLENGE_MODULE_KEYS.filter(key => !PROTOTYPE_MODULE_KEYS.includes(key));
 let selectedModules = DEFAULT_SELECTED_MODULES.slice();
-let challengeMode = localStorage.getItem("flightcore_challenge_mode") || "mock";
-let sessionLength = FlightCore.safeNumber(localStorage.getItem("flightcore_session_length"), 8, { min: 1, max: 50 });
-let startingStreak = FlightCore.safeNumber(localStorage.getItem("flightcore_starting_streak"), 4, { min: 0, max: 100 });
-let timerMultiplier = FlightCore.safeNumber(localStorage.getItem("flightcore_timer_multiplier"), 1, { min: 0.1, max: 10 });
+let challengeMode = getSafeStorageValue("flightcore_challenge_mode", "mock") || "mock";
+let sessionLength = FlightCore.safeNumber(getSafeStorageValue("flightcore_session_length", null), 8, { min: 1, max: 50 });
+let startingStreak = FlightCore.safeNumber(getSafeStorageValue("flightcore_starting_streak", null), 4, { min: 0, max: 100 });
+let timerMultiplier = FlightCore.safeNumber(getSafeStorageValue("flightcore_timer_multiplier", null), 1, { min: 0.1, max: 10 });
 
 let currentRndExpected = null;
 let currentRndInput = null;
@@ -220,8 +238,8 @@ let activeKeypadBuffer = "";
 
 let roundByRoundHistory = []; // Session history
 // Corrupt or tampered storage must never crash boot - safeParse guarantees an array.
-let globalHistory = FlightCore.safeParse(localStorage.getItem("flightcore_history"), []);
-let dailyStreak = FlightCore.safeNumber(localStorage.getItem("flightcore_daily_streak"), 0, { min: 0 });
+let globalHistory = FlightCore.safeParse(getSafeStorageValue("flightcore_history", null), []);
+let dailyStreak = FlightCore.safeNumber(getSafeStorageValue("flightcore_daily_streak", null), 0, { min: 0 });
 
 // Tracks pool indices used this session to prevent within-session repeats
 let usedFaultIndices = [];
@@ -252,6 +270,26 @@ function safeStorageSet(key, value) {
   }
 }
 
+
+function safeStorageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (e) {
+    console.warn(`Unable to remove localStorage key "${key}":`, e);
+    return false;
+  }
+}
+
+function safeStorageClear() {
+  try {
+    localStorage.clear();
+    return true;
+  } catch (e) {
+    console.error("Unable to clear localStorage:", e);
+    return false;
+  }
+}
 
 const APP_CONFIG = Object.freeze(Object.assign({
   APP_ENV: "local",
@@ -285,7 +323,7 @@ function updateEnvironmentBadge() {
 
 const Telemetry = {
   isEnabled() {
-    return APP_CONFIG.TELEMETRY_ENABLED === true && localStorage.getItem("flightcore_telemetry_opt_out") !== "1";
+    return APP_CONFIG.TELEMETRY_ENABLED === true && getSafeStorageValue("flightcore_telemetry_opt_out", null) !== "1";
   },
   setEnabled(enabled) {
     safeStorageSet("flightcore_telemetry_opt_out", enabled ? "0" : "1");
@@ -295,7 +333,9 @@ const Telemetry = {
     const payload = JSON.stringify({ event: String(eventName || "unknown"), env: APP_CONFIG.APP_ENV || "local", ts: new Date().toISOString(), props });
     try {
       if (navigator.sendBeacon) return navigator.sendBeacon(APP_CONFIG.TELEMETRY_ENDPOINT, new Blob([payload], { type: "application/json" }));
-      fetch(APP_CONFIG.TELEMETRY_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch(() => {});
+      fetch(APP_CONFIG.TELEMETRY_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch((error) => {
+        console.warn("Telemetry request failed:", error);
+      });
       return true;
     } catch (e) {
       console.warn("Telemetry emit failed:", e);
@@ -1698,20 +1738,25 @@ keypadButtons.forEach(btn => {
   }
 });
 
-document.getElementById("keypad-back").addEventListener("click", () => {
-  if (focusedInputId === null) return;
-  playSound("click");
-  activeKeypadBuffer = activeKeypadBuffer.slice(0, -1);
-  updateFocusedInputWithValue(activeKeypadBuffer);
-});
+const keypadBack = document.getElementById("keypad-back");
+if (keypadBack) {
+  keypadBack.addEventListener("click", () => {
+    if (focusedInputId === null) return;
+    playSound("click");
+    activeKeypadBuffer = activeKeypadBuffer.slice(0, -1);
+    updateFocusedInputWithValue(activeKeypadBuffer);
+  });
+}
 
-document.getElementById("keypad-clear").addEventListener("click", () => {
-  if (focusedInputId === null) return;
-  playSound("click");
-  activeKeypadBuffer = "";
-  updateFocusedInputWithValue("");
-});
-
+const keypadClear = document.getElementById("keypad-clear");
+if (keypadClear) {
+  keypadClear.addEventListener("click", () => {
+    if (focusedInputId === null) return;
+    playSound("click");
+    activeKeypadBuffer = "";
+    updateFocusedInputWithValue("");
+  });
+}
 function handleKeypadConfirm() {
   if (focusedInputId === null) return;
   playSound("click");
@@ -1761,7 +1806,8 @@ function handleKeypadConfirm() {
   focusedInputId = null;
 }
 
-document.getElementById("keypad-enter").addEventListener("click", handleKeypadConfirm);
+const keypadEnter = document.getElementById("keypad-enter");
+if (keypadEnter) keypadEnter.addEventListener("click", handleKeypadConfirm);
 
 function updateFocusedInputWithValue(val) {
   document.getElementById("keypad-preview-value").textContent = val || "---";
@@ -2097,7 +2143,7 @@ function setupFeedbackScreen(res) {
 }
 
 // Proceed loop
-document.getElementById("btn-next-round").addEventListener("click", () => {
+bindClick("btn-next-round", () => {
   playSound("click");
   if (sessionRound < sessionLength) {
     startRound();
@@ -2105,12 +2151,11 @@ document.getElementById("btn-next-round").addEventListener("click", () => {
     finishSession();
   }
 });
-
 // Skip timer button
-document.getElementById("btn-skip-timer").addEventListener("click", commenceTest);
+bindClick("btn-skip-timer", commenceTest);
 
 // Submit test button
-document.getElementById("btn-submit-test").addEventListener("click", submitTelemetry);
+bindClick("btn-submit-test", submitTelemetry);
 
 // ==========================================
 // 11. DEBRIEFING & HISTORICAL PERFORMANCE
@@ -2188,7 +2233,7 @@ function finishSession() {
   const skillFamilyAccuracy = FlightCore.sessionSkillFamilyAccuracy(roundByRoundHistory);
 
   const todayStr = new Date().toDateString();
-  const lastPlayedStr = localStorage.getItem("flightcore_last_played") || localStorage.getItem("flightcore_last_trained");
+  const lastPlayedStr = getSafeStorageValue("flightcore_last_played", null) || getSafeStorageValue("flightcore_last_trained", null);
   dailyStreak = FlightCore.nextDailyStreak(lastPlayedStr, dailyStreak, todayStr);
   safeStorageSet("flightcore_last_played", todayStr);
   safeStorageSet("flightcore_daily_streak", dailyStreak);
@@ -2348,13 +2393,12 @@ function showPersonalBestBanner() {
 }
 
 // Restart session trigger
-document.getElementById("btn-restart").addEventListener("click", () => {
+bindClick("btn-restart", () => {
   playSound("click");
   initSession();
 });
-
 // Copy score card to clipboard
-document.getElementById("btn-copy-score").addEventListener("click", () => {
+bindClick("btn-copy-score", () => {
   const scoreEl = document.getElementById("debrief-score");
   const pctEl = document.getElementById("debrief-percentage");
   const tierEl = document.getElementById("debrief-rating-label");
@@ -2375,18 +2419,22 @@ document.getElementById("btn-copy-score").addEventListener("click", () => {
   ].join("\n");
 
   const btn = document.getElementById("btn-copy-score");
+  if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+    if (btn) btn.textContent = "COPY FAILED";
+    return;
+  }
   navigator.clipboard.writeText(text).then(() => {
     playSound("success");
-    btn.textContent = "COPIED!";
-    setTimeout(() => { btn.textContent = "COPY SCORE CARD"; }, 2000);
-  }).catch(() => {
-    btn.textContent = "COPY FAILED";
-    setTimeout(() => { btn.textContent = "COPY SCORE CARD"; }, 2000);
+    if (btn) btn.textContent = "COPIED!";
+    setTimeout(() => { if (btn) btn.textContent = "COPY SCORE CARD"; }, 2000);
+  }).catch((error) => {
+    console.warn("Clipboard copy failed:", error);
+    if (btn) btn.textContent = "COPY FAILED";
+    setTimeout(() => { if (btn) btn.textContent = "COPY SCORE CARD"; }, 2000);
   });
 });
-
 // Start Session Button
-document.getElementById("btn-engage-session").addEventListener("click", () => {
+bindClick("btn-engage-session", () => {
   playSound("click");
   initSession();
 });
@@ -2848,7 +2896,7 @@ function initAbortSystem() {
 // ==========================================
 function initThemeSystem() {
   const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
-  let savedTheme = localStorage.getItem("flightcore_theme");
+  let savedTheme = getSafeStorageValue("flightcore_theme", null);
   if (!savedTheme || !VALID_THEMES.includes(savedTheme)) {
     // Respect OS preference on first visit
     savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
@@ -2921,10 +2969,10 @@ function initThemeSystem() {
   if (btnPurgeConfirm) {
     btnPurgeConfirm.addEventListener("click", () => {
       globalHistory = [];
-      localStorage.removeItem("flightcore_history");
-      localStorage.removeItem("flightcore_daily_streak");
-      localStorage.removeItem("flightcore_last_trained");
-      localStorage.removeItem("flightcore_last_played");
+      safeStorageRemove("flightcore_history");
+      safeStorageRemove("flightcore_daily_streak");
+      safeStorageRemove("flightcore_last_trained");
+      safeStorageRemove("flightcore_last_played");
       dailyStreak = 0;
       playSound("error");
       loadHomeStats();
@@ -3166,7 +3214,7 @@ function initOnboarding() {
   const btn = document.getElementById("btn-onboarding-dismiss");
   if (!overlay || !btn) return;
 
-  if (!localStorage.getItem("flightcore_onboarded")) {
+  if (!getSafeStorageValue("flightcore_onboarded", null)) {
     overlay.style.display = "flex";
   }
 
@@ -3543,15 +3591,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnReset = document.getElementById("btn-error-reset");
   if (btnReset) {
     btnReset.addEventListener("click", () => {
-      try {
-        localStorage.clear();
-        window.location.reload();
-      } catch (err) {
-        alert("Failed to clear local storage: " + err.message);
+      if (!safeStorageClear()) {
+        alert("Unable to reset local app storage. Please clear site data and reload.");
+        return;
       }
+      window.location.reload();
     });
   }
-
   ensureAptitudeContainers();
   initThemeSystem();
   initSegmentControl();
@@ -3568,7 +3614,9 @@ window.addEventListener("DOMContentLoaded", () => {
   initOnboarding();
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").catch((error) => {
+      console.warn("Service worker registration failed:", error);
+    });
   }
 });
 
@@ -3812,7 +3860,7 @@ function initProAndGamification() {
       const key = inputProKey.value;
       const proState = FlightCore.evaluateProAccess(key);
       if (proState.isPro) {
-        localStorage.setItem("flightcore_pro_key", key.trim());
+        safeStorageSet("flightcore_pro_key", key.trim());
         playSound("success");
         alert("Pro Pass Activated! Unlocked Pro themes, CSV export, and audio profiles.");
         if (overlayPro) overlayPro.style.display = "none";

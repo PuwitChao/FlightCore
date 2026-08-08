@@ -3038,3 +3038,316 @@ body[data-theme="warm"] .balance-panel {
   border-color: var(--accent-blue);
   background: var(--select-active-bg);
 }
+/* --- APTITUDE COMPANION SUITE CI ---
+   Shared neobrutalist tokens and primitives. This layer intentionally sits
+   last so the existing game modules inherit one consistent visual system. */
+:root {
+  --ci-yellow: #ffd000;
+  --ci-ink: #222222;
+  --ci-canvas-light: #f4f0e8;
+  --ci-surface-light: #faf7f2;
+  --ci-canvas-dark: #0f172a;
+  --ci-surface-dark: #1e293b;
+  --ci-teal: #0d9488;
+  --ci-red: #e63946;
+  --ci-green: #10b981;
+  --ci-blue: #2563eb;
+  --ci-pink: #ec4899;
+  --font-display: 'Space Grotesk', var(--font-sans), sans-serif;
+}
+
+body {
+  --bg-dark: var(--ci-canvas-dark);
+  --bg-card: var(--ci-surface-dark);
+  --bg-input: #26364c;
+  --border-subtle: var(--ci-ink);
+  --border-active: var(--ci-yellow);
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #cbd5e1;
+  --accent-blue: var(--ci-yellow);
+  --accent-cyan: #38bdf8;
+  --accent-amber: var(--ci-yellow);
+  --success-emerald: var(--ci-green);
+  --success-bg: rgba(16, 185, 129, 0.16);
+  --success-border: var(--ci-green);
+  --error-rose: var(--ci-red);
+  --error-bg: rgba(230, 57, 70, 0.16);
+  --error-border: var(--ci-red);
+  --warning-bg: rgba(255, 208, 0, 0.16);
+  --warning-border: var(--ci-yellow);
+  --btn-neutral-bg: var(--ci-surface-dark);
+  --btn-neutral-border: var(--ci-ink);
+  --keypad-btn-bg: var(--ci-surface-dark);
+  --keypad-btn-active-bg: rgba(255, 208, 0, 0.18);
+  --keypad-btn-action-bg: var(--ci-surface-dark);
+  --select-active-bg: rgba(255, 208, 0, 0.16);
+  --shadow-premium: 3px 3px 0 var(--ci-ink);
+  --radius-lg: 4px;
+  --radius-md: 4px;
+  --radius-sm: 3px;
+  --transition-fast: 0.16s ease;
+}
+
+body[data-theme="light"],
+body[data-theme="warm"] {
+  --bg-dark: var(--ci-canvas-light);
+  --bg-card: var(--ci-surface-light);
+  --bg-input: #eee9df;
+  --border-subtle: var(--ci-ink);
+  --border-active: var(--ci-yellow);
+  --text-primary: var(--ci-ink);
+  --text-secondary: #334155;
+  --text-muted: #475569;
+  --accent-blue: var(--ci-yellow);
+  --accent-cyan: var(--ci-teal);
+  --accent-amber: var(--ci-yellow);
+  --success-emerald: var(--ci-green);
+  --error-rose: var(--ci-red);
+  --warning-bg: rgba(255, 208, 0, 0.22);
+  --warning-border: var(--ci-ink);
+  --btn-neutral-bg: var(--ci-surface-light);
+  --btn-neutral-border: var(--ci-ink);
+  --keypad-btn-bg: var(--ci-surface-light);
+  --keypad-btn-active-bg: rgba(255, 208, 0, 0.26);
+  --keypad-btn-action-bg: var(--ci-surface-light);
+  --select-active-bg: rgba(255, 208, 0, 0.24);
+  --shadow-premium: 3px 3px 0 var(--ci-ink);
+}
+
+body[data-theme="mono"],
+body[data-theme="sage"],
+body[data-theme="amber"],
+body[data-theme="stealth"] {
+  --accent-blue: var(--ci-yellow);
+  --accent-amber: var(--ci-yellow);
+  --border-active: var(--ci-yellow);
+  --select-active-bg: rgba(255, 208, 0, 0.16);
+  --shadow-premium: 3px 3px 0 var(--ci-ink);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+.system-title,
+.terminal-card-header,
+.module-family-heading,
+.module-instruction,
+.board-prompt,
+.btn,
+.segment-btn,
+.theme-opt-btn,
+.session-len-btn,
+.answer-tile,
+.abort-btn {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+}
+
+.system-title {
+  letter-spacing: 0.02em;
+}
+
+.system-title-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  background: var(--ci-yellow);
+  color: var(--ci-ink);
+  border: 2px solid var(--ci-ink);
+  box-shadow: 2px 2px 0 var(--ci-ink);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.terminal-frame {
+  max-width: 1700px;
+  border: 0;
+}
+
+.dashboard-header {
+  padding: 14px 20px 12px;
+  border-bottom: 2px solid var(--ci-ink);
+  gap: 12px;
+}
+
+.telemetry-grid,
+.terminal-card,
+.theme-selector-card,
+.aptitude-board,
+.balance-panel,
+.module-select-card,
+.fuel-tank-card,
+.fuel-pump-btn,
+.beacon-option-card,
+.horizon-option-card,
+.achievement-card,
+.pro-feature-card,
+.waitlist-card {
+  border: 2px solid var(--ci-ink);
+  border-radius: 4px;
+  box-shadow: var(--shadow-premium);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.terminal-card {
+  padding: 18px;
+}
+
+.terminal-card-header {
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--ci-ink);
+}
+
+.btn,
+.answer-tile,
+.session-len-btn,
+.theme-opt-btn,
+.module-select-card,
+.segment-btn,
+.history-tab,
+.theme-toggle-btn {
+  border-radius: 3px;
+}
+
+.btn,
+.answer-tile,
+.session-len-btn,
+.theme-opt-btn {
+  border-width: 2px;
+  box-shadow: 2px 2px 0 var(--ci-ink);
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background-color: var(--ci-yellow);
+  border-color: var(--ci-ink);
+  color: var(--ci-ink);
+}
+
+.btn-success {
+  background-color: var(--ci-green);
+  border-color: var(--ci-ink);
+  color: var(--ci-ink);
+}
+
+.btn-danger {
+  background-color: var(--ci-red);
+  border-color: var(--ci-ink);
+}
+
+.btn:active,
+.answer-tile:active,
+.theme-opt-btn:active,
+.session-len-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.module-select-card.active,
+.theme-opt-btn.active,
+.answer-tile.active,
+.segment-btn.active {
+  border-color: var(--ci-ink);
+  background: var(--ci-yellow);
+  color: var(--ci-ink);
+  box-shadow: 2px 2px 0 var(--ci-ink);
+}
+
+.module-select-card.active .select-indicator {
+  background-color: var(--ci-ink);
+  border-color: var(--ci-ink);
+}
+
+.theme-toggle-btn {
+  border: 2px solid var(--ci-ink);
+  background: var(--ci-yellow);
+  color: var(--ci-ink);
+  box-shadow: 2px 2px 0 var(--ci-ink);
+}
+
+.theme-toggle-btn:hover,
+.theme-toggle-btn:active {
+  background: var(--ci-yellow);
+  color: var(--ci-ink);
+}
+
+.telemetry-value,
+.gauge-value-display,
+.keypad-header-value,
+.keypad-btn,
+.balance-scale,
+.input-terminal,
+.onboarding-code-badge,
+.home-stat-num,
+.wire-label,
+.env-badge,
+.type-tag,
+.log-entry-score {
+  font-family: var(--font-mono);
+}
+
+.telemetry-value.accent,
+.type-tag,
+.onboarding-code-badge,
+.env-badge {
+  color: var(--ci-ink);
+  background: var(--ci-yellow);
+  border: 2px solid var(--ci-ink);
+  border-radius: 3px;
+}
+
+.wire-label {
+  font-size: 6px;
+}
+
+.screen-glow-success,
+.screen-glow-error,
+.screen-glow-warning {
+  box-shadow: none !important;
+}
+
+@media (max-width: 700px) {
+  .system-title-badge {
+    display: none;
+  }
+}
+/* CI readability floor for legacy micro-labels */
+.abort-btn,
+.feedback-field,
+.board-label,
+.intercept-readouts span,
+.pilot-rank-badge,
+.pro-badge,
+.style-breakdown-metrics,
+.fuel-tank-header {
+  font-size: 0.72rem;
+}
+
+.wire-label {
+  font-size: 7px;
+}
+
+.segment-btn.active {
+  background: var(--ci-yellow) !important;
+  border: 2px solid var(--ci-ink) !important;
+  color: var(--ci-ink) !important;
+}
+.btn-primary:active {
+  background-color: #d9b200;
+  color: var(--ci-ink);
+}

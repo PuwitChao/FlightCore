@@ -50,6 +50,25 @@
     return v;
   }
 
+  // Convert internal failures into a bounded, user-safe message. Detailed
+  // diagnostics remain in the console; UI surfaces never expose stack traces,
+  // credentials, tokens, or backend implementation details.
+  function safeErrorMessage(error, fallback) {
+    const defaultMessage = (typeof fallback === "string" && fallback.trim())
+      ? fallback.trim()
+      : "The app encountered an unexpected error. Reload to continue.";
+    try {
+      const candidate = typeof error === "string" ? error : error && error.message;
+      if (typeof candidate !== "string" || !candidate.trim()) return defaultMessage;
+      const normalized = candidate.replace(/\s+/g, " ").trim();
+      if (!normalized || /password|secret|token|api[_-]?key|authorization|bearer|database|sql|stack trace|supabase|stripe/i.test(normalized)) {
+        return defaultMessage;
+      }
+      return normalized.length > 180 ? `${normalized.slice(0, 177)}...` : normalized;
+    } catch (e) {
+      return defaultMessage;
+    }
+  }
   // ---- difficulty & geometry ----
 
   const MAX_LEVEL = 99;
@@ -1094,6 +1113,7 @@
     MODULE_METADATA,
     safeParse,
     safeNumber,
+    safeErrorMessage,
     computeLevel,
     gaugePercent,
     moduleMetadata,

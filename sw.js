@@ -1,5 +1,5 @@
 // bump version string to bust cache on new deployments
-const CACHE_VERSION = "v4";
+const CACHE_VERSION = "v5";
 const CACHE_NAME = `flightcore-${CACHE_VERSION}`;
 const FONT_CACHE = `flightcore-fonts-${CACHE_VERSION}`;
 

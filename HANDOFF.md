@@ -1,67 +1,53 @@
-# Handoff: Professional UI, Layout & Bug Fix Sprint
+# Handoff: Aptitude Suite CI, Error Resilience & Test Coverage Closeout
 
-**Generated**: 2026-08-02 21:05 +07:00
+**Generated**: 2026-08-09 00:57 +07:00
 **Branch**: main
-**Status**: Ready for Review
-
-## Loop Telemetry
-- **Active Subtask**: Professional UI de-vibing, fluid layout, bug fixes, and radar module removal
-- **Current Iteration**: 1/1
-- **Healing Actions Taken**: Fixed `startRound` generator branches for `attitude` and `intercept` (`node tests.js` 97/97 passed cleanly)
+**Status**: Pushed to origin/main
 
 ## Goal
-Deliver fluid 100% full-screen layout responsiveness, fix text truncation, de-vibe UI styling to plain professional standards, resolve start-button runtime crash, purge `radar` module, and audit all game board components.
+Apply the Aptitude Companion Suite CI/theme guide, then audit error paths, generate targeted regression coverage, and close the session with durable logs, handoff, commit, and push.
 
 ## Completed
-- [x] Made `.terminal-frame` fluid full-screen (`width: 100%; max-width: 100%; height: 100vh;`).
-- [x] Removed text truncation (`text-overflow: ellipsis`) and updated `.module-family-list` to responsive auto-fill grid for equal card sizing.
-- [x] De-vibed UI styling by stripping out neon glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`) and replacing glowing dots with plain, solid active borders.
-- [x] Fixed start-button runtime crash by adding missing generator branches in `startRound()` and defensive guards in `setupStudyScreen()`.
-- [x] Purged `radar` (2D Radar Separation) from `core.js`, `app.js`, `index.html`, `styles.css`, and `tests.js`.
-- [x] Audited and refined `balance` (Balance Bender) layout and all remaining 12 module board renderers.
-- [x] Completed full verification (`node tests.js` 97/97 passed, `node --check` clean).
+- [x] Applied CI tokens and neobrutalist primitives across the main app and landing page: Space Grotesk display headings, Inter UI text, JetBrains Mono telemetry, yellow/ink accents, cream/slate surfaces, squared controls, 2px outlines, and hard shadows.
+- [x] Added the COCKPIT brand badge, aligned browser/PWA theme metadata, and bumped the service-worker cache version to `v5`.
+- [x] Replaced user-facing global error stack output with a bounded, secret-aware recovery message while keeping detailed diagnostics in the console.
+- [x] Guarded boot-time, settings, telemetry, onboarding, purge/reset, and Pro Pass storage access for private-mode/quota failures.
+- [x] Guarded optional keypad/session/debrief DOM bindings and clipboard access so partial DOMs and unavailable browser APIs degrade cleanly.
+- [x] Added core `safeErrorMessage` coverage and a zero-dependency app-layer VM suite for storage and error-boundary failures.
+- [x] Preserved unrelated pre-existing worktree edits and kept the closeout scope limited to this task.
+- [x] Created the closeout commit and pushed the audited state to origin/main.
 
-## Not Yet Done
-- [ ] Next feature milestone as specified in `ROADMAP.md`.
+## Verification
+- `node --check app.js` passed.
+- `node --check core.js` passed.
+- `node --check sw.js` passed.
+- `node --check tests_app_error_handling.js` passed.
+- `node tests.js` passed: **102/102**.
+- `node tests_app_error_handling.js` passed: **4/4**.
+- `manifest.json` JSON validation passed.
+- `git diff --check` passed with normal Windows CRLF warnings only.
+- Static error audit found no silent empty catches, no remaining top-level direct listener dereferences, and no unguarded app storage call sites outside the safe wrappers.
 
-## Failed Approaches (Don't Repeat These)
-- *Avoid fixed pixel width caps (`max-width: 440px`/`1100px`) or heavy glowing neon box-shadows on cards.*
-
-## Key Decisions
-| Decision | Rationale |
-|---|---|
-| Responsive Grid Auto-Fill | `grid-template-columns: repeat(auto-fill, minmax(130px, 1fr))` allows module selection cards to expand fluidly with viewport width while ensuring equal sizing. |
-| Plain Solid Active Borders | Replacing glowing dot halos with crisp 1px solid active borders provides a clean, professional dark/light UI. |
-| Defensive Generator Guard | Adding null-check fallback guards in `setupStudyScreen()` prevents runtime crashes if a module state is ever missing. |
-
-## Current State
-- **Working**: All 13 game modules, session flows, performance analytics engine, 97/97 engine tests passing.
-- **Broken**: None.
-- **Uncommitted Changes**: Pending git commit and push.
+## Open / Manual Follow-up
+- Browser visual QA across desktop/tablet/mobile and all selectable themes remains manual follow-up. The prior workspace handoff records browser automation as blocked by the Windows ACL environment; no automated browser claim is made here.
+- No known automated test or syntax failures remain.
 
 ## Files to Know
 | File | Why It Matters |
 |---|---|
-| `core.js` | Contains `FlightCore` game engine logic, module generators, flow-state math, and SVG chart generators. |
-| `app.js` | UI renderer, DOM event bindings, module renderers, defensive state guards, and session state handlers. |
-| `styles.css` | Fluid 100% full-screen layout styles, plain professional theme tokens, equal card grid rules, and board styles. |
-| `tests.js` | Automated assertion suite (97 tests) covering all engine mechanics and SVG math. |
-
-## Code Context
-```javascript
-// app.js defensive guard signature:
-if (!currentRndExpected) {
-  if (module === "attitude") currentRndExpected = generateAttitudeData();
-  ...
-}
-```
+| `styles.css` | CI design tokens, typography, borders, shadows, layout primitives, and readability floor. |
+| `landing/styles.css` | Landing-page CI treatment. |
+| `app.js` | Global error boundary, safe storage wrappers, guarded DOM bindings, telemetry and clipboard recovery. |
+| `core.js` | Pure engine helpers including `safeErrorMessage`. |
+| `tests.js` | Existing pure-engine suite, now including safe-error behavior. |
+| `tests_app_error_handling.js` | Node VM suite for app boot/storage/error-boundary resilience. |
+| `SESSION_LOG.md` | Durable session record. |
 
 ## Resume Instructions
-1. Run `node tests.js` to confirm all 97 assertions remain green.
-2. Run `node --check app.js`, `node --check core.js`, and `node --check sw.js` for syntax validation.
+1. Confirm `git status --short --branch` is clean and `main` matches `origin/main`.
+2. If browser access is available, run manual visual QA across the CI theme surfaces and responsive breakpoints.
+3. Continue from the next roadmap milestone in `ROADMAP.md`.
 
 ## Setup Required
-- No external packages or setup required. Standalone web app running pure HTML/CSS/JS.
-
-## Warnings & Caveats
-- All code modifications, files, and git commits must strictly take place in `D:\Documents\Personal_Project\Google_AG\FlightCore`.
+- Standalone web app; no build tool or dependency installation required.
+- Run `node tests.js` and `node tests_app_error_handling.js` for the local regression gate.

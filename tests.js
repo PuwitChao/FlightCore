@@ -82,6 +82,29 @@
   test("safeParse: object fallback keeps parsed object", () => assertDeep(FC.safeParse('{"a":1}', {}), { a: 1 }));
 
   // ==========================================
+  // ==========================================
+  // safeErrorMessage
+  // ==========================================
+  test("safeErrorMessage: null errors use a generic recovery message", () => {
+    assertEqual(FC.safeErrorMessage(null), "The app encountered an unexpected error. Reload to continue.");
+  });
+  test("safeErrorMessage: preserves short non-sensitive context", () => {
+    assertEqual(FC.safeErrorMessage(new Error("Brief failure")), "Brief failure");
+  });
+  test("safeErrorMessage: redacts sensitive implementation details", () => {
+    const out = FC.safeErrorMessage(new Error("supabase token leaked: abc123"));
+    assertEqual(out, "The app encountered an unexpected error. Reload to continue.");
+  });
+  test("safeErrorMessage: bounds long messages", () => {
+    const out = FC.safeErrorMessage(new Error("x".repeat(300)));
+    assertEqual(out.length, 180);
+    assert(out.endsWith("..."));
+  });
+  test("safeErrorMessage: handles throwing message getters", () => {
+    const error = {};
+    Object.defineProperty(error, "message", { get() { throw new Error("getter failed"); } });
+    assertEqual(FC.safeErrorMessage(error, "Safe fallback"), "Safe fallback");
+  });
   // safeNumber
   // ==========================================
   test("safeNumber: valid string", () => assertEqual(FC.safeNumber("8", 0), 8));

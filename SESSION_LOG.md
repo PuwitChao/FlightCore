@@ -67,3 +67,25 @@ Performed the requested final wrap-up after the usability correction patch. Conf
 ### Handoff State
 - Manual browser QA remains the only material open item because browser automation is still blocked by the Windows sandbox ACL issue.
 - Next agent should start with browser visual QA of the corrected Target Scan, Wire Trace, onboarding modal, and module catalog.
+
+## 2026-08-09 00:57 +07:00 - CI Theme, Error Resilience & Test Generation Closeout
+
+### Summary
+Applied the Aptitude Companion Suite CI guide to the FlightCore app and landing page, then completed the requested error-handling audit and generated targeted regression coverage before closeout.
+
+### Code Changes
+- Added shared CI tokens and neobrutalist component overrides in `styles.css` and `landing/styles.css`.
+- Added Space Grotesk imports and a `COCKPIT` brand badge in the main header.
+- Updated PWA theme/icon metadata and bumped the service-worker cache to `v5`.
+- Added `FlightCore.safeErrorMessage` to prevent stack traces, secrets, and backend details from reaching the UI error overlay.
+- Added guarded storage reads/writes/removals/clear operations across boot, settings, telemetry, onboarding, purge/reset, and Pro Pass flows.
+- Guarded optional top-level DOM listeners and clipboard operations; replaced silent telemetry/service-worker catches with observable warnings.
+
+### Test Generation & Verification
+- Extended `tests.js` with safe-error redaction, truncation, fallback, and hostile-getter cases: **102/102 passed**.
+- Added `tests_app_error_handling.js` VM coverage for unavailable storage, safe persistence wrappers, error-boundary redaction, and duplicate-error suppression: **4/4 passed**.
+- `node --check app.js`, `core.js`, `sw.js`, and `tests_app_error_handling.js` passed.
+- `manifest.json` JSON validation and `git diff --check` passed.
+
+### Remaining Manual Work
+- Browser visual QA across responsive breakpoints and selectable themes remains manual follow-up because the prior handoff documents the workspace ACL limitation for browser automation.
