@@ -113,4 +113,4 @@ Reworked the main app and landing page away from the yellow-heavy CI treatment t
 
 ### Handoff
 
-Changes are intentionally left uncommitted and unpushed for review.
+Implementation committed as `7a8489f` (`feat(ui): refresh theme and wire trace crossings`) and pushed to `origin/main`.

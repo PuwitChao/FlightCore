@@ -2,7 +2,7 @@
 
 **Generated**: 2026-08-09
 **Branch**: main
-**Status**: Working tree changes ready for review (not committed)
+**Status**: Committed and pushed to origin/main (`7a8489f`)
 
 ## Goal
 Refresh the Flight Core visual system toward Apple Human Interface Guidelines, replace yellow emphasis with calm neutral/blue surfaces, and make Wire Trace crossings explicit overpasses with deterministic bridge rendering.
@@ -44,7 +44,7 @@ Refresh the Flight Core visual system toward Apple Human Interface Guidelines, r
 | `SESSION_LOG.md` | Durable session record. |
 
 ## Resume Instructions
-1. Review the current Apple HIG and Wire Trace changes in `git diff`; commit/push only after approval.
+1. Confirm `git status --short --branch` is clean and `main` matches `origin/main`.
 2. If browser access is available, run manual visual QA across the CI theme surfaces and responsive breakpoints.
 3. Continue from the next roadmap milestone in `ROADMAP.md`.
 
