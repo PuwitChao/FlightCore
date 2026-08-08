@@ -548,6 +548,24 @@ function pointsToPath(points) {
   return pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 }
 
+function renderWireBridge(bridge, isActive) {
+  if (!bridge || !Number.isFinite(bridge.x) || !Number.isFinite(bridge.y)) return "";
+  const gap = 3.6;
+  const rise = 2.8;
+  const x = bridge.x;
+  const y = bridge.y;
+  const maskPath = bridge.orientation === "vertical"
+    ? `M ${x} ${y - gap} L ${x} ${y + gap}`
+    : `M ${x - gap} ${y} L ${x + gap} ${y}`;
+  const arcPath = bridge.orientation === "vertical"
+    ? `M ${x} ${y - gap} Q ${x + rise} ${y} ${x} ${y + gap}`
+    : `M ${x - gap} ${y} Q ${x} ${y - rise} ${x + gap} ${y}`;
+  return `
+    <path class="wire-bridge-mask" d="${maskPath}" aria-hidden="true" />
+    <path class="wire-bridge ${isActive ? "wire-bridge-active" : "wire-bridge-muted"}" d="${arcPath}" aria-hidden="true" />
+  `;
+}
+
 function renderWireBoard(data) {
   const count = data.starts.length;
   const rowGap = count > 1 ? 68 / (count - 1) : 0;
@@ -563,13 +581,17 @@ function renderWireBoard(data) {
     <circle class="wire-terminal wire-start" cx="${activePath.points[0].x}" cy="${activePath.points[0].y}" r="1.9" />
     <circle class="wire-terminal wire-end" cx="${activePath.points[activePath.points.length - 1].x}" cy="${activePath.points[activePath.points.length - 1].y}" r="2.4" />
   ` : "";
+  const bridges = paths.flatMap(path => (Array.isArray(path.bridges) ? path.bridges : []).map(bridge =>
+    renderWireBridge(bridge, path === activePath)
+  )).join("");
   const startLabels = data.starts.map((s, idx) => `<text x="4" y="${yForIndex(idx) + 1.8}" class="wire-label ${s === data.queryStart ? 'wire-query' : ''}">${s}</text>`).join("");
   const endLabels = data.ends.map((e, idx) => `<text x="94" y="${yForIndex(idx) + 1.8}" class="wire-label">${e}</text>`).join("");
   return `
     <div class="aptitude-board wire-board">
-      <div class="board-prompt">Trace the blue route from <strong>${data.queryStart}</strong>. Crossings are overpasses, not junctions.</div>
+      <div class="board-prompt">Trace the highlighted route from <strong>${data.queryStart}</strong>. A hump marks a bridge-over; crossings are not junctions.</div>
       <svg class="wire-svg" viewBox="0 0 100 88" role="img" aria-label="Wire trace puzzle from ${data.queryStart} to a numbered endpoint">
-        ${inactiveLines}${activeLine}${startLabels}${endLabels}
+        <title>Trace ${data.queryStart}. Bridges show routes passing over one another.</title>
+        ${inactiveLines}${activeLine}${bridges}${startLabels}${endLabels}
       </svg>
     </div>
     <div class="answer-grid compact" id="wire-choice-grid">
@@ -577,7 +599,6 @@ function renderWireBoard(data) {
     </div>
   `;
 }
-
 function renderTargetBoard(data, includeChoices = true) {
   const cells = data.cells.map((cell, idx) => `
     <div class="target-cell" aria-label="${cell.color} ${cell.shape} ${idx + 1}">

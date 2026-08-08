@@ -89,3 +89,28 @@ Applied the Aptitude Companion Suite CI guide to the FlightCore app and landing 
 
 ### Remaining Manual Work
 - Browser visual QA across responsive breakpoints and selectable themes remains manual follow-up because the prior handoff documents the workspace ACL limitation for browser automation.
+
+## 2026-08-09 - Apple HIG Visual Refresh & Wire Trace Overpasses
+
+### Summary
+
+Reworked the main app and landing page away from the yellow-heavy CI treatment toward a restrained Apple HIG-inspired system: system UI typography, neutral dark/light surfaces, semantic colors, blue selection states, soft borders, and subtle elevation.
+
+### Code Changes
+
+- Replaced the appended CI overrides in `styles.css` and `landing/styles.css` with Apple-aligned tokens, radii, focus rings, and responsive surface treatments.
+- Removed the retired Space Grotesk import and updated PWA metadata/icons to the neutral/blue palette.
+- Added deterministic orthogonal crossing detection in `core.js`; horizontal routes own explicit bridge metadata.
+- Updated `app.js` Wire Trace SVG rendering with background masks and curved bridge arches so crossings read as overpasses rather than junctions.
+
+### Verification
+
+- `node --check app.js`, `core.js`, and `sw.js` passed.
+- `node tests.js` passed: **103/103**.
+- `node tests_app_error_handling.js` passed: **4/4**.
+- `git diff --check` passed.
+- In-app browser screenshot capture remains unavailable because the Windows sandbox helper fails ACL setup; no automated visual-pass claim is made.
+
+### Handoff
+
+Changes are intentionally left uncommitted and unpushed for review.

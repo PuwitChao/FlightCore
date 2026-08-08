@@ -1,6 +1,6 @@
 # Flight Core - Cockpit Challenge Game
 
-Flight Core is a zero-build, offline-first browser game built around cockpit-inspired memory, visual scanning, logic, and multitask challenges. It is designed for quick sessions on mobile or desktop, with a dark glass UI, tactile controls, local history, skill-family debriefs, and a grouped aptitude module catalog.
+Flight Core is a zero-build, offline-first browser game built around cockpit-inspired memory, visual scanning, logic, and multitask challenges. It is designed for quick sessions on mobile or desktop, with an Apple HIG-inspired neutral/blue UI, tactile controls, local history, skill-family debriefs, and a grouped aptitude module catalog.
 
 Flight Core is for entertainment only. It is not real aviation instruction, not regulatory study material, and not for real-world aviation use.
 
@@ -16,6 +16,7 @@ Flight Core is for entertainment only. It is not real aviation instruction, not 
 - Module rotation: avoids playing the same module three times in a row when possible.
 - Local history: scores, accuracy, streaks, module trends, skill-family trends, and recent run history stay in localStorage.
 - Responsive layout: mobile, tablet, and widescreen desktop cockpit layouts.
+- Wire Trace crossings render as explicit bridge-overpasses with deterministic route metadata.
 
 ## Run Locally
 

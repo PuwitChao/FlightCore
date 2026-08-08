@@ -410,6 +410,22 @@
     assertEqual(queryPath.end, d.expected);
   });
 
+  test("generateWire: annotates crossings as horizontal overpasses", () => {
+    let bridgeCount = 0;
+    for (let seed = 1; seed <= 12; seed++) {
+      const d = FC.generateWire(5, seeded(seed));
+      d.paths.forEach(path => {
+        assert(Array.isArray(path.bridges), "every path exposes bridge metadata");
+        path.bridges.forEach(bridge => {
+          bridgeCount += 1;
+          assertEqual(bridge.orientation, "horizontal");
+          assert(Number.isFinite(bridge.x) && Number.isFinite(bridge.y));
+          assert(typeof bridge.crossingWith === "string" && bridge.crossingWith.length > 0);
+        });
+      });
+    }
+    assert(bridgeCount > 0, "seeded routes should include at least one crossing bridge");
+  });
   test("generateClearance: produces extended recall fields", () => {
     const d = FC.generateClearance(ATC, 5, seeded(12));
     ["callsign", "facility", "freq", "squawk", "altitude", "heading", "speed"].forEach(f => assert(d.expected[f]));

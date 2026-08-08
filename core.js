@@ -562,9 +562,47 @@
           { x: midX, y: startY },
           { x: midX, y: endY },
           { x: 88, y: endY }
-        ]
+        ],
+        bridges: []
       };
     });
+
+    // Mark every orthogonal route crossing with a deterministic overpass.
+    // Horizontal segments own the bridge so the rendered flow chart always
+    // communicates "passes over" instead of an ambiguous junction.
+    const segmentsFor = path => [
+      { orientation: "horizontal", x1: path.points[0].x, x2: path.points[1].x, y: path.points[0].y },
+      { orientation: "vertical", x: path.points[1].x, y1: path.points[1].y, y2: path.points[2].y },
+      { orientation: "horizontal", x1: path.points[2].x, x2: path.points[3].x, y: path.points[2].y }
+    ];
+    const segments = paths.map(segmentsFor);
+    const EPSILON = 1;
+    const addCrossing = (horizontalPathIdx, verticalPathIdx, horizontal, vertical) => {
+      const x = vertical.x;
+      const y = horizontal.y;
+      const verticalMin = Math.min(vertical.y1, vertical.y2);
+      const verticalMax = Math.max(vertical.y1, vertical.y2);
+      if (x <= horizontal.x1 + EPSILON || x >= horizontal.x2 - EPSILON) return;
+      if (y <= verticalMin + EPSILON || y >= verticalMax - EPSILON) return;
+      paths[horizontalPathIdx].bridges.push({
+        x,
+        y,
+        orientation: "horizontal",
+        crossingWith: paths[verticalPathIdx].start
+      });
+    };
+
+    for (let i = 0; i < segments.length; i++) {
+      for (let j = i + 1; j < segments.length; j++) {
+        segments[i].forEach(a => segments[j].forEach(b => {
+          if (a.orientation === "horizontal" && b.orientation === "vertical") {
+            addCrossing(i, j, a, b);
+          } else if (a.orientation === "vertical" && b.orientation === "horizontal") {
+            addCrossing(j, i, b, a);
+          }
+        }));
+      }
+    }
     const query = mappings[Math.floor(rng() * mappings.length)];
     return { starts, ends, mappings, paths, queryStart: query.start, expected: query.end };
   }

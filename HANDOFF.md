@@ -1,28 +1,28 @@
-# Handoff: Aptitude Suite CI, Error Resilience & Test Coverage Closeout
+# Handoff: Apple HIG Visual Refresh & Wire Trace Overpasses
 
-**Generated**: 2026-08-09 00:57 +07:00
+**Generated**: 2026-08-09
 **Branch**: main
-**Status**: Pushed to origin/main
+**Status**: Working tree changes ready for review (not committed)
 
 ## Goal
-Apply the Aptitude Companion Suite CI/theme guide, then audit error paths, generate targeted regression coverage, and close the session with durable logs, handoff, commit, and push.
+Refresh the Flight Core visual system toward Apple Human Interface Guidelines, replace yellow emphasis with calm neutral/blue surfaces, and make Wire Trace crossings explicit overpasses with deterministic bridge rendering.
 
 ## Completed
-- [x] Applied CI tokens and neobrutalist primitives across the main app and landing page: Space Grotesk display headings, Inter UI text, JetBrains Mono telemetry, yellow/ink accents, cream/slate surfaces, squared controls, 2px outlines, and hard shadows.
-- [x] Added the COCKPIT brand badge, aligned browser/PWA theme metadata, and bumped the service-worker cache version to `v5`.
+- [x] Replaced the previous yellow/neobrutalist treatment with Apple-aligned system typography, neutral surfaces, semantic system colors, blue active states, soft elevation, and touch-friendly radii across the main app and landing page.
+- [x] Updated browser/PWA theme metadata and icon colors to the neutral/blue palette; retained the COCKPIT brand badge and service-worker cache `v5`.
 - [x] Replaced user-facing global error stack output with a bounded, secret-aware recovery message while keeping detailed diagnostics in the console.
 - [x] Guarded boot-time, settings, telemetry, onboarding, purge/reset, and Pro Pass storage access for private-mode/quota failures.
 - [x] Guarded optional keypad/session/debrief DOM bindings and clipboard access so partial DOMs and unavailable browser APIs degrade cleanly.
 - [x] Added core `safeErrorMessage` coverage and a zero-dependency app-layer VM suite for storage and error-boundary failures.
 - [x] Preserved unrelated pre-existing worktree edits and kept the closeout scope limited to this task.
-- [x] Created the closeout commit and pushed the audited state to origin/main.
+- [x] Added deterministic Wire Trace crossing metadata, SVG bridge masks/arches, accessible prompt/title copy, and regression coverage for overpasses.
 
 ## Verification
 - `node --check app.js` passed.
 - `node --check core.js` passed.
 - `node --check sw.js` passed.
 - `node --check tests_app_error_handling.js` passed.
-- `node tests.js` passed: **102/102**.
+- `node tests.js` passed: **103/103**.
 - `node tests_app_error_handling.js` passed: **4/4**.
 - `manifest.json` JSON validation passed.
 - `git diff --check` passed with normal Windows CRLF warnings only.
@@ -35,8 +35,8 @@ Apply the Aptitude Companion Suite CI/theme guide, then audit error paths, gener
 ## Files to Know
 | File | Why It Matters |
 |---|---|
-| `styles.css` | CI design tokens, typography, borders, shadows, layout primitives, and readability floor. |
-| `landing/styles.css` | Landing-page CI treatment. |
+| `styles.css` | Apple HIG-aligned tokens, typography, borders, shadows, layout primitives, wire bridges, and readability floor. |
+| `landing/styles.css` | Apple HIG-aligned landing-page surfaces and controls. |
 | `app.js` | Global error boundary, safe storage wrappers, guarded DOM bindings, telemetry and clipboard recovery. |
 | `core.js` | Pure engine helpers including `safeErrorMessage`. |
 | `tests.js` | Existing pure-engine suite, now including safe-error behavior. |
@@ -44,7 +44,7 @@ Apply the Aptitude Companion Suite CI/theme guide, then audit error paths, gener
 | `SESSION_LOG.md` | Durable session record. |
 
 ## Resume Instructions
-1. Confirm `git status --short --branch` is clean and `main` matches `origin/main`.
+1. Review the current Apple HIG and Wire Trace changes in `git diff`; commit/push only after approval.
 2. If browser access is available, run manual visual QA across the CI theme surfaces and responsive breakpoints.
 3. Continue from the next roadmap milestone in `ROADMAP.md`.
 

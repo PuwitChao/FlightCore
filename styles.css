@@ -3038,92 +3038,179 @@ body[data-theme="warm"] .balance-panel {
   border-color: var(--accent-blue);
   background: var(--select-active-bg);
 }
-/* --- APTITUDE COMPANION SUITE CI ---
-   Shared neobrutalist tokens and primitives. This layer intentionally sits
-   last so the existing game modules inherit one consistent visual system. */
+/* --- APPLE HUMAN INTERFACE GUIDELINES ---
+   Calm surfaces, semantic system colors, generous touch targets, and
+   restrained elevation replace the previous high-contrast treatment. */
 :root {
-  --ci-yellow: #ffd000;
-  --ci-ink: #222222;
-  --ci-canvas-light: #f4f0e8;
-  --ci-surface-light: #faf7f2;
-  --ci-canvas-dark: #0f172a;
-  --ci-surface-dark: #1e293b;
-  --ci-teal: #0d9488;
-  --ci-red: #e63946;
-  --ci-green: #10b981;
-  --ci-blue: #2563eb;
-  --ci-pink: #ec4899;
-  --font-display: 'Space Grotesk', var(--font-sans), sans-serif;
+  --apple-blue: #0a84ff;
+  --apple-blue-light: #007aff;
+  --apple-indigo: #5e5ce6;
+  --apple-green: #30d158;
+  --apple-red: #ff453a;
+  --apple-orange: #ff9f0a;
+  --apple-bg-dark: #0b0d10;
+  --apple-surface-dark: #151a24;
+  --apple-elevated-dark: #1c222c;
+  --apple-bg-light: #f2f2f7;
+  --apple-surface-light: #ffffff;
+  --apple-elevated-light: #e5e5ea;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
 }
 
 body {
-  --bg-dark: var(--ci-canvas-dark);
-  --bg-card: var(--ci-surface-dark);
-  --bg-input: #26364c;
-  --border-subtle: var(--ci-ink);
-  --border-active: var(--ci-yellow);
-  --text-primary: #f8fafc;
-  --text-secondary: #e2e8f0;
-  --text-muted: #cbd5e1;
-  --accent-blue: var(--ci-yellow);
-  --accent-cyan: #38bdf8;
-  --accent-amber: var(--ci-yellow);
-  --success-emerald: var(--ci-green);
-  --success-bg: rgba(16, 185, 129, 0.16);
-  --success-border: var(--ci-green);
-  --error-rose: var(--ci-red);
-  --error-bg: rgba(230, 57, 70, 0.16);
-  --error-border: var(--ci-red);
-  --warning-bg: rgba(255, 208, 0, 0.16);
-  --warning-border: var(--ci-yellow);
-  --btn-neutral-bg: var(--ci-surface-dark);
-  --btn-neutral-border: var(--ci-ink);
-  --keypad-btn-bg: var(--ci-surface-dark);
-  --keypad-btn-active-bg: rgba(255, 208, 0, 0.18);
-  --keypad-btn-action-bg: var(--ci-surface-dark);
-  --select-active-bg: rgba(255, 208, 0, 0.16);
-  --shadow-premium: 3px 3px 0 var(--ci-ink);
-  --radius-lg: 4px;
-  --radius-md: 4px;
-  --radius-sm: 3px;
-  --transition-fast: 0.16s ease;
+  --bg-dark: var(--apple-bg-dark);
+  --bg-card: var(--apple-surface-dark);
+  --bg-input: var(--apple-elevated-dark);
+  --border-subtle: rgba(255, 255, 255, 0.16);
+  --border-active: var(--apple-blue);
+  --text-primary: #f5f5f7;
+  --text-secondary: #d1d1d6;
+  --text-muted: #8e8e93;
+  --accent-blue: var(--apple-blue);
+  --accent-blue-glow: rgba(10, 132, 255, 0.18);
+  --accent-cyan: #64d2ff;
+  --accent-amber: var(--apple-orange);
+  --success-emerald: var(--apple-green);
+  --success-bg: rgba(48, 209, 88, 0.14);
+  --success-border: rgba(48, 209, 88, 0.55);
+  --error-rose: var(--apple-red);
+  --error-bg: rgba(255, 69, 58, 0.14);
+  --error-border: rgba(255, 69, 58, 0.55);
+  --warning-bg: rgba(255, 159, 10, 0.14);
+  --warning-border: rgba(255, 159, 10, 0.55);
+  --btn-neutral-bg: rgba(255, 255, 255, 0.06);
+  --btn-neutral-border: rgba(255, 255, 255, 0.18);
+  --keypad-btn-bg: var(--apple-elevated-dark);
+  --keypad-btn-active-bg: rgba(10, 132, 255, 0.2);
+  --keypad-btn-action-bg: rgba(255, 255, 255, 0.05);
+  --select-active-bg: rgba(10, 132, 255, 0.15);
+  --shadow-premium: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+  --transition-fast: 0.2s ease;
 }
 
-body[data-theme="light"],
+body[data-theme="light"] {
+  --bg-dark: var(--apple-bg-light);
+  --bg-card: var(--apple-surface-light);
+  --bg-input: var(--apple-elevated-light);
+  --border-subtle: #d1d1d6;
+  --border-active: var(--apple-blue-light);
+  --text-primary: #1c1c1e;
+  --text-secondary: #3a3a3c;
+  --text-muted: #6c6c70;
+  --accent-blue: var(--apple-blue-light);
+  --accent-cyan: #007aff;
+  --accent-amber: #ff9500;
+  --btn-neutral-bg: #ffffff;
+  --btn-neutral-border: #d1d1d6;
+  --keypad-btn-bg: #ffffff;
+  --keypad-btn-active-bg: rgba(0, 122, 255, 0.12);
+  --keypad-btn-action-bg: #e5e5ea;
+  --select-active-bg: rgba(0, 122, 255, 0.1);
+  --shadow-premium: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
 body[data-theme="warm"] {
-  --bg-dark: var(--ci-canvas-light);
-  --bg-card: var(--ci-surface-light);
-  --bg-input: #eee9df;
-  --border-subtle: var(--ci-ink);
-  --border-active: var(--ci-yellow);
-  --text-primary: var(--ci-ink);
-  --text-secondary: #334155;
-  --text-muted: #475569;
-  --accent-blue: var(--ci-yellow);
-  --accent-cyan: var(--ci-teal);
-  --accent-amber: var(--ci-yellow);
-  --success-emerald: var(--ci-green);
-  --error-rose: var(--ci-red);
-  --warning-bg: rgba(255, 208, 0, 0.22);
-  --warning-border: var(--ci-ink);
-  --btn-neutral-bg: var(--ci-surface-light);
-  --btn-neutral-border: var(--ci-ink);
-  --keypad-btn-bg: var(--ci-surface-light);
-  --keypad-btn-active-bg: rgba(255, 208, 0, 0.26);
-  --keypad-btn-action-bg: var(--ci-surface-light);
-  --select-active-bg: rgba(255, 208, 0, 0.24);
-  --shadow-premium: 3px 3px 0 var(--ci-ink);
+  --bg-dark: #f4f0ec;
+  --bg-card: #fffdf9;
+  --bg-input: #ebe6e1;
+  --border-subtle: #d8d1c9;
+  --border-active: #ff9500;
+  --text-primary: #1c1c1e;
+  --text-secondary: #3a3a3c;
+  --text-muted: #6c6c70;
+  --accent-blue: #ff9500;
+  --accent-cyan: #007aff;
+  --accent-amber: #ff9500;
+  --btn-neutral-bg: #fffdf9;
+  --btn-neutral-border: #d8d1c9;
+  --keypad-btn-bg: #fffdf9;
+  --keypad-btn-active-bg: rgba(255, 149, 0, 0.12);
+  --keypad-btn-action-bg: #ebe6e1;
+  --select-active-bg: rgba(255, 149, 0, 0.12);
+  --shadow-premium: 0 6px 18px rgba(70, 50, 30, 0.08);
 }
 
-body[data-theme="mono"],
-body[data-theme="sage"],
-body[data-theme="amber"],
+body[data-theme="mono"] {
+  --bg-dark: #111113;
+  --bg-card: #1c1c1e;
+  --bg-input: #2c2c2e;
+  --border-subtle: rgba(255, 255, 255, 0.18);
+  --border-active: #8e8e93;
+  --text-primary: #f5f5f7;
+  --text-secondary: #d1d1d6;
+  --text-muted: #8e8e93;
+  --accent-blue: #d1d1d6;
+  --accent-cyan: #aeaeb2;
+  --accent-amber: #aeaeb2;
+  --btn-neutral-bg: #2c2c2e;
+  --btn-neutral-border: rgba(255, 255, 255, 0.18);
+  --keypad-btn-bg: #2c2c2e;
+  --keypad-btn-active-bg: rgba(255, 255, 255, 0.14);
+  --keypad-btn-action-bg: #1c1c1e;
+  --select-active-bg: rgba(255, 255, 255, 0.12);
+}
+
+body[data-theme="sage"] {
+  --bg-dark: #0f1b16;
+  --bg-card: #16241e;
+  --bg-input: #1d3027;
+  --border-subtle: rgba(216, 255, 230, 0.18);
+  --border-active: var(--apple-green);
+  --text-primary: #f0fdf4;
+  --text-secondary: #d1e7d8;
+  --text-muted: #9bb7a4;
+  --accent-blue: var(--apple-green);
+  --accent-cyan: #64d2ff;
+  --accent-amber: #ff9f0a;
+  --btn-neutral-bg: #1d3027;
+  --btn-neutral-border: rgba(216, 255, 230, 0.18);
+  --keypad-btn-bg: #1d3027;
+  --keypad-btn-active-bg: rgba(48, 209, 88, 0.18);
+  --keypad-btn-action-bg: #16241e;
+  --select-active-bg: rgba(48, 209, 88, 0.15);
+}
+
+body[data-theme="amber"] {
+  --bg-dark: #100b06;
+  --bg-card: #1e140c;
+  --bg-input: #2a1b0e;
+  --border-subtle: rgba(255, 214, 160, 0.18);
+  --border-active: var(--apple-orange);
+  --text-primary: #fff4e5;
+  --text-secondary: #f5d7b0;
+  --text-muted: #c3a27b;
+  --accent-blue: var(--apple-orange);
+  --accent-cyan: #64d2ff;
+  --accent-amber: var(--apple-orange);
+  --btn-neutral-bg: #2a1b0e;
+  --btn-neutral-border: rgba(255, 214, 160, 0.18);
+  --keypad-btn-bg: #2a1b0e;
+  --keypad-btn-active-bg: rgba(255, 159, 10, 0.18);
+  --keypad-btn-action-bg: #1e140c;
+  --select-active-bg: rgba(255, 159, 10, 0.15);
+}
+
 body[data-theme="stealth"] {
-  --accent-blue: var(--ci-yellow);
-  --accent-amber: var(--ci-yellow);
-  --border-active: var(--ci-yellow);
-  --select-active-bg: rgba(255, 208, 0, 0.16);
-  --shadow-premium: 3px 3px 0 var(--ci-ink);
+  --bg-dark: #000000;
+  --bg-card: #121216;
+  --bg-input: #1c1c20;
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --border-active: var(--apple-blue);
+  --text-primary: #f5f5f7;
+  --text-secondary: #d1d1d6;
+  --text-muted: #8e8e93;
+  --accent-blue: var(--apple-blue);
+  --accent-cyan: #64d2ff;
+  --accent-amber: var(--apple-orange);
+  --btn-neutral-bg: #1c1c20;
+  --btn-neutral-border: rgba(255, 255, 255, 0.14);
+  --keypad-btn-bg: #1c1c20;
+  --keypad-btn-active-bg: rgba(10, 132, 255, 0.18);
+  --keypad-btn-action-bg: #121216;
+  --select-active-bg: rgba(10, 132, 255, 0.14);
 }
 
 body,
@@ -3149,36 +3236,38 @@ h3,
 .answer-tile,
 .abort-btn {
   font-family: var(--font-display);
-  text-transform: uppercase;
+  text-transform: none;
+  letter-spacing: -0.01em;
 }
 
 .system-title {
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .system-title-badge {
   display: inline-flex;
   align-items: center;
   min-height: 22px;
-  padding: 2px 7px;
-  background: var(--ci-yellow);
-  color: var(--ci-ink);
-  border: 2px solid var(--ci-ink);
-  box-shadow: 2px 2px 0 var(--ci-ink);
+  padding: 2px 8px;
+  background: var(--select-active-bg);
+  color: var(--accent-blue);
+  border: 1px solid var(--border-active);
+  border-radius: 7px;
+  box-shadow: none;
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .terminal-frame {
-  max-width: 1700px;
+  max-width: 1440px;
   border: 0;
 }
 
 .dashboard-header {
   padding: 14px 20px 12px;
-  border-bottom: 2px solid var(--ci-ink);
+  border-bottom: 1px solid var(--border-subtle);
   gap: 12px;
 }
 
@@ -3195,21 +3284,21 @@ h3,
 .achievement-card,
 .pro-feature-card,
 .waitlist-card {
-  border: 2px solid var(--ci-ink);
-  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-premium);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 .terminal-card {
-  padding: 18px;
+  padding: 20px;
 }
 
 .terminal-card-header {
   color: var(--text-primary);
-  letter-spacing: 0.04em;
-  border-bottom: 2px solid var(--ci-ink);
+  letter-spacing: 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .btn,
@@ -3220,41 +3309,42 @@ h3,
 .segment-btn,
 .history-tab,
 .theme-toggle-btn {
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .btn,
 .answer-tile,
 .session-len-btn,
 .theme-opt-btn {
-  border-width: 2px;
-  box-shadow: 2px 2px 0 var(--ci-ink);
+  border-width: 1px;
+  box-shadow: none;
 }
 
 .btn-primary,
 .btn-primary:hover,
 .btn-primary:focus-visible {
-  background-color: var(--ci-yellow);
-  border-color: var(--ci-ink);
-  color: var(--ci-ink);
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #ffffff;
 }
 
 .btn-success {
-  background-color: var(--ci-green);
-  border-color: var(--ci-ink);
-  color: var(--ci-ink);
+  background-color: var(--success-emerald);
+  border-color: var(--success-emerald);
+  color: #ffffff;
 }
 
 .btn-danger {
-  background-color: var(--ci-red);
-  border-color: var(--ci-ink);
+  background-color: var(--error-rose);
+  border-color: var(--error-rose);
+  color: #ffffff;
 }
 
 .btn:active,
 .answer-tile:active,
 .theme-opt-btn:active,
 .session-len-btn:active {
-  transform: translate(2px, 2px);
+  transform: scale(0.98);
   box-shadow: none;
 }
 
@@ -3262,28 +3352,29 @@ h3,
 .theme-opt-btn.active,
 .answer-tile.active,
 .segment-btn.active {
-  border-color: var(--ci-ink);
-  background: var(--ci-yellow);
-  color: var(--ci-ink);
-  box-shadow: 2px 2px 0 var(--ci-ink);
+  border-color: var(--accent-blue);
+  background: var(--select-active-bg);
+  color: var(--text-primary);
+  box-shadow: none;
 }
 
 .module-select-card.active .select-indicator {
-  background-color: var(--ci-ink);
-  border-color: var(--ci-ink);
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  box-shadow: none;
 }
 
 .theme-toggle-btn {
-  border: 2px solid var(--ci-ink);
-  background: var(--ci-yellow);
-  color: var(--ci-ink);
-  box-shadow: 2px 2px 0 var(--ci-ink);
+  border: 1px solid var(--border-subtle);
+  background: var(--btn-neutral-bg);
+  color: var(--text-secondary);
+  box-shadow: none;
 }
 
 .theme-toggle-btn:hover,
 .theme-toggle-btn:active {
-  background: var(--ci-yellow);
-  color: var(--ci-ink);
+  background: var(--select-active-bg);
+  color: var(--accent-blue);
 }
 
 .telemetry-value,
@@ -3305,14 +3396,10 @@ h3,
 .type-tag,
 .onboarding-code-badge,
 .env-badge {
-  color: var(--ci-ink);
-  background: var(--ci-yellow);
-  border: 2px solid var(--ci-ink);
-  border-radius: 3px;
-}
-
-.wire-label {
-  font-size: 6px;
+  color: var(--accent-blue);
+  background: var(--select-active-bg);
+  border: 1px solid var(--border-active);
+  border-radius: 7px;
 }
 
 .screen-glow-success,
@@ -3321,12 +3408,85 @@ h3,
   box-shadow: none !important;
 }
 
-@media (max-width: 700px) {
-  .system-title-badge {
-    display: none;
-  }
+.wire-board {
+  overflow: visible;
 }
-/* CI readability floor for legacy micro-labels */
+
+.wire-board .board-prompt {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+}
+
+.wire-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wire-path.wire-active {
+  stroke: var(--accent-blue);
+}
+
+.wire-bridge-mask,
+.wire-bridge {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wire-bridge-mask {
+  stroke: var(--bg-input);
+  stroke-width: 5.4;
+}
+
+.wire-bridge {
+  stroke-width: 2.4;
+}
+
+.wire-bridge-active {
+  stroke: var(--accent-blue);
+}
+
+.wire-bridge-muted {
+  stroke: var(--text-secondary);
+  opacity: 0.55;
+}
+
+.wire-label {
+  font-size: 7px;
+  fill: var(--text-secondary);
+}
+
+.wire-label.wire-query {
+  fill: var(--accent-blue);
+}
+
+button:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-blue) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.pilot-rank-badge,
+.achievement-card.unlocked,
+.cei-badge,
+.pro-badge {
+  box-shadow: none;
+}
+
+.segment-btn.active,
+.btn-primary:active {
+  background: color-mix(in srgb, var(--accent-blue) 86%, #000000);
+  color: #ffffff;
+}
+
+/* Keep compact telemetry and feedback labels readable at Apple-style density. */
 .abort-btn,
 .feedback-field,
 .board-label,
@@ -3338,16 +3498,14 @@ h3,
   font-size: 0.72rem;
 }
 
-.wire-label {
-  font-size: 7px;
+/* The segment control has legacy inline styles; the blue tint is the selected state. */
+.segment-btn.active {
+  background: var(--select-active-bg) !important;
+  color: var(--text-primary) !important;
 }
 
-.segment-btn.active {
-  background: var(--ci-yellow) !important;
-  border: 2px solid var(--ci-ink) !important;
-  color: var(--ci-ink) !important;
-}
-.btn-primary:active {
-  background-color: #d9b200;
-  color: var(--ci-ink);
+@media (max-width: 700px) {
+  .system-title-badge {
+    display: none;
+  }
 }
