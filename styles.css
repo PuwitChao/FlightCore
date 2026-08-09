@@ -3049,10 +3049,15 @@ body[data-theme="warm"] .balance-panel {
   --ink: #222222;
   --muted-ink: #555555;
   --paper-grid: #ded7ca;
+  --accent: #00d4ff;
+  --accent-contrast: #162033;
   --bauhaus-yellow: #ffd000;
   --bauhaus-red: #e63946;
   --bauhaus-green: #10b981;
   --bauhaus-blue: #2563eb;
+  --bauhaus-orange: #ff8a00;
+  --bauhaus-slate: #64748b;
+  --font-heading: 'Space Grotesk', sans-serif;
   --font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
@@ -3060,7 +3065,7 @@ body[data-theme="warm"] .balance-panel {
   --neo-border-control: 2px solid var(--ink);
   --neo-offset-card: 3px 3px 0 0 var(--ink);
   --neo-offset-control: 2.5px 2.5px 0 0 var(--ink);
-  --neo-offset-yellow: 2px 2px 0 0 var(--bauhaus-yellow);
+  --neo-offset-accent: 2px 2px 0 0 var(--accent);
   --neo-transition: 120ms ease;
 }
 
@@ -3080,9 +3085,14 @@ body[data-theme='stealth'] {
   --text-primary: var(--ink);
   --text-secondary: #333333;
   --text-muted: var(--muted-ink);
-  --accent-blue: var(--bauhaus-blue);
+  --color-primary: var(--ink);
+  --color-secondary: var(--muted-ink);
+  --color-red: var(--bauhaus-red);
+  --color-green: var(--bauhaus-green);
+  --color-blue: var(--bauhaus-blue);
+  --accent-blue: var(--accent);
   --accent-blue-glow: transparent;
-  --accent-cyan: var(--bauhaus-blue);
+  --accent-cyan: var(--accent);
   --accent-amber: var(--bauhaus-yellow);
   --success-emerald: var(--bauhaus-green);
   --success-bg: #dcfce7;
@@ -3095,13 +3105,13 @@ body[data-theme='stealth'] {
   --btn-neutral-bg: var(--bg-card-solid);
   --btn-neutral-border: var(--ink);
   --keypad-bg: var(--bg-paper);
-  --keypad-active-bg: var(--bauhaus-yellow);
+  --keypad-active-bg: var(--accent);
   --keypad-panel-bg: var(--bg-card-solid);
   --keypad-btn-bg: var(--bg-card-solid);
-  --keypad-btn-active-bg: var(--bauhaus-yellow);
+  --keypad-btn-active-bg: var(--accent);
   --keypad-btn-action-bg: #fff3b0;
   --keypad-btn-shadow: var(--neo-offset-control);
-  --select-active-bg: var(--bauhaus-yellow);
+  --select-active-bg: var(--accent);
   --shadow-premium: var(--neo-offset-card);
   --radius-lg: 0;
   --radius-md: 0;
@@ -3116,16 +3126,17 @@ body[data-theme='stealth'] {
   font-family: var(--font-sans);
 }
 
-body[data-theme='light'] { --select-active-bg: var(--bauhaus-yellow); }
-body[data-theme='mono'] { --select-active-bg: var(--ink); --accent-blue: var(--ink); }
-body[data-theme='sage'] { --select-active-bg: var(--bauhaus-green); --accent-blue: var(--bauhaus-green); }
-body[data-theme='warm'] { --select-active-bg: #ffe3e6; --accent-blue: var(--bauhaus-red); }
+body[data-theme='dark'] { --accent: #00d4ff; --accent-contrast: #162033; }
+body[data-theme='light'] { --accent: var(--bauhaus-yellow); --accent-contrast: var(--ink); }
+body[data-theme='mono'] { --accent: var(--bauhaus-slate); --accent-contrast: #ffffff; }
+body[data-theme='sage'] { --accent: var(--bauhaus-green); --accent-contrast: #162033; }
+body[data-theme='warm'] { --accent: var(--bauhaus-orange); --accent-contrast: #221a10; }
 
 body[data-theme='mono'] .segment-btn.active,
 body[data-theme='mono'] .module-select-card.active,
 body[data-theme='mono'] .theme-opt-btn.active,
 body[data-theme='mono'] .answer-tile.active {
-  color: #ffffff !important;
+  color: var(--accent-contrast) !important;
 }
 
 .terminal-frame {
@@ -3240,26 +3251,16 @@ h3,
   align-items: center;
   min-height: 24px;
   padding: 3px 8px;
-  color: var(--ink) !important;
-  background: var(--bauhaus-yellow) !important;
+  color: var(--accent-contrast) !important;
+  background: var(--accent) !important;
   border: var(--neo-border-control) !important;
   border-radius: 0 !important;
-  box-shadow: var(--neo-offset-yellow) !important;
+  box-shadow: var(--neo-offset-accent) !important;
   font-family: var(--font-mono) !important;
   font-weight: 800;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
-
-body[data-theme='sage'] .type-tag,
-body[data-theme='sage'] .system-title-badge,
-body[data-theme='sage'] .pilot-rank-badge { background: var(--bauhaus-green) !important; color: var(--ink) !important; }
-body[data-theme='warm'] .type-tag,
-body[data-theme='warm'] .system-title-badge,
-body[data-theme='warm'] .pilot-rank-badge { background: #ffe3e6 !important; color: #7f1d1d !important; box-shadow: 2px 2px 0 0 var(--bauhaus-red) !important; }
-body[data-theme='mono'] .type-tag,
-body[data-theme='mono'] .system-title-badge,
-body[data-theme='mono'] .pilot-rank-badge { background: var(--ink) !important; color: #ffffff !important; }
 
 .btn,
 .abort-btn,
@@ -3299,8 +3300,8 @@ textarea {
 .beacon-option-card:hover,
 .horizon-option-card:hover,
 .segment-btn:hover {
-  background: var(--bauhaus-yellow) !important;
-  color: var(--ink) !important;
+  background: var(--accent) !important;
+  color: var(--accent-contrast) !important;
 }
 
 .btn:active,
@@ -3332,8 +3333,8 @@ textarea {
 .answer-tile.active {
   background: var(--select-active-bg) !important;
   border-color: var(--ink) !important;
-  color: var(--ink) !important;
-  box-shadow: var(--neo-offset-yellow) !important;
+  color: var(--accent-contrast) !important;
+  box-shadow: var(--neo-offset-accent) !important;
 }
 
 .btn-danger,
@@ -3357,6 +3358,12 @@ textarea {
   height: 36px;
   min-height: 36px;
   padding: 0;
+}
+
+.btn-primary:hover,
+.keypad-btn.action.enter:hover {
+  background: var(--ink) !important;
+  color: #ffffff !important;
 }
 
 .theme-close-btn,
@@ -3466,6 +3473,12 @@ li,
   background: var(--bg-input) !important;
 }
 
+.competency-bar-fill,
+.module-stat-fill,
+.timer-bar {
+  background: var(--accent) !important;
+}
+
 .competency-bar-track,
 .module-stat-track,
 .gauge-range-bar {
@@ -3490,7 +3503,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--bauhaus-yellow) !important;
+  outline: 3px solid var(--accent) !important;
   outline-offset: 3px;
   box-shadow: var(--neo-offset-control) !important;
 }
@@ -3549,7 +3562,7 @@ body[data-custom-accent='true'] {
   --accent-blue: var(--custom-accent-readable);
   --accent-cyan: var(--custom-accent-readable);
   --accent-amber: var(--custom-accent-bg);
-  --neo-offset-yellow: 2px 2px 0 0 var(--custom-accent-raw);
+  --neo-offset-accent: 2px 2px 0 0 var(--custom-accent-raw);
 }
 
 body[data-custom-accent='true'] .segment-btn.active,

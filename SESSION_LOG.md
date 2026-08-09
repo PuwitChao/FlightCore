@@ -138,3 +138,26 @@ Aligned Flight Core with the referenced Bauhaus neo-brutalist design system, the
 
 ### Remaining Manual Work
 - Manual browser QA for the custom accent picker, responsive breakpoints, and session-start scroll behavior remains useful because automated browser screenshot tooling is unavailable in this environment.
+
+## 2026-08-09 23:51 +07:00 - App Family UI Guide Alignment
+
+### Summary
+Aligned Flight Core more strictly to the sibling app family UI guide from `Spartial_cube\APP_FAMILY_UI_HIG.md`. The app now keeps the warm paper / card / ink Bauhaus base while routing active controls, hover states, focus rings, progress fills, badges, and CTAs through the guide's accent contract.
+
+### Code Changes
+- Added `--accent` and `--accent-contrast` to the effective main app Bauhaus layer in `styles.css` with Cyan as the default accent.
+- Remapped the existing stored theme keys into approved accent presets: Cyan, Yellow, Slate, Emerald, and Orange.
+- Replaced yellow-only active shadows and focus rings with selected-accent behavior while preserving hard ink borders and square geometry.
+- Updated `index.html` accent selector copy, swatches, ARIA/title wording, and font import weights.
+- Updated `app.js` custom accent default/status from yellow/Default to Cyan.
+- Updated landing font import, accent tokens, CTA/focus color usage, and breakpoint-based hero typography in `landing/index.html` and `landing/styles.css`.
+
+### Verification
+- `node tests.js` passed: **103/103**.
+- `node --check app.js` passed.
+- `node --check core.js` passed.
+- `node tests_app_error_handling.js` passed: **4/4**.
+- `git diff --check` passed with normal Windows CRLF warnings only.
+
+### Remaining Manual Work
+- Automated screenshot QA was not performed because Playwright is unavailable in this environment. Manual browser QA of accent switching, custom accent override, focus rings, progress fills, and responsive breakpoints remains useful.

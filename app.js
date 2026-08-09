@@ -2986,7 +2986,7 @@ function contrastRatio(hexA, hexB) {
 }
 
 function resolveAccentPalette(hex) {
-  const raw = normalizeAccentHex(hex) || "#ffd000";
+  const raw = normalizeAccentHex(hex) || "#00d4ff";
   let bg = raw;
   let text = contrastRatio(bg, "#222222") >= contrastRatio(bg, "#ffffff") ? "#222222" : "#ffffff";
   if (contrastRatio(bg, text) < 4.5) {
@@ -3004,8 +3004,8 @@ function updateCustomAccentControls(rawAccent) {
   const input = document.getElementById("custom-accent-input");
   const status = document.getElementById("custom-accent-status");
   const normalized = normalizeAccentHex(rawAccent);
-  if (input) input.value = normalized || "#ffd000";
-  if (status) status.textContent = normalized ? normalized.toUpperCase() : "Default";
+  if (input) input.value = normalized || "#00d4ff";
+  if (status) status.textContent = normalized ? normalized.toUpperCase() : "CYAN";
   document.querySelectorAll(".accent-swatch-btn[data-accent-color]").forEach(btn => {
     const isActive = normalizeAccentHex(btn.getAttribute("data-accent-color")) === normalized;
     btn.classList.toggle("active", Boolean(normalized && isActive));
