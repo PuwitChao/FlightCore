@@ -605,7 +605,8 @@ function renderTargetBoard(data, includeChoices = true) {
       <span class="scan-mark shape-${cell.color} mark-${cell.shape}"></span>
     </div>
   `).join("");
-  const maxCount = Math.min(data.size * data.size, Math.max(9, Number(data.expected) || 0));
+  const visibleCount = FlightCore.countTargetMatches(data);
+  const maxCount = Math.min(data.size * data.size, Math.max(9, visibleCount));
   return `
     <div class="aptitude-board target-board">
       <div class="board-prompt">Count <strong>${data.targetColor.toUpperCase()} ${data.targetShape.toUpperCase()}</strong> marks.</div>
@@ -688,7 +689,7 @@ function renderFuelBoard(data, includeControls = true) {
   const t = data.tanks;
   return `
     <div class="aptitude-board fuel-board">
-      <div class="board-prompt">Balance Main Tanks A & B between <strong>${data.targetMin}</strong> and <strong>${data.targetMax} GAL</strong>.</div>
+      <div class="board-prompt">Select a pump setup that leaves Main Tanks A & B between <strong>${data.targetMin}</strong> and <strong>${data.targetMax} GAL</strong> after one flow cycle.</div>
       <div class="fuel-tank-grid">
         <div class="fuel-tank-card">
           <div class="fuel-tank-header"><span>MAIN TANK A</span><span>${t.mainA} GAL</span></div>
@@ -1993,8 +1994,9 @@ function submitTelemetry() {
     discrepancyLogItem = accuracy < 100 ? "Extended clearance recall mismatch" : null;
   }
   else if (activeModule === "target") {
-    accuracy = FlightCore.targetAccuracy(currentRndExpected.expected, currentRndInput);
-    breakdownRows.push({ field: "Target Count", expected: String(currentRndExpected.expected), input: currentRndInput === null ? "[OMITTED]" : String(currentRndInput), correct: accuracy === 100 });
+    const visibleCount = FlightCore.countTargetMatches(currentRndExpected);
+    accuracy = FlightCore.targetAccuracy(currentRndExpected, currentRndInput);
+    breakdownRows.push({ field: "Target Count", expected: String(visibleCount), input: currentRndInput === null ? "[OMITTED]" : String(currentRndInput), correct: accuracy === 100 });
     discrepancyLogItem = accuracy < 100 ? "Target scan count mismatch" : null;
   }
   else if (activeModule === "attitude") {
@@ -2013,8 +2015,11 @@ function submitTelemetry() {
     discrepancyLogItem = accuracy < 100 ? "Capacity split-task mismatch" : null;
   }
   else if (activeModule === "fuel") {
-    accuracy = FlightCore.fuelAccuracy(currentRndExpected.expectedPumps, currentRndInput);
-    breakdownRows.push({ field: "Pump Configuration", expected: "Balanced Flow", input: accuracy === 100 ? "Balanced Flow" : "Unbalanced Flow", correct: accuracy === 100 });
+    const finalFuel = FlightCore.projectFuelState(currentRndExpected, currentRndInput);
+    accuracy = FlightCore.fuelAccuracy(currentRndExpected, currentRndInput);
+    const targetBand = `${currentRndExpected.targetMin}-${currentRndExpected.targetMax} GAL`;
+    const finalReadout = `A ${finalFuel.mainA} GAL / B ${finalFuel.mainB} GAL`;
+    breakdownRows.push({ field: "Pump Configuration", expected: `Both main tanks in ${targetBand}`, input: finalReadout, correct: accuracy === 100 });
     discrepancyLogItem = accuracy < 100 ? "Fuel flow pump imbalance" : null;
   }
   else if (activeModule === "beacon") {

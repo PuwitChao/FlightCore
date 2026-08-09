@@ -1,58 +1,41 @@
-# FlightCore Bauhaus Neo-Brutalist UI Alignment Plan
+# FlightCore Answer-Key Audit And Fix Plan
 
-This plan aligns Flight Core with the Bauhaus neo-brutalist design system from `D:\Documents\Personal_Project\Google_AG\Spartial_cube\BAUHAUS_NEO_BRUTALIST_DESIGN_SYSTEM.md`, while retaining accessibility and professional UI guidance such as readable hierarchy, predictable controls, clear focus states, and resilient responsive behavior.
+This plan audits and fixes user-reported wrong or incorrect answer keys across FlightCore gameplay modules. Scope is restricted to `D:\Documents\Personal_Project\Google_AG\FlightCore`.
 
----
+## Product Flow Under Audit
 
-## Design Direction
+- Surface: FlightCore active game session.
+- Flow: start a session, study a module prompt, answer the recall/test screen, submit, and review feedback rows.
+- Reported issue: some games mark the visible correct answer as wrong or use an answer key that does not match the visible task.
+- Follow-up scope: Shape/Balance Bender and the box-counting Target Scan game.
 
-> [!IMPORTANT]
-> **Key aesthetic and ergonomic requirements**:
-> 1. Use the approved warm paper canvas, light card surface, ink-black borders/text, and yellow/red/green/blue accent blocks.
-> 2. Replace translucent glass, rounded Apple cards, soft shadows, ambient gradients, and blur effects with sharp rectangular panels and hard offset elevation.
-> 3. Use `Space Grotesk` for display/header language, `Inter` for body/UI copy, and `JetBrains Mono` for telemetry, badges, and data.
-> 4. Preserve WCAG-friendly contrast, visible `:focus-visible` rings, minimum touch target sizing, reduced-motion behavior, and scan-friendly density.
-> 5. Keep the existing game behavior and theme selector functional; this pass is visual/theming only.
+## Decomposition
 
----
+| Step | Objective | Dependencies | Verification | Scope |
+|---|---|---|---|---|
+| 1 | Map all module generators, renderers, and scorers. | None | Code inspection plus randomized core audit. | Medium |
+| 2 | Identify modules where visible task semantics differ from scoring keys. | Step 1 | Targeted seeded audit scripts and source/render review. | Medium |
+| 3 | Fix generator/scorer/render mismatch without changing unrelated UI. | Step 2 | New regression tests fail before fix and pass after fix. | Medium |
+| 4 | Add durable answer-key regression coverage. | Step 3 | `node tests.js`. | Medium |
+| 5 | Run full verification gate. | Step 4 | `node tests.js`, `node --check app.js`, `node --check core.js`, `node --check tests.js`, `node tests_app_error_handling.js`, `git diff --check`. | Small |
 
-## Proposed Changes
+## Findings
 
-### Core App (`styles.css`, `index.html`)
+- Randomized core audit found no missing/duplicate answer key for `balance`, `wire`, `target`, `attitude`, `intercept`, `beacon`, or `horizon` in generated samples, but the first pass only checked stored keys against generated data.
+- Fuel Balancer had a user-facing answer-key bug: scoring compared the hidden original `expectedPumps` state instead of the visible tank outcome. In sampled seeds, tanks could already be visibly in the requested 40-60 GAL range while the hidden key still marked no pumps wrong.
+- Target Scan had a display/key mismatch introduced by the app-family style pass: `.mark-circle` and `.mark-square` were included in a square-geometry override, so circles were rendered as square/box marks. That made player-visible counts differ from the prompt shape and made the key appear incorrect.
+- Target Scan scoring is now hardened to derive the answer from the full visible challenge object via `countTargetMatches`, rather than trusting a separate stored count when the full challenge is available.
+- Balance Bender shape logic now has explicit regression coverage proving the visible shape equation has exactly one matching answer key across sampled seeds.
 
-#### [MODIFY] [styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/styles.css)
-* **Token Layer**: Add Bauhaus tokens for paper/card/ink/accent colors, hard borders, zero radius, and offset elevation.
-* **Effective Theme Override**: Make all existing theme values resolve to Bauhaus-compatible tokens so saved user theme state cannot reintroduce glassy Apple styling.
-* **Component Geometry**: Normalize cards, dialogs, tabs, buttons, gauges, module cards, keypads, and overlays to sharp borders and offset shadows.
-* **Accessibility Layer**: Use high-contrast focus rings, sufficient minimum target sizes, readable muted text, and reduced-motion-safe transitions.
+## Implemented Fix
 
-#### [MODIFY] [index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/index.html)
-* **Fonts & Metadata**: Import `Space Grotesk` alongside `Inter` and `JetBrains Mono`; update theme color to the paper background.
-* **Theme Labels**: Rename visual theme options to Bauhaus-friendly labels without changing the underlying stored theme keys.
+- Added `countTargetMatches(challenge)` in `core.js` and updated `targetAccuracy` to score full Target Scan challenges from visible cells.
+- Updated `app.js` Target Scan submission feedback to use the same visible count used for grading.
+- Fixed `styles.css` so Bauhaus square-control overrides no longer flatten gameplay target glyphs; circle, square, diamond, and triangle marks remain distinct.
+- Added regression tests for Balance Bender visible-equation correctness, Target Scan full-challenge scoring, randomized target key invariants, and Fuel Balancer visible-state scoring.
 
-### Landing Page (`landing/index.html`, `landing/styles.css`)
+## Product Design Audit Limits
 
-#### [MODIFY] [landing/index.html](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/landing/index.html)
-#### [MODIFY] [landing/styles.css](file:///D:/Documents/Personal_Project/Google_AG/FlightCore/landing/styles.css)
-* Align landing typography, color, buttons, form controls, proof cards, and preview panels with the same Bauhaus system.
-* Remove the dark radial gradient, rounded glass panels, and soft shadows.
-
----
-
-## Verification Plan
-
-### Automated Tests
-* Run the existing engine test suite:
-  ```powershell
-  node tests.js
-  ```
-* Run syntax checking on JavaScript files:
-  ```powershell
-  node --check app.js
-  node --check core.js
-  ```
-
-### UI Review
-* Serve the static app locally and inspect the main app plus landing page.
-* Verify the effective UI uses paper/card/ink tokens, sharp geometry, hard offset elevation, no blur/glassmorphism, and no generic gradient/glow decoration.
-* Check focus states, target sizes, text legibility, and responsive layout at desktop and mobile widths.
+- The requested Product Design audit workflow normally requires screenshots of the flow.
+- Browser screenshot automation is not currently available in this environment; Playwright is unavailable locally and no Product Design saved context exists.
+- This pass audits the product flow through source and deterministic generated-game evidence, then reports the screenshot limitation explicitly.

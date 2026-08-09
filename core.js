@@ -658,11 +658,20 @@
     if (!cells.some(c => c.color === targetColor && c.shape === targetShape)) {
       cells[Math.floor(rng() * cells.length)] = { color: targetColor, shape: targetShape };
     }
-    const expected = cells.filter(c => c.color === targetColor && c.shape === targetShape).length;
-    return { size, targetColor, targetShape, cells, expected };
+    const challenge = { size, targetColor, targetShape, cells };
+    return Object.assign(challenge, { expected: countTargetMatches(challenge) });
   }
 
-  function targetAccuracy(expected, input) {
+  function countTargetMatches(challenge) {
+    const data = challenge || {};
+    const cells = Array.isArray(data.cells) ? data.cells : [];
+    return cells.filter(c => c && c.color === data.targetColor && c.shape === data.targetShape).length;
+  }
+
+  function targetAccuracy(challengeOrExpected, input) {
+    const expected = challengeOrExpected && Array.isArray(challengeOrExpected.cells)
+      ? countTargetMatches(challengeOrExpected)
+      : challengeOrExpected;
     return Number(expected) === Number(input) ? 100 : 0;
   }
 
@@ -1044,7 +1053,7 @@
     const pumps = [
       { id: "p1", label: "PUMP 1 (AUX A -> MAIN A)", flow: flow1 },
       { id: "p2", label: "PUMP 2 (AUX B -> MAIN B)", flow: flow2 },
-      { id: "cross", label: "CROSSFEED (MAIN A <-> MAIN B)", flow: flowCross }
+      { id: "cross", label: "CROSSFEED (MAIN A -> MAIN B)", flow: flowCross }
     ];
 
     return {
@@ -1056,13 +1065,49 @@
     };
   }
 
-  function fuelAccuracy(expectedPumps, userPumps) {
-    const exp = expectedPumps || {};
-    const usr = userPumps || {};
+  function normalizeFuelPumps(pumps) {
+    const p = pumps || {};
+    return { p1: Boolean(p.p1), p2: Boolean(p.p2), cross: Boolean(p.cross) };
+  }
+
+  function projectFuelState(challenge, userPumps) {
+    const data = challenge || {};
+    const tanks = data.tanks || {};
+    const pumps = Array.isArray(data.pumps) ? data.pumps : [];
+    const pumpFlow = (id, fallback) => {
+      const pump = pumps.find(p => p && p.id === id);
+      return safeNumber(pump && pump.flow, fallback, { min: 0, max: 100 });
+    };
+    const selected = normalizeFuelPumps(userPumps);
+    const flow1 = pumpFlow("p1", 12);
+    const flow2 = pumpFlow("p2", 12);
+    const flowCross = pumpFlow("cross", 6);
+    const mainAStart = safeNumber(tanks.mainA, 0, { min: 0, max: 100 });
+    const mainBStart = safeNumber(tanks.mainB, 0, { min: 0, max: 100 });
+    return {
+      mainA: mainAStart + (selected.p1 ? flow1 : 0) - (selected.cross ? flowCross : 0),
+      mainB: mainBStart + (selected.p2 ? flow2 : 0) + (selected.cross ? flowCross : 0)
+    };
+  }
+
+  function fuelAccuracy(challengeOrExpectedPumps, userPumps) {
+    const data = challengeOrExpectedPumps || {};
+    if (data.tanks && data.pumps) {
+      const finalState = projectFuelState(data, userPumps);
+      const min = safeNumber(data.targetMin, 40, { min: 0, max: 100 });
+      const max = safeNumber(data.targetMax, 60, { min, max: 100 });
+      const inRange = value => value >= min && value <= max;
+      const correctTanks = (inRange(finalState.mainA) ? 1 : 0) + (inRange(finalState.mainB) ? 1 : 0);
+      return Math.round((correctTanks / 2) * 100);
+    }
+
+    // Legacy exact-key fallback for older callers that only pass the hidden pump key.
+    const exp = normalizeFuelPumps(data);
+    const usr = normalizeFuelPumps(userPumps);
     const keys = ["p1", "p2", "cross"];
     let match = 0;
     keys.forEach(k => {
-      if (Boolean(exp[k]) === Boolean(usr[k])) match++;
+      if (exp[k] === usr[k]) match++;
     });
     return Math.round((match / keys.length) * 100);
   }
@@ -1184,12 +1229,14 @@
     generateClearance,
     clearanceAccuracy,
     generateTarget,
+    countTargetMatches,
     targetAccuracy,
     generateIntercept,
     interceptAccuracy,
     generateAttitude,
     attitudeAccuracy,
     generateFuel,
+    projectFuelState,
     fuelAccuracy,
     generateBeacon,
     beaconAccuracy,

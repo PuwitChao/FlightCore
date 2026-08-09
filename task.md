@@ -1,8 +1,12 @@
-# Task Checklist - Bauhaus Neo-Brutalist UI Alignment
+# Task Checklist - Answer-Key Audit And Fix
 
-- [x] Import Bauhaus typography and update app metadata in `index.html` <!-- id: 0 -->
-- [x] Add effective Bauhaus token/override layer in `styles.css` <!-- id: 1 -->
-- [x] Align theme selector labels and indicators with the Bauhaus CI <!-- id: 2 -->
-- [x] Rework `landing/styles.css` and landing font import to match the same CI <!-- id: 3 -->
-- [x] Run JavaScript tests and syntax validation <!-- id: 4 -->
-- [x] Perform UI review render checks for app and landing page <!-- id: 5 -->
+- [x] Map module generators, renderers, and scorers <!-- id: 0 -->
+- [x] Run randomized core answer-key audit for option modules <!-- id: 1 -->
+- [x] Reproduce user-facing Fuel Balancer false-negative answer key <!-- id: 2 -->
+- [x] Patch fuel scoring to evaluate visible tank outcome <!-- id: 3 -->
+- [x] Audit Shape/Balance Bender visible equation against answer key <!-- id: 4 -->
+- [x] Patch Target Scan box-counting scoring to derive from visible challenge cells <!-- id: 5 -->
+- [x] Fix Target Scan glyph CSS so prompted shapes render distinctly <!-- id: 6 -->
+- [x] Add regression tests for fuel, shape, target, and option-key invariants <!-- id: 7 -->
+- [x] Run full verification gate <!-- id: 8 -->
+- [x] Summarize product-design audit limits and fixed gameplay flow <!-- id: 9 -->

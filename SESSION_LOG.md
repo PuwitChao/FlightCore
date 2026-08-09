@@ -161,3 +161,27 @@ Aligned Flight Core more strictly to the sibling app family UI guide from `Spart
 
 ### Remaining Manual Work
 - Automated screenshot QA was not performed because Playwright is unavailable in this environment. Manual browser QA of accent switching, custom accent override, focus rings, progress fills, and responsive breakpoints remains useful.
+
+## 2026-08-10 00:30 +07:00 - Answer-Key Audit & Target Scan Fix
+
+### Summary
+Audited user-reported incorrect answer keys across FlightCore games, then fixed the confirmed gameplay mismatches in Fuel Balancer and Target Scan. Follow-up review focused on Shape/Balance Bender and the box-counting Target Scan game.
+
+### Code Changes
+- Added visible-state Fuel Balancer scoring in `core.js` with `projectFuelState`, and updated `app.js` feedback to report final Main A/Main B fuel levels.
+- Added `countTargetMatches` and updated Target Scan scoring so full challenge objects are graded from the visible grid cells.
+- Updated Target Scan feedback to display the same visible count used for grading.
+- Fixed `styles.css` so app-family square-control overrides no longer flatten Target Scan gameplay glyphs; circle, square, diamond, and triangle marks remain distinct.
+- Added regression coverage for Fuel Balancer visible-state scoring, Target Scan full-challenge scoring, Balance Bender visible-equation correctness, and sampled option-key invariants.
+- Updated `implementation_plan.md`, `task.md`, and `HANDOFF.md` for durable continuity.
+
+### Verification
+- `node tests.js` passed: **106/106**.
+- `node --check app.js` passed.
+- `node --check core.js` passed.
+- `node --check tests.js` passed.
+- `node tests_app_error_handling.js` passed: **4/4**.
+- `git diff --check` passed with normal Windows CRLF warnings only.
+
+### Remaining Manual Work
+- Browser screenshot QA remains unavailable in this environment because the Windows sandbox/browser tooling is blocked and Playwright is not installed. Manual browser QA of Target Scan glyphs and answer feedback remains useful.

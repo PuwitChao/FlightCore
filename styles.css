@@ -2497,10 +2497,6 @@ body[data-theme="warm"] .balance-panel {
   font-weight: 800;
   font-size: 1rem;
 }
-  border-radius: 50%;
-  border: 1px solid var(--border-active);
-  color: var(--accent-blue);
-}
 
 .answer-grid {
   display: grid;
@@ -2618,16 +2614,17 @@ body[data-theme="warm"] .balance-panel {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.mark-circle { border-radius: 50%; }
-.mark-square { border-radius: 4px; }
-.mark-diamond { transform: rotate(45deg); }
-.mark-triangle {
+.scan-mark.mark-circle { border-radius: 50%; }
+.scan-mark.mark-square { border-radius: 4px; }
+.scan-mark.mark-diamond { transform: rotate(45deg); }
+.scan-mark.mark-triangle {
   width: 0;
   height: 0;
   border-left: 9px solid transparent;
   border-right: 9px solid transparent;
   border-bottom: 16px solid currentColor;
   background: transparent !important;
+  border-top: 0;
   border-radius: 0;
 }
 
@@ -3387,8 +3384,6 @@ textarea {
 .round-dot,
 .chevron,
 .gauge-range-indicator,
-.mark-circle,
-.mark-square,
 .competency-bar-fill,
 .module-stat-fill,
 .timer-bar {

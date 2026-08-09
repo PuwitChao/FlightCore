@@ -382,6 +382,17 @@
     assertEqual(FC.balanceAccuracy(d.expected, "Z"), 0);
   });
 
+  test("generateBalance: visible shape equation matches the answer key", () => {
+    const totalFor = (items, weights) => items.reduce((sum, item) => sum + weights[item.shape] * item.count, 0);
+    for (let seed = 1; seed <= 200; seed++) {
+      const d = FC.generateBalance(8, seeded(seed));
+      const questionTotal = totalFor(d.question.left, d.weights);
+      const correctOptions = d.options.filter(o => totalFor(o.items, d.weights) === questionTotal);
+      assertEqual(correctOptions.length, 1, `balance visible equation should have one key seed ${seed}`);
+      assertEqual(correctOptions[0].id, d.expected, `balance key should match visible equation seed ${seed}`);
+    }
+  });
+
   test("generateWire: maps each start to one endpoint", () => {
     const d = FC.generateWire(5, seeded(11));
     assertEqual(d.starts.length, d.ends.length);
@@ -435,9 +446,28 @@
 
   test("generateTarget: expected count matches generated cells", () => {
     const d = FC.generateTarget(5, seeded(13));
-    const count = d.cells.filter(c => c.color === d.targetColor && c.shape === d.targetShape).length;
+    const count = FC.countTargetMatches(d);
     assertEqual(d.expected, count);
-    assertEqual(FC.targetAccuracy(d.expected, d.expected), 100);
+    assertEqual(FC.targetAccuracy(d, d.expected), 100);
+  });
+
+  test("targetAccuracy: scores the visible box count from the challenge", () => {
+    const d = {
+      size: 2,
+      targetColor: "blue",
+      targetShape: "circle",
+      expected: 99,
+      cells: [
+        { color: "blue", shape: "circle" },
+        { color: "blue", shape: "square" },
+        { color: "green", shape: "circle" },
+        { color: "blue", shape: "circle" }
+      ]
+    };
+    assertEqual(FC.countTargetMatches(d), 2);
+    assertEqual(FC.targetAccuracy(d, 2), 100);
+    assertEqual(FC.targetAccuracy(d, 99), 0);
+    assertEqual(FC.targetAccuracy(3, 3), 100);
   });
 
   test("generateIntercept: action follows altitude band", () => {
@@ -533,16 +563,53 @@
     assertEqual(s5.timerFactor, 0.8);
     assertEqual(s5.scoreMultiplier, 1.75);
   });
-
-  test("generateFuel & fuelAccuracy: produces valid fuel balancer challenges and scores pumps", () => {
-    const f = FC.generateFuel(1, FC.pickUnused ? null : () => 0.6);
+  test("generateFuel & fuelAccuracy: scores the visible final tank outcome", () => {
+    const f = FC.generateFuel(1, seeded(1));
     assert(f.tanks && f.pumps.length === 3);
-    const perfectScore = FC.fuelAccuracy(f.expectedPumps, f.expectedPumps);
-    assertEqual(perfectScore, 100);
-    const zeroScore = FC.fuelAccuracy(f.expectedPumps, { p1: !f.expectedPumps.p1, p2: !f.expectedPumps.p2, cross: !f.expectedPumps.cross });
-    assertEqual(zeroScore, 0);
+    const projectedExpected = FC.projectFuelState(f, f.expectedPumps);
+    assertDeep(projectedExpected, { mainA: 50, mainB: 50 });
+    assertEqual(FC.fuelAccuracy(f, f.expectedPumps), 100);
+
+    // Regression: this generated board starts at A44/B44, visibly inside the
+    // requested 40-60 GAL band. The old hidden-key scorer marked no pumps wrong.
+    assertDeep(f.tanks, { mainA: 44, mainB: 44, auxA: 75, auxB: 75 });
+    assertEqual(FC.fuelAccuracy(f, { p1: false, p2: false, cross: false }), 100);
+    assertEqual(FC.fuelAccuracy(f, { p1: true, p2: true, cross: false }), 100);
+    assertEqual(FC.fuelAccuracy(f, { p1: false, p2: false, cross: true }), 50);
+    assertEqual(FC.fuelAccuracy(f, { p1: false, p2: true, cross: true }), 0);
+
+    // Backwards-compatible exact-key fallback for older callers remains intact.
+    assertEqual(FC.fuelAccuracy(f.expectedPumps, f.expectedPumps), 100);
+    assertEqual(FC.fuelAccuracy(f.expectedPumps, { p1: !f.expectedPumps.p1, p2: !f.expectedPumps.p2, cross: !f.expectedPumps.cross }), 0);
   });
 
+  test("generated option answer keys are present and unique across sampled modules", () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const balance = FC.generateBalance(8, seeded(seed));
+      assert(balance.options.some(o => o.id === balance.expected), `balance missing expected seed ${seed}`);
+      assertEqual(balance.options.filter(o => FC.balanceAccuracy(balance.expected, o.id) === 100).length, 1, `balance multi-key seed ${seed}`);
+
+      const wire = FC.generateWire(8, seeded(seed));
+      assert(wire.ends.includes(wire.expected), `wire missing expected seed ${seed}`);
+      assertEqual(wire.paths.find(p => p.start === wire.queryStart).end, wire.expected, `wire path/key mismatch seed ${seed}`);
+
+      const target = FC.generateTarget(8, seeded(seed));
+      const count = FC.countTargetMatches(target);
+      assertEqual(target.expected, count, `target count mismatch seed ${seed}`);
+      assertEqual(FC.targetAccuracy(target, count), 100, `target full-challenge scorer mismatch seed ${seed}`);
+
+      const attitude = FC.generateAttitude(8, seeded(seed));
+      assertEqual(attitude.choices.filter((_, idx) => FC.attitudeAccuracy(attitude.expectedIndex, idx) === 100).length, 1, `attitude multi-key seed ${seed}`);
+
+      const beacon = FC.generateBeacon(8, seeded(seed));
+      assertEqual(beacon.options.filter(o => o.isCorrect).length, 1, `beacon correct flag mismatch seed ${seed}`);
+      assert(beacon.options.some(o => o.id === beacon.expectedId), `beacon missing expected seed ${seed}`);
+
+      const horizon = FC.generateHorizon(8, seeded(seed));
+      assertEqual(horizon.options.filter(o => o.isCorrect).length, 1, `horizon correct flag mismatch seed ${seed}`);
+      assert(horizon.options.some(o => o.id === horizon.expectedId), `horizon missing expected seed ${seed}`);
+    }
+  });
   test("generateBeacon & beaconAccuracy: generates valid gyro compass & RBI bearings", () => {
     const b = FC.generateBeacon(1, () => 0.5);
     assert(b.heading > 0 && b.rbi > 0);
