@@ -185,3 +185,31 @@ Audited user-reported incorrect answer keys across FlightCore games, then fixed 
 
 ### Remaining Manual Work
 - Browser screenshot QA remains unavailable in this environment because the Windows sandbox/browser tooling is blocked and Playwright is not installed. Manual browser QA of Target Scan glyphs and answer feedback remains useful.
+
+## 2026-08-10 13:36 +07:00 - Game Logic Audit Gap Fixes
+
+### Summary
+Closed the remaining game-logic audit issues found after the answer-key audit. The fixes address visible/scored field mismatches, gamification unlock semantics, weakest-skill analytics, stale Radar gameplay references, Attitude label clarity, and current module documentation.
+
+### Code Changes
+- Updated `core.js` so Clearance Recall always displays the scored speed field and Attitude Vector labels use absolute values for nose-down/bank-left wording.
+- Updated `core.js` achievements so Flawless unlocks from saved `percentage` records and Master Navigator requires core skill-family coverage.
+- Updated weakest-skill-family logic so populated `0%` skill families are considered valid weakest outcomes.
+- Removed unreachable app-level Radar gameplay references from `app.js`.
+- Updated `README.md` and `docs/aptitude_module_contract.md` to distinguish current playable modules from locked Aero Intercept prototype behavior.
+- Added regression coverage in `tests.js` and `tests_app_error_handling.js` for all corrected logic paths.
+- Updated `HANDOFF.md` for durable continuity.
+
+### Verification
+- `node --check core.js` passed.
+- `node --check app.js` passed.
+- `node --check tests.js` passed.
+- `node --check tests_app_error_handling.js` passed.
+- `node --check sw.js` passed.
+- `node tests.js` passed: **109/109**.
+- `node tests_app_error_handling.js` passed: **5/5**.
+- Targeted probes for Clearance speed visibility/scoring, Flawless, Master Navigator, weakest-family `0%`, Attitude labels, and Radar dead references passed.
+- `git diff --check` passed with normal Windows CRLF warnings only.
+
+### Remaining Manual Work
+- Browser screenshot/click-through QA remains unavailable in this environment because the Windows sandbox/browser tooling is blocked and Playwright is not installed. Manual browser QA remains useful before release claims involving visual behavior.

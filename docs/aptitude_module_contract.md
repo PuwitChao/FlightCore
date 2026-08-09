@@ -19,15 +19,17 @@ Default selected modules:
 - `wire` - Visual
 - `clearance` - Memory
 - `target` - Visual
+- `attitude` - Spatial
+- `fuel` - Logical
+- `beacon` - Spatial
+- `horizon` - Spatial
 
-Available prototype module:
+Locked prototype module:
 
-- `intercept` - Advanced. It appears in the catalog and can be selected manually, but it is not part of the default rotation until browser performance and input feel are proven.
+- `intercept` - Advanced. It appears in the catalog as a locked prototype, but cannot be selected and is not part of the default rotation until browser performance and input feel are proven.
 
 Planned metadata-only modules:
 
-- `attitude` - Spatial
-- `beacon` - Spatial
 - `capacity` - Advanced
 
 ## Module Lifecycle

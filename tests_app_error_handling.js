@@ -136,6 +136,10 @@ run("global error boundary does not overwrite the first active failure", () => {
   assertEqual(app.logEl.textContent, first);
   assertEqual(app.errors.length, 2);
 });
+run("app source has no unreachable radar gameplay renderer", () => {
+  assert(!source.includes("renderRadarBoard("), "radar gameplay renderer should not be referenced without a generator");
+  assert(!source.includes('module === "radar"'), "radar should not be included in gameplay module branches");
+});
 
 const passed = results.filter(result => result.ok).length;
 const failed = results.length - passed;

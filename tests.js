@@ -290,6 +290,10 @@
     const weakest = FC.weakestSkillFamily([{ skillFamilyAccuracy: { memory: 90, visual: 70, logical: 40 } }]);
     assertDeep(weakest, { key: "logical", label: "Logical", accuracy: 40 });
   });
+  test("weakestSkillFamily: treats a populated 0% family as weakest", () => {
+    const weakest = FC.weakestSkillFamily([{ skillFamilyAccuracy: { memory: 100, visual: 0 } }]);
+    assertDeep(weakest, { key: "visual", label: "Visual", accuracy: 0 });
+  });
 
   test("nextDailyStreak: same, next, and missed day behavior", () => {
     assertEqual(FC.nextDailyStreak(null, 0, "2026-07-17"), 1);
@@ -440,8 +444,14 @@
   test("generateClearance: produces extended recall fields", () => {
     const d = FC.generateClearance(ATC, 5, seeded(12));
     ["callsign", "facility", "freq", "squawk", "altitude", "heading", "speed"].forEach(f => assert(d.expected[f]));
+    assert(d.displayText.includes(`SPEED ${d.expected.speed}`), "briefing must include every scored field");
     assertEqual(FC.clearanceAccuracy(d.expected, d.expected), 100);
     assert(FC.clearanceAccuracy(d.expected, {}) < 100);
+  });
+  test("generateClearance: low-level briefing includes the scored speed field", () => {
+    const d = FC.generateClearance(ATC, 1, seeded(12));
+    assert(d.displayText.includes(`SPEED ${d.expected.speed}`), "level 1 clearance hid speed while scoring it");
+    assertEqual(FC.clearanceAccuracy(d.expected, d.expected), 100);
   });
 
   test("generateTarget: expected count matches generated cells", () => {
@@ -483,6 +493,7 @@
     const d = FC.generateAttitude(3, seeded(14));
     assertEqual(d.choices.length, 4);
     assert(d.expectedIndex >= 0 && d.expectedIndex < 4);
+    assert(!d.choices.some(choice => /Nose Down -|Bank Left -/.test(choice)), "attitude labels should not use double-negative wording");
     assertEqual(FC.attitudeAccuracy(d.expectedIndex, d.expectedIndex), 100);
     assertEqual(FC.attitudeAccuracy(d.expectedIndex, 999), 0);
   });
@@ -496,15 +507,29 @@
     assertEqual(FC.computePilotRank({ totalSessions: 55, highScore: 16000 }).title, "Test Pilot");
   });
 
-  test("evaluateAchievements: unlocks badges based on flight history", () => {
+  test("evaluateAchievements: unlocks badges based on saved session history", () => {
     const hist = [
-      { scorePct: 100, maxStreak: 6, score: 6000 }
+      { percentage: 100, maxStreak: 6, score: 6000 }
     ];
     const badges = FC.evaluateAchievements(hist);
     assert(badges.some(b => b.id === "first_sortie" && b.unlocked));
     assert(badges.some(b => b.id === "flawless" && b.unlocked));
     assert(badges.some(b => b.id === "streak_5" && b.unlocked));
     assert(badges.some(b => b.id === "high_score_5k" && b.unlocked));
+  });
+
+  test("evaluateAchievements: Master Navigator requires core skill-family coverage", () => {
+    const repeatedMemory = Array.from({ length: 5 }, () => ({ moduleAccuracy: { checklist: 100 } }));
+    let badges = FC.evaluateAchievements(repeatedMemory);
+    assert(!badges.some(b => b.id === "all_families" && b.unlocked), "five sessions in one family should not unlock all-family badge");
+
+    badges = FC.evaluateAchievements([
+      { moduleAccuracy: { checklist: 100 } },
+      { moduleAccuracy: { instruments: 100 } },
+      { moduleAccuracy: { fault: 100 } },
+      { moduleAccuracy: { attitude: 100 } }
+    ]);
+    assert(badges.some(b => b.id === "all_families" && b.unlocked));
   });
 
   test("evaluateProAccess: validates pro license keys", () => {

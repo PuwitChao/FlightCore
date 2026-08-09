@@ -1040,7 +1040,7 @@ function setupStudyScreen(module) {
     studySecs = Math.max(11 - (level * 0.7), 4.5);
   } else if (module === "intercept") {
     studySecs = Math.max(6 - (level * 0.35), 3);
-  } else if (module === "fuel" || module === "beacon" || module === "radar" || module === "horizon") {
+  } else if (module === "fuel" || module === "beacon" || module === "horizon") {
     studySecs = Math.max(8 - (level * 0.5), 4);
   }
   studySecs = studySecs * timerMultiplier;
@@ -1621,19 +1621,6 @@ function renderBeaconTestLayout() {
   });
 }
 
-function renderRadarTestLayout() {
-  const root = document.getElementById("test-radar");
-  if (!root) return;
-  root.innerHTML = renderRadarBoard(currentRndExpected, true);
-  root.querySelectorAll(".radar-option-card").forEach(card => {
-    card.addEventListener("click", () => {
-      playSound("click");
-      currentRndInput = card.getAttribute("data-choice");
-      root.querySelectorAll(".radar-option-card").forEach(c => c.classList.remove("selected"));
-      card.classList.add("selected");
-    });
-  });
-}
 
 function renderHorizonTestLayout() {
   const root = document.getElementById("test-horizon");

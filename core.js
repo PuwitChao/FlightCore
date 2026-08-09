@@ -330,8 +330,36 @@
 
   function weakestSkillFamily(history) {
     const averages = skillFamilyAverages(history);
+    const hist = Array.isArray(history) ? history : [];
+    const populatedFamilies = new Set();
+
+    hist.forEach(h => {
+      const record = h || {};
+      if (record.skillFamilyAccuracy) {
+        SKILL_FAMILIES.forEach(key => {
+          if (Number.isFinite(Number(record.skillFamilyAccuracy[key]))) populatedFamilies.add(key);
+        });
+        return;
+      }
+
+      if (record.moduleAccuracy || record.competencies) {
+        const moduleData = record.moduleAccuracy || record.competencies;
+        Object.keys(moduleData).forEach(moduleKey => {
+          const family = moduleSkillFamily(moduleKey);
+          if (SKILL_FAMILIES.includes(family) && Number.isFinite(Number(moduleData[moduleKey]))) {
+            populatedFamilies.add(family);
+          }
+        });
+        return;
+      }
+
+      if (Number.isFinite(Number(record.percentage))) {
+        SKILL_FAMILIES.forEach(key => populatedFamilies.add(key));
+      }
+    });
+
     const populated = SKILL_FAMILIES
-      .filter(key => averages[key] > 0)
+      .filter(key => populatedFamilies.has(key))
       .map(key => ({ key, label: titleCaseFamily(key), accuracy: averages[key] }));
     if (populated.length === 0) return null;
     populated.sort((a, b) => a.accuracy - b.accuracy || SKILL_FAMILIES.indexOf(a.key) - SKILL_FAMILIES.indexOf(b.key));
@@ -622,9 +650,7 @@
     const heading = String(Math.floor(rng() * 36) * 10).padStart(3, "0");
     const speed = String((Math.floor(rng() * 9) + 22) * 10);
     const expected = { callsign, facility, freq, squawk, altitude, heading, speed };
-    const displayText = lvl < 4
-      ? `"${callsign}, ${facility}, CLIMB AND MAINTAIN ${altitude}, FLY HEADING ${heading}, CONTACT ${freq}, SQUAWK ${squawk}."`
-      : `"${callsign}, ${facility}, CLIMB AND MAINTAIN ${altitude}, SPEED ${speed}, FLY HEADING ${heading}, CONTACT ${freq}, SQUAWK ${squawk}."`;
+    const displayText = `"${callsign}, ${facility}, CLIMB AND MAINTAIN ${altitude}, SPEED ${speed}, FLY HEADING ${heading}, CONTACT ${freq}, SQUAWK ${squawk}."`;
     return { expected, displayText };
   }
 
@@ -713,8 +739,8 @@
     const pitch = pitchOptions[Math.floor(rng() * pitchOptions.length)];
     const roll = rollOptions[Math.floor(rng() * rollOptions.length)];
 
-    const pitchLabel = pitch > 0 ? `Nose Up +${pitch}°` : pitch < 0 ? `Nose Down ${pitch}°` : "Level Pitch";
-    const rollLabel = roll > 0 ? `Bank Right +${roll}°` : roll < 0 ? `Bank Left ${roll}°` : "Wings Level";
+    const pitchLabel = pitch > 0 ? `Nose Up +${pitch}°` : pitch < 0 ? `Nose Down ${Math.abs(pitch)}°` : "Level Pitch";
+    const rollLabel = roll > 0 ? `Bank Right +${roll}°` : roll < 0 ? `Bank Left ${Math.abs(roll)}°` : "Wings Level";
     
     const choices = [];
     const correctChoice = `${pitchLabel}, ${rollLabel}`;
@@ -723,8 +749,8 @@
     while (choices.length < 4) {
       const p = pitchOptions[Math.floor(rng() * pitchOptions.length)];
       const r = rollOptions[Math.floor(rng() * rollOptions.length)];
-      const pL = p > 0 ? `Nose Up +${p}°` : p < 0 ? `Nose Down ${p}°` : "Level Pitch";
-      const rL = r > 0 ? `Bank Right +${r}°` : r < 0 ? `Bank Left ${r}°` : "Wings Level";
+      const pL = p > 0 ? `Nose Up +${p}°` : p < 0 ? `Nose Down ${Math.abs(p)}°` : "Level Pitch";
+      const rL = r > 0 ? `Bank Right +${r}°` : r < 0 ? `Bank Left ${Math.abs(r)}°` : "Wings Level";
       const candidate = `${pL}, ${rL}`;
       if (!choices.includes(candidate)) {
         choices.push(candidate);
@@ -773,13 +799,35 @@
     const hist = Array.isArray(history) ? history : [];
     const curr = currentSession || null;
     const all = curr ? [...hist, curr] : hist;
+    const requiredFamilies = ["logical", "spatial", "visual", "memory"];
+    const playedFamilies = new Set();
+
+    all.forEach(s => {
+      const record = s || {};
+      if (record.skillFamilyAccuracy) {
+        requiredFamilies.forEach(key => {
+          if (Number.isFinite(Number(record.skillFamilyAccuracy[key]))) playedFamilies.add(key);
+        });
+      }
+      const moduleData = record.moduleAccuracy || record.competencies || {};
+      Object.keys(moduleData).forEach(moduleKey => {
+        const family = moduleSkillFamily(moduleKey);
+        if (requiredFamilies.includes(family) && Number.isFinite(Number(moduleData[moduleKey]))) {
+          playedFamilies.add(family);
+        }
+      });
+      if (record.module) {
+        const family = moduleSkillFamily(record.module);
+        if (requiredFamilies.includes(family)) playedFamilies.add(family);
+      }
+    });
 
     const badges = [
       { id: "first_sortie", title: "First Flight", desc: "Completed your first flight core sortie", icon: "FLT", unlocked: all.length >= 1 },
-      { id: "flawless", title: "Flawless Flight", desc: "Achieved 100% accuracy in a session", icon: "ACE", unlocked: all.some(s => Number(s.scorePct) === 100) },
+      { id: "flawless", title: "Flawless Flight", desc: "Achieved 100% accuracy in a session", icon: "ACE", unlocked: all.some(s => Number(s.scorePct) === 100 || Number(s.percentage) === 100) },
       { id: "streak_5", title: "Streak Master", desc: "Reached a correct streak of 5+", icon: "STR", unlocked: all.some(s => Number(s.maxStreak) >= 5) },
       { id: "high_score_5k", title: "High Performer", desc: "Scored over 5,000 points in a session", icon: "5K", unlocked: all.some(s => Number(s.score) >= 5000) },
-      { id: "all_families", title: "Master Navigator", desc: "Played sessions across all skill families", icon: "NAV", unlocked: all.length >= 5 },
+      { id: "all_families", title: "Master Navigator", desc: "Played sessions across all core skill families", icon: "NAV", unlocked: requiredFamilies.every(key => playedFamilies.has(key)) },
       { id: "veteran_10", title: "Flight Leader", desc: "Completed 10 or more flight sessions", icon: "CPT", unlocked: all.length >= 10 }
     ];
 
