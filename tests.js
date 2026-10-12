@@ -656,6 +656,142 @@
     assert(svg.includes("<svg") && svg.includes("radar-chart-svg"));
   });
 
+  // ==========================================
+  // Daily Ops: seeded RNG, date hashing, challenge generation, share card
+  // ==========================================
+  test("createSeededRandom and hashDateSeed: deterministic across same date", () => {
+    const s1 = FC.hashDateSeed("2026-07-17");
+    const s2 = FC.hashDateSeed("2026-07-17");
+    assertEqual(s1, s2);
+    const rng1 = FC.createSeededRandom(s1);
+    const rng2 = FC.createSeededRandom(s2);
+    assertEqual(rng1(), rng2());
+  });
+  test("hashDateSeed: different dates produce different seeds", () => {
+    assert(FC.hashDateSeed("2026-07-17") !== FC.hashDateSeed("2026-07-18"));
+  });
+  test("hashDateSeed: empty/null/undefined produce a stable fallback", () => {
+    assert(Number.isInteger(FC.hashDateSeed("")));
+    assert(Number.isInteger(FC.hashDateSeed(null)));
+  });
+
+  test("generateDailyChallenge: produces 5 unique modules at levels 1-5, no intercept", () => {
+    const dc = FC.generateDailyChallenge("2026-07-17");
+    assertEqual(dc.rounds.length, 5);
+    const modules = dc.rounds.map(r => r.module);
+    assertEqual(new Set(modules).size, 5, "modules must be unique");
+    assert(modules.every(m => m !== "intercept"), "daily must exclude intercept prototype");
+    dc.rounds.forEach((r, i) => {
+      assertEqual(r.round, i + 1);
+      assertEqual(r.level, i + 1);
+      assert(typeof r.skillFamily === "string");    });
+    assert(dc.date === "2026-07-17");
+  });
+  test("generateDailyChallenge: same date yields identical output", () => {
+    const a = FC.generateDailyChallenge("2026-07-17");
+    const b = FC.generateDailyChallenge("2026-07-17");
+    assertDeep(a, b);
+  });
+
+  test("formatDailyShareCard: contains DAILY FLIGHT OPS, emoji blocks, score, accuracy, tier, URL", () => {
+    const card = FC.formatDailyShareCard({
+      date: "2026-07-17",
+      score: 4250,
+      accuracy: 80,
+      tier: "SHARP",
+      rounds: [{ accuracy: 100 }, { accuracy: 80 }, { accuracy: 30 }, { accuracy: 100 }, { accuracy: 90 }]
+    });
+    assert(card.includes("DAILY FLIGHT OPS"));
+    assert(card.includes("https://flightcore.app/daily"));
+    assert(card.includes("Score: 4,250"));
+    assert(card.includes("Accuracy: 80%"));
+    assert(card.includes("Tier: SHARP"));
+    // Emoji blocks: green (100%), yellow (80%), red (30%), green (100%), yellow (90%)
+    assert(card.includes("\u{1F7E9}") && card.includes("\u{1F7E8}") && card.includes("\u{1F7E5}"),
+      "share card must include green, yellow, and red blocks");
+  });
+  test("formatDailyShareCard: handles empty rounds gracefully", () => {
+    const card = FC.formatDailyShareCard({ date: "2026-07-17", score: 0, accuracy: 0 });
+    assert(card.includes("DAILY FLIGHT OPS") && card.includes("https://flightcore.app/daily"));
+    assert(card.includes("Score: 0") && card.includes("Accuracy: 0%"));
+  });
+
+  // ==========================================
+  // XP computation
+  // ==========================================
+  test("computeSessionXP: per-round telemetry yields correct sum", () => {
+    // round1: acc=100, diff=1, correct true  -> 100*(0.5+0.2)=70 + 25 = 95
+    // round2: acc=50, diff=2, correct false   -> 50*(0.5+0.4)=45 + 0 = 45
+    // total = 140
+    assertEqual(FC.computeSessionXP({
+      rounds: [
+        { accuracy: 100, difficulty: 1, correct: true },
+        { accuracy: 50, difficulty: 2, correct: false }
+      ]
+    }), 140);
+  });
+  test("computeSessionXP: fallback aggregates (no rounds array)", () => {
+    // levelScore = 80 * (0.5 + 0.2*3) = 80 * 1.1 = 88
+    // streakBonus = min(2*10, 100) = 20
+    // perfectBonus = 0
+    // total = 108
+    assertEqual(FC.computeSessionXP({ percentage: 80, maxLevel: 3, maxStreak: 2 }), 108);
+  });
+  test("computeSessionXP: empty/null/undefined input -> 0 (no NaN)", () => {
+    assertEqual(FC.computeSessionXP(null), 0);
+    assertEqual(FC.computeSessionXP({}), 0);
+    assertEqual(FC.computeSessionXP(), 0);
+    assert(Number.isFinite(FC.computeSessionXP({ rounds: [] })));
+  });
+  test("computeSessionXP: perfect session includes perfectBonus", () => {
+    // levelScore = 100 * (0.5 + 0.2*5) = 100 * 1.5 = 150
+    // streakBonus = min(5*10, 100) = 50
+    // perfectBonus = 50
+    // total = 250
+    assertEqual(FC.computeSessionXP({ percentage: 100, maxLevel: 5, maxStreak: 5 }), 250);
+  });
+
+  test("computeTotalXP: sums stored xp fields", () => {
+    assertEqual(FC.computeTotalXP([{ xp: 500 }, { xp: 300 }]), 800);
+  });
+  test("computeTotalXP: mixed stored xp and fallback sessions", () => {
+    // stored: 500, fallback: 108 (from previous test)
+    assertEqual(FC.computeTotalXP([{ xp: 500 }, { percentage: 80, maxLevel: 3, maxStreak: 2 }]), 608);
+  });
+  test("computeTotalXP: empty/invalid history -> 0", () => {
+    assertEqual(FC.computeTotalXP([]), 0);
+    assertEqual(FC.computeTotalXP(null), 0);
+    assertEqual(FC.computeTotalXP(), 0);
+  });
+
+  // ==========================================
+  // computePilotRank with lifetimeXP promotion
+  // ==========================================
+  test("computePilotRank: lifetimeXP promotes to Senior Captain at 25000+", () => {
+    const rank = FC.computePilotRank({ totalSessions: 0, highScore: 0, lifetimeXP: 25000 });
+    assertEqual(rank.title, "Senior Captain");
+    assertEqual(rank.rankId, "senior_captain");
+  });
+  test("computePilotRank: lifetimeXP promotes to Ace at 50000+", () => {
+    const rank = FC.computePilotRank({ totalSessions: 0, highScore: 0, lifetimeXP: 50000 });
+    assertEqual(rank.title, "Ace");
+    assertEqual(rank.rankId, "ace");
+  });
+  test("computePilotRank: lifetimeXP promotes to Legend at 100000+", () => {
+    const rank = FC.computePilotRank({ totalSessions: 0, highScore: 0, lifetimeXP: 100000 });
+    assertEqual(rank.title, "Legend");
+    assertEqual(rank.rankId, "legend");
+  });
+  test("computePilotRank: 0 lifetimeXP does not alter legacy rank", () => {
+    const rank = FC.computePilotRank({ totalSessions: 0, highScore: 0 });
+    assertEqual(rank.title, "Student Pilot"); // unchanged from sessions/core ladder
+  });
+  test("computePilotRank: high XP beats low session/score rank", () => {
+    const rank = FC.computePilotRank({ totalSessions: 55, highScore: 16000, lifetimeXP: 100000 });
+    // Legacy would be Test Pilot (level 6), but XP-based Legend (level 9) should win
+    assertEqual(rank.title, "Legend");
+  });
+
   // ---- reporting ----
   const passed = results.filter(r => r.ok).length;
   const failed = results.length - passed;

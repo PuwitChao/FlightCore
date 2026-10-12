@@ -776,23 +776,49 @@
 
   // ---- gamification: pilot ranks & achievements ----
 
+  // Rank tier derived purely from lifetime XP. Used to promote high-flying
+  // aviators past the session/score ladder and to unlock the Senior Captain,
+  // Ace, and Legend tiers on top of the legacy ranks (never demotes).
+  function xpRankFor(lifetimeXP) {
+    const xp = safeNumber(lifetimeXP, 0, { min: 0 });
+    if (xp >= 100000) return { rankId: "legend", title: "Legend", badge: "LGD", level: 9, req: "Maximum Rank Achieved" };
+    if (xp >= 50000) return { rankId: "ace", title: "Ace", badge: "ACE", level: 8, req: "Next: Legend (100,000 XP)" };
+    if (xp >= 25000) return { rankId: "senior_captain", title: "Senior Captain", badge: "SCPT", level: 7, req: "Next: Ace (50,000 XP)" };
+    if (xp >= 12000) return { rankId: "captain", title: "Captain", badge: "CPT", level: 5, req: "Next: Senior Captain (25,000 XP)" };
+    if (xp >= 5000) return { rankId: "first_officer", title: "First Officer", badge: "FO", level: 4, req: "Next: Captain (12,000 XP)" };
+    if (xp >= 2000) return { rankId: "second_officer", title: "Second Officer", badge: "SO", level: 3, req: "Next: First Officer (5,000 XP)" };
+    if (xp >= 500) return { rankId: "cadet", title: "Cadet", badge: "CDT", level: 2, req: "Next: Second Officer (2,000 XP)" };
+    return { rankId: "student", title: "Student Pilot", badge: "STU", level: 1, req: "Next: Cadet (500 XP)" };
+  }
+
   function computePilotRank(stats) {
     const s = stats || {};
     const sessions = safeNumber(s.totalSessions, 0, { min: 0 });
     const highScore = safeNumber(s.highScore, 0, { min: 0 });
 
+    let rank;
     if (sessions >= 50 && highScore >= 15000) {
-      return { rankId: "test_pilot", title: "Test Pilot", badge: "TP", level: 6, req: "Maximum Rank Achieved" };
+      rank = { rankId: "test_pilot", title: "Test Pilot", badge: "TP", level: 6, req: "Maximum Rank Achieved" };
     } else if (sessions >= 20 || highScore >= 10000) {
-      return { rankId: "captain", title: "Captain", badge: "CPT", level: 5, req: "Next: Test Pilot (50 Sessions & 15,000 Score)" };
+      rank = { rankId: "captain", title: "Captain", badge: "CPT", level: 5, req: "Next: Test Pilot (50 Sessions & 15,000 Score)" };
     } else if (sessions >= 10 || highScore >= 6000) {
-      return { rankId: "first_officer", title: "First Officer", badge: "FO", level: 4, req: "Next: Captain (20 Sessions or 10,000 Score)" };
+      rank = { rankId: "first_officer", title: "First Officer", badge: "FO", level: 4, req: "Next: Captain (20 Sessions or 10,000 Score)" };
     } else if (sessions >= 5 || highScore >= 3000) {
-      return { rankId: "second_officer", title: "Second Officer", badge: "SO", level: 3, req: "Next: First Officer (10 Sessions or 6,000 Score)" };
+      rank = { rankId: "second_officer", title: "Second Officer", badge: "SO", level: 3, req: "Next: First Officer (10 Sessions or 6,000 Score)" };
     } else if (sessions >= 1 || highScore >= 1000) {
-      return { rankId: "cadet", title: "Cadet", badge: "CDT", level: 2, req: "Next: Second Officer (5 Sessions or 3,000 Score)" };
+      rank = { rankId: "cadet", title: "Cadet", badge: "CDT", level: 2, req: "Next: Second Officer (5 Sessions or 3,000 Score)" };
+    } else {
+      rank = { rankId: "student", title: "Student Pilot", badge: "STU", level: 1, req: "Next: Cadet (Complete 1 Session)" };
     }
-    return { rankId: "student", title: "Student Pilot", badge: "STU", level: 1, req: "Next: Cadet (Complete 1 Session)" };
+
+    // Lifetime XP only ever promotes (never demotes) and unlocks the tiers
+    // above Test Pilot. Callers that pass only `totalSessions`/`highScore` have
+    // no XP and keep the exact previous behavior.
+    if (Number.isFinite(Number(s.lifetimeXP)) && Number(s.lifetimeXP) > 0) {
+      const xpRank = xpRankFor(s.lifetimeXP);
+      if (xpRank.level > rank.level) rank = xpRank;
+    }
+    return rank;
   }
 
   function evaluateAchievements(history, currentSession) {
@@ -1237,6 +1263,140 @@
     return generateRadarSVG(skillAverages);
   }
 
+  // ---- daily flight ops: deterministic seeded challenge ----
+
+  // mulberry32 PRNG tied to a single 32-bit seed. All math is 32-bit unsigned
+  // so the same seed always yields the exact same sequence on every machine,
+  // which is what makes a "date -> challenge" mapping globally reproducible.
+  function createSeededRandom(seed) {
+    let a = (Number(seed) >>> 0) || 0;
+    return function () {
+      a |= 0;
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Deterministic 32-bit hash (FNV-1a) of a `YYYY-MM-DD` date string; feeds
+  // createSeededRandom so identical date strings map to identical seeds.
+  function hashDateSeed(dateStr) {
+    const text = String(dateStr || "");
+    let hash = 2166136261 >>> 0;
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  // Normalize any date-ish input to a UTC `YYYY-MM-DD` key; missing or invalid
+  // input falls back to today's UTC date so the caller always gets a valid,
+  // playable challenge key rather than a throw.
+  function utcDateKey(dateStr) {
+    const d = (dateStr === undefined || dateStr === null || dateStr === "")
+      ? new Date()
+      : new Date(dateStr);
+    return (Number.isFinite(d.getTime()) ? d : new Date()).toISOString().slice(0, 10);
+  }
+
+  // The daily module pool is the 12 playable (non-prototype) modules:
+  // CHALLENGE_MODULE_KEYS minus the locked `intercept` prototype.
+  function dailyModulePool() {
+    return CHALLENGE_MODULE_KEYS.filter(module => module !== "intercept");
+  }
+
+  // Deterministic 5-module daily lineup. Seeds the PRNG from the UTC date,
+  // shuffles the playable pool, keeps 5 unique modules, and assigns progressive
+  // difficulty levels (round N runs at level N).
+  function generateDailyChallenge(dateStr) {
+    const date = utcDateKey(dateStr);
+    const seedNumber = hashDateSeed(date);
+    const rng = createSeededRandom(seedNumber);
+    const modules = shuffle(dailyModulePool(), rng).slice(0, 5);
+    const rounds = modules.map((module, index) => ({
+      round: index + 1,
+      module,
+      level: index + 1,
+      skillFamily: moduleSkillFamily(module)
+    }));
+    return { date, seedNumber, rounds };
+  }
+
+  // Wordle-style share card. Each round's accuracy maps to one emoji block
+  // (100% = green, 50-99% = yellow, <50% = red) wrapped five per line, then a
+  // score/accuracy/tier summary line and the flightcore.app play link.
+  function dailyAccuracyBlock(accuracy) {
+    const acc = clampPct(Number(accuracy));
+    if (acc >= 100) return "\u{1F7E9}";
+    if (acc >= 50) return "\u{1F7E8}";
+    return "\u{1F7E5}";
+  }
+
+  function formatDailyShareCard(summary) {
+    const data = summary || {};
+    const date = data.date || new Date().toISOString().slice(0, 10);
+    const score = safeNumber(data.score, 0, { min: 0 });
+    const accuracy = clampPct(Number(data.accuracy) || 0);
+    const tier = data.tier || sessionTier(accuracy).label;
+    const rounds = Array.isArray(data.rounds) ? data.rounds : [];
+
+    const blocks = rounds.map(r => dailyAccuracyBlock(r && r.accuracy));
+    const rows = [];
+    for (let i = 0; i < blocks.length; i += 5) {
+      rows.push(blocks.slice(i, i + 5).join(""));
+    }
+    const grid = rows.length > 0 ? rows.join("\n") : "\u2014";
+
+    return [
+      `\u{1F6EB} DAILY FLIGHT OPS \u2014 ${date}`,
+      grid,
+      `Score: ${score.toLocaleString()} | Accuracy: ${accuracy}% | Tier: ${tier}`,
+      "https://flightcore.app/daily"
+    ].join("\n");
+  }
+
+  // ---- XP & rank progression ----
+
+  // XP for one completed round: accuracy points scaled by difficulty so a strong
+  // performance on a harder round earns more, plus a correctness bonus. Runs of
+  // failures still floor at zero (never negative).
+  function roundXP(round) {
+    const acc = clampPct(Number(round && round.accuracy) || 0);
+    const difficulty = safeNumber(round && round.difficulty, 1, { min: 1, max: MAX_LEVEL });
+    const accuracyScore = Math.round(acc * (0.5 + 0.2 * difficulty));
+    const correctBonus = (round && (round.correct || acc === 100)) ? 25 : 0;
+    return Math.max(0, accuracyScore + correctBonus);
+  }
+
+  // Lifetime XP earned by one session. Prefers per-round telemetry when present;
+  // falls back to session-level aggregates (accuracy & maxLevel) so legacy saved
+  // records without a `rounds` block still produce a stable XP value.
+  function computeSessionXP(session) {
+    const s = session || {};
+    if (Array.isArray(s.rounds) && s.rounds.length > 0) {
+      return s.rounds.reduce((total, round) => total + roundXP(round), 0);
+    }
+    const accuracy = clampPct(Number(s.percentage) || Number(s.accuracy) || 0);
+    const maxLevel = safeNumber(s.maxLevel, 1, { min: 1, max: MAX_LEVEL });
+    const levelScore = Math.round(accuracy * (0.5 + 0.2 * maxLevel));
+    const streakBonus = Math.min(safeNumber(s.maxStreak, 0, { min: 0 }) * 10, 100);
+    const perfectBonus = accuracy >= 100 ? 50 : 0;
+    return Math.max(0, levelScore + streakBonus + perfectBonus);
+  }
+
+  // Sum of lifetime XP across stored sessions. Honors an explicit persisted `xp`
+  // field when present; otherwise derives XP deterministically per session.
+  function computeTotalXP(history) {
+    const hist = Array.isArray(history) ? history : [];
+    return hist.reduce((total, record) => {
+      const rec = record || {};
+      const stored = Number(rec.xp);
+      return total + (Number.isFinite(stored) && stored > 0 ? stored : computeSessionXP(rec));
+    }, 0);
+  }
+
   return {
     MAX_LEVEL,
     SKILL_FAMILIES,
@@ -1291,6 +1451,12 @@
     generateHorizon,
     horizonAccuracy,
     computeFlowStateParams,
+    createSeededRandom,
+    hashDateSeed,
+    generateDailyChallenge,
+    formatDailyShareCard,
+    computeSessionXP,
+    computeTotalXP,
     computePilotRank,
     evaluateAchievements,
     evaluateProAccess,

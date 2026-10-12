@@ -246,16 +246,142 @@ let usedFaultIndices = [];
 let usedChecklistIndices = [];
 let usedATCIndices = {}; // { callsigns: Set, facilities: Set, frequencies: Set, squawks: Set }
 
+// Daily Flight Ops state: when a daily sortie is launched the session is locked
+// to the deterministic 5-round challenge generated from the current UTC date.
+let isDailySession = false;
+let currentDailyChallenge = null;
+
 // ==========================================
-// 3. AUDIO SYNTH (Muted)
+// 3. AUDIO SYNTH (Web Audio Synthesizer)
 // ==========================================
 
+let audioCtx = null;
+// Mute preference persisted via localStorage ("1" = muted, otherwise audible).
+let audioMuted = (getSafeStorageValue("flightcore_audio_muted", "0") || "0") === "1";
+
+// Lazy AudioContext creation. Autoplay policies require a user gesture before
+// audio is allowed, so the context is created on first play attempt and any
+// suspended state is explicitly resumed. Every Web Audio operation is guarded
+// so a browser without AudioContext support degrades to a silent no-op.
+function getAudioContext() {
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  } catch (e) {
+    console.warn("Unable to create AudioContext:", e);
+    return null;
+  }
+}
+
+// Unlock the context automatically on the first user gesture (pointer/keydown).
+function ensureAudioUnlocked() {
+  getAudioContext();
+  try {
+    const unlock = () => getAudioContext();
+    window.addEventListener("pointerdown", unlock, { passive: true });
+    window.addEventListener("keydown", unlock);
+  } catch (e) {
+    console.warn("Unable to attach audio unlock listeners:", e);
+  }
+}
+
+// Schedule a single oscillator tone with optional frequency glide and a fast
+// attack/decay envelope to avoid audible clicks between notes.
+function playTone(ctx, { freq = 440, toFreq = null, start = 0, duration = 0.1, type = "sine", gain = 0.12 }) {
+  if (!ctx) return;
+  const t0 = ctx.currentTime + start;
+  const osc = ctx.createOscillator();
+  const amp = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  if (toFreq !== null) osc.frequency.exponentialRampToValueAtTime(Math.max(toFreq, 1), t0 + duration);
+  amp.gain.setValueAtTime(gain, t0);
+  amp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+  amp.gain.linearRampToValueAtTime(0, t0 + duration + 0.01);
+  osc.connect(amp).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + duration + 0.02);
+}
+
 function playSound(type) {
-  // Silent no-op
+  try {
+    if (audioMuted) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    if (type === "click") {
+      // Tactile 5ms sine pop from 1200Hz to 400Hz
+      playTone(ctx, { freq: 1200, toFreq: 400, duration: 0.005, type: "sine", gain: 0.1 });
+    } else if (type === "chime") {
+      // Dual-tone caution sine chime at 800Hz and 1000Hz
+      playTone(ctx, { freq: 800, duration: 0.35, type: "sine", gain: 0.07 });
+      playTone(ctx, { freq: 1000, duration: 0.35, type: "sine", gain: 0.07 });
+    } else if (type === "success") {
+      // Ascending chord arpeggio: C5, E5, G5 sine notes spaced 60ms apart
+      const notes = [523.25, 659.25, 783.99];
+      notes.forEach((note, i) => {
+        playTone(ctx, { freq: note, start: i * 0.06, duration: 0.22, type: "sine", gain: 0.1 });
+      });
+    } else if (type === "error") {
+      // 130Hz low sawtooth buzz
+      playTone(ctx, { freq: 130, duration: 0.4, type: "sawtooth", gain: 0.09 });
+    }
+  } catch (e) {
+    console.warn("playSound failed:", e);
+  }
 }
 
 function triggerHaptic(type) {
   // Silent no-op
+}
+
+// Toggle the persisted mute preference and sync the header button state.
+function toggleAudioMute() {
+  try {
+    audioMuted = !audioMuted;
+    safeStorageSet("flightcore_audio_muted", audioMuted ? "1" : "0");
+    updateSoundToggleUI();
+    if (!audioMuted) playSound("click");
+  } catch (e) {
+    console.warn("toggleAudioMute failed:", e);
+  }
+}
+
+// Keep the header #btn-sound-toggle in sync with the mute state: updates its
+// aria-label, title, aria-pressed, and the #sound-icon SVG speaker path.
+function updateSoundToggleUI() {
+  const btn = document.getElementById("btn-sound-toggle");
+  if (!btn) return;
+  btn.setAttribute("aria-label", audioMuted ? "Unmute sound" : "Mute sound");
+  btn.setAttribute("aria-pressed", audioMuted ? "true" : "false");
+  btn.title = audioMuted ? "Unmute Sound" : "Mute Sound";
+  const icon = document.getElementById("sound-icon");
+  if (!icon) return;
+  if (audioMuted) {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />`;
+  } else {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" />`;
+  }
+  // Keep the settings-panel mute checkbox in sync with the live mute state so
+  // either control (header button or theme-modal switch) reflects the other.
+  const muteToggle = document.getElementById("toggle-audio-mute");
+  if (muteToggle) muteToggle.checked = audioMuted;
+}
+
+function initSoundToggle() {
+  ensureAudioUnlocked();
+  updateSoundToggleUI();
+  bindClick("btn-sound-toggle", toggleAudioMute);
+  const muteToggle = document.getElementById("toggle-audio-mute");
+  if (muteToggle) {
+    muteToggle.addEventListener("change", () => toggleAudioMute());
+  }
 }
 
 // Persist to localStorage without ever throwing. Private mode / quota-exceeded
@@ -837,8 +963,27 @@ function updateSidebarLiveStats() {
 function startRound() {
   sessionRound++;
   updateLevelAndHUD();
-  
-  const module = selectNextModule();
+
+  let module;
+  if (isDailySession) {
+    // Daily sorties follow the fixed 5-round seeded lineup: round N uses the
+    // challenge's module at its assigned difficulty level (not streak-driven).
+    const challengeRound = currentDailyChallenge && currentDailyChallenge.rounds
+      ? currentDailyChallenge.rounds[sessionRound - 1]
+      : null;
+    if (challengeRound && challengeRound.module) {
+      module = challengeRound.module;
+      level = FlightCore.safeNumber(challengeRound.level, 1, { min: 1, max: FlightCore.MAX_LEVEL });
+      activeModule = module;
+      const meta = FlightCore.moduleMetadata(module);
+      document.getElementById("hud-module").textContent = meta.label.toUpperCase();
+      document.getElementById("hud-level").textContent = `LVL: ${String(level).padStart(2, "0")}`;
+    } else {
+      module = selectNextModule();
+    }
+  } else {
+    module = selectNextModule();
+  }
   
   // Generate module data
   if (module === "checklist") {
@@ -2244,7 +2389,7 @@ function finishSession() {
   const blindspotCard = document.getElementById("debrief-blindspots");
   const blindspotList = document.getElementById("debrief-blindspot-list");
 
-  if (blindspots.length > 0) {
+if (blindspots.length > 0) {
     blindspotCard.style.display = "block";
     blindspotList.innerHTML = "";
     [...new Set(blindspots)].forEach(b => {
@@ -2266,6 +2411,16 @@ function finishSession() {
   safeStorageSet("flightcore_last_played", todayStr);
   safeStorageSet("flightcore_daily_streak", dailyStreak);
 
+  // Lifetime XP: derive session XP from the precise per-round telemetry so the
+  // difficulty-scaled formula applies, then persist it on the saved record.
+  const sessionXP = FlightCore.computeSessionXP({
+    rounds: roundByRoundHistory.map(r => ({
+      accuracy: r.accuracy,
+      difficulty: r.difficulty,
+      correct: r.correct
+    }))
+  });
+
   const sessionRecord = {
     date: new Date().toISOString(),
     score: sessionScore,
@@ -2273,6 +2428,8 @@ function finishSession() {
     tier: tierInfo.label,
     maxLevel: level,
     maxStreak: sessionMaxStreak,
+    xp: sessionXP,
+    isDaily: isDailySession,
     competencies: compsData,
     moduleAccuracy: moduleAccuracy,
     skillFamilyAccuracy: skillFamilyAccuracy
@@ -2283,9 +2440,12 @@ function finishSession() {
   if (globalHistory.length > 30) globalHistory.shift();
   safeStorageSet("flightcore_history", JSON.stringify(globalHistory));
 
+  // Refresh lifetime XP totals and the pilot rank badge (XP only ever promotes).
+  updatePilotRankHUD();
+
   renderDebriefSkillFamilies(skillFamilyAccuracy);
   renderTechnicalPerformanceAnalytics();
-  Telemetry.emit("session_finished", { rounds: roundByRoundHistory.length, score: sessionScore, accuracy: percentage, tier: tierInfo.label, maxStreak: sessionMaxStreak, weakestSkillFamily: FlightCore.weakestSkillFamily(globalHistory) });
+  Telemetry.emit("session_finished", { rounds: roundByRoundHistory.length, score: sessionScore, accuracy: percentage, tier: tierInfo.label, maxStreak: sessionMaxStreak, weakestSkillFamily: FlightCore.weakestSkillFamily(globalHistory), xp: sessionXP, isDaily: isDailySession });
   showScreen("screen-debrief");
   if (percentage > previousBest && previousBest >= 0) showPersonalBestBanner();
 }
@@ -2427,24 +2587,38 @@ bindClick("btn-restart", () => {
 });
 // Copy score card to clipboard
 bindClick("btn-copy-score", () => {
-  const scoreEl = document.getElementById("debrief-score");
-  const pctEl = document.getElementById("debrief-percentage");
-  const tierEl = document.getElementById("debrief-rating-label");
+  let text;
+  if (isDailySession) {
+    // Daily sorties export a Wordle-style share card (emoji grid + summary).
+    const dailyPct = FlightCore.sessionGrade(roundByRoundHistory);
+    const dailyTier = FlightCore.sessionTier(dailyPct);
+    text = FlightCore.formatDailyShareCard({
+      date: (currentDailyChallenge && currentDailyChallenge.date) || new Date().toISOString().slice(0, 10),
+      score: sessionScore,
+      accuracy: dailyPct,
+      tier: dailyTier.label,
+      rounds: roundByRoundHistory.map(r => ({ accuracy: r.accuracy }))
+    });
+  } else {
+    const scoreEl = document.getElementById("debrief-score");
+    const pctEl = document.getElementById("debrief-percentage");
+    const tierEl = document.getElementById("debrief-rating-label");
 
-  const modLines = ["checklist", "instruments", "atc", "fault"].map(mod => {
-    const rounds = roundByRoundHistory.filter(r => r.module === mod);
-    if (rounds.length === 0) return null;
-    const avg = Math.round(rounds.reduce((s, r) => s + r.accuracy, 0) / rounds.length);
-    return `${mod.charAt(0).toUpperCase() + mod.slice(1)}: ${avg}%`;
-  }).filter(Boolean);
+    const modLines = ["checklist", "instruments", "atc", "fault"].map(mod => {
+      const rounds = roundByRoundHistory.filter(r => r.module === mod);
+      if (rounds.length === 0) return null;
+      const avg = Math.round(rounds.reduce((s, r) => s + r.accuracy, 0) / rounds.length);
+      return `${mod.charAt(0).toUpperCase() + mod.slice(1)}: ${avg}%`;
+    }).filter(Boolean);
 
-  const text = [
-    "FLIGHT CORE - SESSION DEBRIEF",
-    `Score: ${scoreEl ? scoreEl.textContent : "-"} | ${pctEl ? pctEl.textContent : "-"}`,
-    `Tier: ${tierEl ? tierEl.textContent : "-"} | Streak: ${sessionMaxStreak} | Level: ${level}`,
-    modLines.join(" | "),
-    "flightcore.app"
-  ].join("\n");
+    text = [
+      "FLIGHT CORE - SESSION DEBRIEF",
+      `Score: ${scoreEl ? scoreEl.textContent : "-"} | ${pctEl ? pctEl.textContent : "-"}`,
+      `Tier: ${tierEl ? tierEl.textContent : "-"} | Streak: ${sessionMaxStreak} | Level: ${level}`,
+      modLines.join(" | "),
+      "flightcore.app"
+    ].join("\n");
+  }
 
   const btn = document.getElementById("btn-copy-score");
   if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
@@ -2461,9 +2635,32 @@ bindClick("btn-copy-score", () => {
     setTimeout(() => { if (btn) btn.textContent = "COPY SCORE CARD"; }, 2000);
   });
 });
-// Start Session Button
+// Render the current UTC date into the Daily Flight Ops badge so the card
+// always advertises today's seeded sortie.
+function renderDailyOpsBadge() {
+  const badge = document.getElementById("daily-ops-date-badge");
+  if (!badge) return;
+  const challenge = currentDailyChallenge || FlightCore.generateDailyChallenge();
+  const d = new Date(`${challenge.date}T00:00:00Z`);
+  const label = Number.isFinite(d.getTime())
+    ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }).toUpperCase()
+    : "TODAY";
+  badge.textContent = label;
+}
+
+// Start Session Button (standard configuration)
 bindClick("btn-engage-session", () => {
   playSound("click");
+  isDailySession = false;
+  currentDailyChallenge = null;
+  initSession();
+});
+
+// Daily Flight Ops Button (seeded 5-round challenge for the current UTC date)
+bindClick("btn-daily-ops", () => {
+  playSound("click");
+  isDailySession = true;
+  currentDailyChallenge = FlightCore.generateDailyChallenge();
   initSession();
 });
 
@@ -2480,10 +2677,21 @@ function initSession() {
   usedChecklistIndices = [];
   usedATCIndices = { callsigns: new Set(), facilities: new Set(), frequencies: new Set(), squawks: new Set() };
 
+  // Daily sorties are always 5 rounds against the seeded challenge; leaving
+  // daily mode restores the pilot's persisted session-length preference so the
+  // normal flow is never left stuck at the daily length.
+  if (isDailySession) {
+    if (!currentDailyChallenge) currentDailyChallenge = FlightCore.generateDailyChallenge();
+    sessionLength = 5;
+  } else {
+    sessionLength = FlightCore.safeNumber(getSafeStorageValue("flightcore_session_length", null), 8, { min: 1, max: 50 });
+  }
+
   Telemetry.emit("session_started", {
     sessionLength,
     startingStreak,
     timerMultiplier,
+    isDaily: isDailySession,
     selectedModules: selectedModules.slice()
   });
   startRound();
@@ -2820,6 +3028,10 @@ function loadHomeStats() {
   renderModuleStats();
   renderSkillFamilyStats();
   renderRoundStepTracker();
+
+  // Keep lifetime XP, pilot rank, and the Daily Ops date badge fresh on home.
+  updatePilotRankHUD();
+  renderDailyOpsBadge();
 }
 
 // ==========================================
@@ -3768,6 +3980,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initHistoryTabs();
   initAbortSystem();
   initHelpSystem();
+  initSoundToggle();
   initStudyPauseSystem();
   initModalA11y();
   initOnboarding();
@@ -3931,13 +4144,19 @@ function renderRunHistory() {
 function updatePilotRankHUD() {
   const history = getSafeStorageHistory();
   const highScore = getSafeStorageInt("flightcore_high_score", 0);
-  const rank = FlightCore.computePilotRank({ totalSessions: history.length, highScore });
+  const lifetimeXP = FlightCore.computeTotalXP(history);
+  const rank = FlightCore.computePilotRank({ totalSessions: history.length, highScore, lifetimeXP });
   const badgeEl = document.getElementById("hud-rank-badge");
   if (badgeEl) {
     badgeEl.textContent = rank.title.toUpperCase();
     badgeEl.title = `Pilot Rank: ${rank.title} (${rank.req})`;
     badgeEl.setAttribute("aria-label", `Pilot rank: ${rank.title}`);
   }
+  // Surface lifetime XP on the home and sidebar stat panels.
+  const statXPEl = document.getElementById("stat-lifetime-xp");
+  if (statXPEl) statXPEl.textContent = lifetimeXP.toLocaleString();
+  const sideXPEl = document.getElementById("side-stat-xp");
+  if (sideXPEl) sideXPEl.textContent = lifetimeXP.toLocaleString();
 }
 
 function renderAchievementsModal() {

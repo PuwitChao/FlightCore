@@ -1,12 +1,53 @@
-# Task Checklist - Answer-Key Audit And Fix
+﻿# Task Checklist: Daily Flight Ops, Web Audio Synthesizer & Gamification Depth
 
-- [x] Map module generators, renderers, and scorers <!-- id: 0 -->
-- [x] Run randomized core answer-key audit for option modules <!-- id: 1 -->
-- [x] Reproduce user-facing Fuel Balancer false-negative answer key <!-- id: 2 -->
-- [x] Patch fuel scoring to evaluate visible tank outcome <!-- id: 3 -->
-- [x] Audit Shape/Balance Bender visible equation against answer key <!-- id: 4 -->
-- [x] Patch Target Scan box-counting scoring to derive from visible challenge cells <!-- id: 5 -->
-- [x] Fix Target Scan glyph CSS so prompted shapes render distinctly <!-- id: 6 -->
-- [x] Add regression tests for fuel, shape, target, and option-key invariants <!-- id: 7 -->
-- [x] Run full verification gate <!-- id: 8 -->
-- [x] Summarize product-design audit limits and fixed gameplay flow <!-- id: 9 -->
+- [x] **Phase 1: Pure Engine Primitives & Unit Tests**
+  - [x] **Subtask 1.1**: Implement deterministic Daily Ops PRNG & module sequence generator in `core.js`
+    - *Dependencies*: None
+    - *Skill*: `opencode_delegate` / `engineering_code`
+    - *Validation*: `node --check core.js`
+  - [x] **Subtask 1.2**: Implement Wordle-style Daily Ops shareable score card formatter in `core.js`
+    - *Dependencies*: Subtask 1.1
+    - *Skill*: `opencode_delegate`
+    - *Validation*: `node --check core.js`
+  - [x] **Subtask 1.3**: Implement Persistent XP & Cockpit Rank progression logic in `core.js`
+    - *Dependencies*: None
+    - *Skill*: `opencode_delegate` / `engineering_code`
+    - *Validation*: `node --check core.js`
+  - [x] **Subtask 1.4**: Add automated test cases for PRNG determinism, share card format, and XP calculation in `tests.js`
+    - *Dependencies*: Subtasks 1.1, 1.2, 1.3
+    - *Skill*: `opencode_delegate` / `test_generator`
+    - *Validation*: `node tests.js` (128/128 passed)
+
+- [x] **Phase 2: Tactile Web Audio Synthesizer**
+  - [x] **Subtask 2.1**: Implement zero-dependency Web Audio synthesizer in `app.js` with mute setting
+    - *Dependencies*: None
+    - *Skill*: `opencode_delegate`
+    - *Validation*: `node --check app.js`
+
+- [x] **Phase 3: Daily Ops & Gamification UI Integration**
+  - [x] **Subtask 3.1**: Add Daily Flight Ops launch button, date badge, and challenge flow in `index.html` and `app.js`
+    - *Dependencies*: Phase 1
+    - *Skill*: `opencode_delegate` / `ui_review`
+    - *Validation*: `node --check app.js`
+  - [x] **Subtask 3.2**: Add Debrief Share Card button and clipboard copy toast in `app.js` and `index.html`
+    - *Dependencies*: Subtask 1.2, 3.1
+    - *Skill*: `opencode_delegate`
+    - *Validation*: `node --check app.js`
+  - [x] **Subtask 3.3**: Add Pilot Rank and XP display components to header and sidebar in `index.html` and `styles.css`
+    - *Dependencies*: Subtask 1.3
+    - *Skill*: `opencode_delegate` / `ui_review`
+    - *Validation*: `node --check app.js`
+  - [x] **Subtask 3.4**: Add audio mute toggle switch in settings modal
+    - *Dependencies*: Subtask 2.1
+    - *Skill*: `opencode_delegate`
+    - *Validation*: `node --check app.js`
+
+- [x] **Phase 4: Full Verification, Error Resilience & Handoff**
+  - [x] **Subtask 4.1**: Run regression test suites and app error handling VM tests
+    - *Dependencies*: Phases 1, 2, 3
+    - *Skill*: `verify`
+    - *Validation*: `node tests.js && node tests_app_error_handling.js` (128/128 and 5/5 passed)
+  - [x] **Subtask 4.2**: Update project documentation and log session
+    - *Dependencies*: Subtask 4.1
+    - *Skill*: `documentation` / `handoff`
+    - *Validation*: `git status`

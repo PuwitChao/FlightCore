@@ -143,6 +143,10 @@
               <span class="home-stat-num" id="stat-daily-streak">0</span>
               <span class="home-stat-label">Day Streak</span>
             </div>
+            <div class="home-stat-box">
+              <span class="home-stat-num" id="stat-lifetime-xp">0</span>
+              <span class="home-stat-label">Lifetime XP</span>
+            </div>
           </div>
 
           <!-- History card with Calendar/Trend tabs -->
@@ -279,6 +283,20 @@
                 How long to study each briefing before the test begins. Relaxed = 1.5x, Extended = 2x the default duration.
               </p>
             </div>
+          </div>
+
+          <!-- Daily Flight Ops Card -->
+          <div class="terminal-card" style="margin-bottom: 16px;" id="daily-ops-card">
+            <div class="terminal-card-header">
+              <span>Daily Flight Ops</span>
+              <span class="type-tag" id="daily-ops-date-badge">TODAY</span>
+            </div>
+            <p style="font-size: 0.72rem; line-height: 1.5; color: var(--text-secondary); margin-bottom: 10px;">
+              A fresh 5-round cognitive sortie, identical for every pilot on this date. Complete it and share your Wordle-style score card.
+            </p>
+            <button class="btn btn-primary btn-block" id="btn-daily-ops" style="min-height: 44px;">
+              LAUNCH DAILY SORTIE
+            </button>
           </div>
 
           <button class="btn btn-primary btn-block" id="btn-engage-session">
@@ -699,6 +717,10 @@
               <span class="home-stat-num" id="side-stat-daily-streak">0</span>
               <span class="home-stat-label">Day Streak</span>
             </div>
+            <div class="home-stat-box" style="grid-column: span 2;">
+              <span class="home-stat-num" id="side-stat-xp">0</span>
+              <span class="home-stat-label">Lifetime XP</span>
+            </div>
           </div>
         </div>
         <div class="terminal-card" style="margin-bottom: 0; flex-grow: 1; display: flex; flex-direction: column;">
@@ -845,6 +867,15 @@
               <span id="telemetry-status" style="font-size: 0.64rem; color: var(--text-muted); line-height: 1.35;">Telemetry endpoint is not configured.</span>
             </span>
             <input type="checkbox" id="toggle-telemetry" aria-describedby="telemetry-status">
+          </label>
+        </div>
+        <div class="terminal-card" style="margin-top: 12px; margin-bottom: 8px; padding: 12px;">
+          <label for="toggle-audio-mute" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+            <span style="display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 0.75rem; color: var(--text-primary); font-weight: 700;">Mute audio feedback</span>
+              <span style="font-size: 0.64rem; color: var(--text-muted); line-height: 1.35;">Disable synthesized clicks, chimes, and alert tones.</span>
+            </span>
+            <input type="checkbox" id="toggle-audio-mute" aria-label="Mute audio feedback">
           </label>
         </div>
         <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 8px;" id="purge-section">

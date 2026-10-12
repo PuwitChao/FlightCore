@@ -3642,3 +3642,13 @@ body[data-custom-accent='true'] .telemetry-value.accent {
   flex: 1 1 92px;
   min-width: 92px;
 }
+
+/* --- DAILY FLIGHT OPS CARD --- */
+#daily-ops-card {
+  border-color: var(--accent-blue) !important;
+  background: rgba(0, 212, 255, 0.03);
+}
+
+#btn-daily-ops:hover {
+  filter: brightness(1.08);
+}
