@@ -1,30 +1,46 @@
-﻿# Implementation Plan - Public Beta Monetization Readiness & Dormant Boundary
+﻿# Implementation Plan - Issue #10: Validate, Migrate and Safely Render Persisted FlightCore Sessions
 
-## Context & Objectives
-FlightCore is preparing for an independent public beta as a cockpit-inspired entertainment/puzzle game.
-Per GitHub Issues #17, #11, and Epic #8:
-- The public beta must remain 100% free with all released exercises, themes, and history accessible without payment, accounts, or licenses.
-- Remove all fake Pro key checks (`PRO-FLIGHT-PASS`), promotional paywalls, and modal triggers.
-- Clean up any legacy saved `flightcore_pro_key` from localStorage safely on startup without touching user run history or settings.
-- Enable full free access in public beta mode (all 7 themes, CSV logbook export, full gameplay).
-- Provide a dormant, clean future entitlement boundary contract (`FlightCore.getAccessStatus()`) that truthfully reports active beta mode without any fake paid state or client-side license checks.
-- Add regression tests verifying that `PRO-FLIGHT-PASS` grants no special paid privilege, that beta access provides full free capability, and that no paywall modal or fake license inputs are exposed in the DOM.
+## Problem Statement & Observed Risk
+In `app.js`:
+- `getSafeStorageHistory()` only verifies that the parsed JSON is an Array (`Array.isArray(parsed)`).
+- `globalHistory` at boot line 241 uses `FlightCore.safeParse(..., [])` without per-record validation.
+- Throughout `loadHomeStats()`, `renderLogbook()`, `exportLogbookCSV()`, `updatePilotRankHUD()`, and debrief calculations, records are dereferenced directly:
+  - `h.score.toLocaleString()` (throws `TypeError: Cannot read properties of undefined/null (reading 'toLocaleString')` if `h.score` is null/undefined or `h` is null/primitive).
+  - `h.percentage` (NaN if missing or non-numeric, breaking average grade calculations).
+  - `h.date` (invalid date if malformed).
+- When `safeStorageSet()` fails due to quota or storage restrictions, sessions are saved in memory without user notification or fallback.
 
-## Work Breakdown
-1. **Core Logic (`core.js`)**:
-   - Replace insecure `evaluateProAccess(licenseKey)` with a clean access status interface:
-     - In beta mode, `mode: "public_beta"`, `isPaid: false`, `isBeta: true`, all features unlocked for beta testing (`unlockedThemes`, `csvExport`, etc.).
-     - Remove `PRO-FLIGHT-PASS` and `FLIGHT-CORE-PRO` hardcoded keys.
-   - Update export surface and pure unit tests.
-2. **DOM & UI (`index.html`)**:
-   - Remove `#pro-pass-overlay` modal and `#btn-pro-toggle` from the HUD header.
-   - Add "Export CSV" button to the Run History section so users can cleanly use the logbook export feature.
-3. **Application Lifecycle (`app.js`)**:
-   - Remove `btnPro`, `overlayPro`, and `btnProUnlock` listeners.
-   - On startup, safely scrub legacy `flightcore_pro_key` from localStorage (`safeStorageRemove("flightcore_pro_key")`) to prevent stale legacy license keys.
-   - Wire up the Run History CSV export button directly to `exportLogbookCSV()`.
-4. **Automated Verification**:
-   - Update `tests.js` to test `FlightCore.getAccessStatus()`, verifying public beta mode, no legacy key bypass, and full theme access.
-   - Add new tests in `tests_app_error_handling.js` or dedicated test file for DOM non-exposure of Pro modal and legacy key scrubbing.
-   - Run `node tests.js` and `node tests_app_error_handling.js`.
-   - Run `node --check app.js` and `node --check core.js`.
+## Proposed Architecture & Solution
+1. **Schema Validation & Migration in `core.js`**:
+   - Introduce `FlightCore.validateHistoryRecord(rawRecord)`:
+     - Sanitizes/migrates any record into a bounded, well-formed object:
+       - `date`: Valid ISO string (fallback to valid ISO string for today).
+       - `score`: Safe bounded integer >= 0 (default 0).
+       - `percentage`: Safe bounded integer 0..100 (default 0).
+       - `tier`: Safe string (default computed via `FlightCore.sessionTier(percentage).label`).
+       - `maxLevel`: Safe integer >= 1 (default 1).
+       - `maxStreak`: Safe integer >= 0 (default 0).
+       - `xp`: Safe integer >= 0 (default computed from score/percentage).
+       - `competencies`: Object with valid numeric values or empty object.
+       - `moduleAccuracy`: Object with valid numeric values or empty object.
+       - `skillFamilyAccuracy`: Object with valid numeric values or empty object.
+       - `isDaily`: Boolean.
+       - `version`: Schema version (default 1).
+     - Returns `null` for completely irrecoverable objects (e.g. non-object primitives or corrupted garbage that has neither score nor date), allowing quarantine.
+   - Introduce `FlightCore.sanitizeHistory(historyArray)`:
+     - Filters and sanitizes array entries using `validateHistoryRecord`.
+     - Preserves all valid and partially-valid recoverable records.
+     - Never throws.
+2. **Hardened App-Layer Integration in `app.js`**:
+   - `getSafeStorageHistory()` uses `FlightCore.sanitizeHistory()` to guarantee clean records.
+   - Boot-time `globalHistory` is sanitized on startup: `globalHistory = FlightCore.sanitizeHistory(getSafeStorageHistory())`.
+   - Update `renderLogbook()` to defensively format:
+     - `(Number(h.score) || 0).toLocaleString()`
+     - Date parse safeguard with fallback string.
+   - Update `loadHomeStats()`:
+     - Guarantees finite numbers for `maxScore`, `averageGrade`, `maxStreakAchieved` even with empty or irregular history.
+   - Add quota / storage write failure toast/notification if `safeStorageSet("flightcore_history", ...)` fails on session save.
+3. **Automated Verification & Testing**:
+   - Unit tests in `tests.js` for `validateHistoryRecord` and `sanitizeHistory` with evil fixtures (nulls, missing fields, strings as scores, huge numbers, nested junk, empty array, non-array).
+   - Node VM tests in `tests_app_error_handling.js` simulating corrupt localStorage history and verifying `renderLogbook()` and `loadHomeStats()` never throw.
+   - Storage quota failure test verifying graceful fallback.

@@ -775,6 +775,92 @@
   });
 
   // ==========================================
+  // validateHistoryRecord / sanitizeHistory
+  // ==========================================
+  test("validateHistoryRecord: sanitizes a well-formed record without loss", () => {
+    const record = FC.validateHistoryRecord({
+      date: "2026-10-13T12:00:00.000Z",
+      score: 4250,
+      percentage: 87,
+      tier: "SHARP",
+      maxLevel: 5,
+      maxStreak: 3,
+      xp: 1200,
+      isDaily: true,
+      competencies: { checklist: 90, atc: 75 },
+      moduleAccuracy: { checklist: 90 },
+      skillFamilyAccuracy: { logical: 80, spatial: 60 }
+    });
+    assertEqual(record.date, "2026-10-13T12:00:00.000Z");
+    assertEqual(record.score, 4250);
+    assertEqual(record.percentage, 87);
+    assertEqual(record.tier, "SHARP");
+    assertEqual(record.maxLevel, 5);
+    assertEqual(record.maxStreak, 3);
+    assertEqual(record.xp, 1200);
+    assertEqual(record.isDaily, true);
+    assertEqual(record.version, 1);
+    assertDeep(record.competencies, { checklist: 90, atc: 75 });
+    assertDeep(record.moduleAccuracy, { checklist: 90 });
+    assertDeep(record.skillFamilyAccuracy, { logical: 80, spatial: 60 });
+  });
+  test("validateHistoryRecord: clamps out-of-range / coerces bad values", () => {
+    const record = FC.validateHistoryRecord({
+      date: "not-a-date",
+      score: -500,
+      percentage: 250,
+      tier: "",
+      maxLevel: 0,
+      maxStreak: -3,
+      xp: -100,
+      isDaily: "false",
+      competencies: { checklist: -50, atc: 120, clean: 75, bad: "oops" },
+      moduleAccuracy: { fault: null },
+      skillFamilyAccuracy: { logical: Infinity }
+    });
+    assertEqual(record.score, 0);
+    assertEqual(record.percentage, 100);
+    assertEqual(record.maxLevel, 1);
+    assertEqual(record.maxStreak, 0);
+    assertEqual(record.xp, 0);
+    assertEqual(record.isDaily, false);
+    assertEqual(record.version, 1);
+    assertEqual(Number.isFinite(new Date(record.date).getTime()), true, "date must fall back to a valid ISO string");
+    assert(record.tier.length > 0, "tier must fall back to a label string");
+    assertDeep(record.competencies, { checklist: 0, atc: 100, clean: 75 });
+    assertDeep(record.moduleAccuracy, {});
+    assertDeep(record.skillFamilyAccuracy, { logical: 0 });
+  });
+  test("validateHistoryRecord: returns null for unrecoverable primitives/non-objects", () => {
+    assertEqual(FC.validateHistoryRecord(null), null);
+    assertEqual(FC.validateHistoryRecord(undefined), null);
+    assertEqual(FC.validateHistoryRecord("nope"), null);
+    assertEqual(FC.validateHistoryRecord(42), null);
+    assertEqual(FC.validateHistoryRecord(true), null);
+    assertEqual(FC.validateHistoryRecord([]), null);
+  });
+  test("sanitizeHistory: filters unrecoverable entries and sanitizes the rest", () => {
+    const clean = FC.sanitizeHistory([
+      42,
+      null,
+      "junk",
+      { score: 1000, percentage: 90, date: "2026-10-13", maxLevel: 4, maxStreak: 2, xp: 300 },
+      { score: -10, percentage: 150 }
+    ]);
+    assertEqual(clean.length, 2);
+    assertEqual(clean[0].score, 1000);
+    assertEqual(clean[0].version, 1);
+    assertEqual(clean[1].score, 0);
+    assertEqual(clean[1].percentage, 100);
+  });
+  test("sanitizeHistory: non-array input -> empty array", () => {
+    assertDeep(FC.sanitizeHistory(), []);
+    assertDeep(FC.sanitizeHistory(null), []);
+    assertDeep(FC.sanitizeHistory("oops"), []);
+    assertDeep(FC.sanitizeHistory({ a: 1 }), []);
+  });
+
+  // ==========================================
   // computePilotRank with lifetimeXP promotion
   // ==========================================
   test("computePilotRank: lifetimeXP promotes to Senior Captain at 25000+", () => {

@@ -1,19 +1,17 @@
-﻿# Task: PR #18 Review, Remediation & Closeout
+﻿# Task: Issue #10 - Validate, Migrate and Safely Render Persisted FlightCore Sessions
 
 - [x] Phase 1: Planning and Research <!-- id: 0 -->
-  - [x] Fetch latest remote branches and review PR #18 diff against main <!-- id: 1 -->
-  - [x] Inspect existing implementation, tests, and documentation <!-- id: 2 -->
-  - [x] Audit Findings A (themes), B (README), and C (naming cleanup) <!-- id: 3 -->
-- [x] Phase 2: Execution via OpenCode Delegation <!-- id: 4 -->
-  - [x] Export `VALID_THEMES` on `FlightCore` in `core.js` <!-- id: 5 -->
-  - [x] Expose Amber Vector and Stealth AMOLED buttons in `index.html` <!-- id: 6 -->
-  - [x] Update `app.js` to accept all 7 themes and rename `initGamification()` <!-- id: 7 -->
-  - [x] Update `README.md` to reflect 100% free public beta access model <!-- id: 8 -->
-- [x] Phase 3: Verification & Quality Gates <!-- id: 9 -->
-  - [x] Extend test suite in `tests_app_error_handling.js` for theme validity, persistence, and UI markup <!-- id: 10 -->
-  - [x] Run full automated test suites (129 engine, 10 app tests) <!-- id: 11 -->
-  - [x] Run syntax validation checks on all JS files <!-- id: 12 -->
-- [x] Phase 4: Merge, Handoff & Issue Closeout <!-- id: 13 -->
-  - [x] Commit fixes and push branch `feat/beta-monetization-readiness` <!-- id: 14 -->
-  - [x] Merge PR #18 into `main` <!-- id: 15 -->
-  - [x] Update `HANDOFF.md` and recommend issue closeout for #17 & #11 <!-- id: 16 -->
+  - [x] Reproduce and document malformed record risks in `app.js` and `core.js` <!-- id: 1 -->
+  - [x] Design bounded, versioned schema and sanitizer interface <!-- id: 2 -->
+- [x] Phase 2: Execution via OpenCode Delegation <!-- id: 3 -->
+  - [x] Implement `validateHistoryRecord` and `sanitizeHistory` in `core.js` <!-- id: 4 -->
+  - [x] Wire sanitization into `app.js` (`getSafeStorageHistory`, `globalHistory`, `renderLogbook`, `loadHomeStats`) <!-- id: 5 -->
+  - [x] Add storage quota / write failure notification on session save <!-- id: 6 -->
+- [x] Phase 3: Verification & Quality Gates <!-- id: 7 -->
+  - [x] Add unit test suite in `tests.js` for malformed/legacy history fixtures <!-- id: 8 -->
+  - [x] Add app error handling VM tests in `tests_app_error_handling.js` for corrupt history and quota failures <!-- id: 9 -->
+  - [x] Run full test suite (`node tests.js`, `node tests_app_error_handling.js`) <!-- id: 10 -->
+  - [x] Verify JS syntax (`node --check core.js`, `node --check app.js`) <!-- id: 11 -->
+- [x] Phase 4: Documentation, PR & Closeout <!-- id: 12 -->
+  - [x] Update `walkthrough.md`, `lessons_learned.md`, and `HANDOFF.md` <!-- id: 13 -->
+  - [x] Commit, push branch, open PR, and prepare Issue #10 closeout evidence <!-- id: 14 -->

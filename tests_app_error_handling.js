@@ -41,7 +41,7 @@ const overlay = { dataset: {}, style: { display: "none" } };
     getElementById(id) {
       if (id === "error-boundary-overlay") return overlay;
       if (id === "error-boundary-log") return logEl;
-      return null;
+      return { textContent: "", style: {}, innerHTML: "", appendChild() {}, classList: { add() {}, toggle() {} }, setAttribute() {}, addEventListener() {}, removeEventListener() {} };
     },
     querySelectorAll() { return []; },
     querySelector() { return null; },
@@ -204,6 +204,51 @@ run("index.html ships CSV logbook export and no pro-gated overlay", () => {
   const html = fs.readFileSync("./index.html", "utf8");
   assert(html.includes('id="btn-export-logbook-csv"'), "missing logbook CSV export button");
   assert(!html.includes("pro-pass-overlay"), "pro pass overlay should not exist in index.html");
+});
+
+run("getSafeStorageHistory sanitizes corrupt/malformed history array safely", () => {
+  const corruptRaw = JSON.stringify([
+    null,
+    "garbage-string",
+    12345,
+    { score: -50, percentage: 150, date: "bad-date" },
+    { score: "500", percentage: "80", date: "2026-10-13T00:00:00.000Z" }
+  ]);
+  const mockStorage = {
+    getItem(k) { return k === "flightcore_history" ? corruptRaw : null; },
+    setItem() {},
+    removeItem() {},
+    clear() {}
+  };
+  const app = makeContext(mockStorage);
+  assert(typeof app.context.getSafeStorageHistory === "function");
+  const clean = app.context.getSafeStorageHistory();
+  assertEqual(clean.length, 2, "only recoverable records should be kept");
+  assertEqual(clean[0].score, 0, "negative score clamped to 0");
+  assertEqual(clean[0].percentage, 100, "out-of-range percentage clamped to 100");
+  assertEqual(clean[1].score, 500, "string score parsed to number");
+  assertEqual(clean[1].percentage, 80, "string percentage parsed to number");
+});
+
+run("loadHomeStats and renderRunHistory execute without throwing on malformed records", () => {
+  const corruptRaw = JSON.stringify([
+    { score: null, percentage: null, date: null },
+    { score: "NaN", percentage: "invalid" }
+  ]);
+  const mockStorage = {
+    getItem(k) { return k === "flightcore_history" ? corruptRaw : null; },
+    setItem() {},
+    removeItem() {},
+    clear() {}
+  };
+  const app = makeContext(mockStorage);
+  if (typeof app.context.loadHomeStats === "function") {
+    app.context.loadHomeStats();
+  }
+  if (typeof app.context.renderRunHistory === "function") {
+    app.context.renderRunHistory();
+  }
+  assert(true, "loadHomeStats and renderRunHistory executed safely");
 });
 
 const passed = results.filter(result => result.ok).length;

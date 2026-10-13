@@ -72,7 +72,7 @@ function getSafeStorageHistory() {
     const raw = getSafeStorageValue("flightcore_history", null);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? FlightCore.sanitizeHistory(parsed) : [];
   } catch (e) {
     console.error("Failed to parse flightcore_history from localStorage:", e);
     return [];
@@ -238,7 +238,7 @@ let activeKeypadBuffer = "";
 
 let roundByRoundHistory = []; // Session history
 // Corrupt or tampered storage must never crash boot - safeParse guarantees an array.
-let globalHistory = FlightCore.safeParse(getSafeStorageValue("flightcore_history", null), []);
+let globalHistory = FlightCore.sanitizeHistory(getSafeStorageHistory());
 let dailyStreak = FlightCore.safeNumber(getSafeStorageValue("flightcore_daily_streak", null), 0, { min: 0 });
 
 // Tracks pool indices used this session to prevent within-session repeats
@@ -2438,7 +2438,9 @@ if (blindspots.length > 0) {
   const previousBest = globalHistory.length > 0 ? Math.max(...globalHistory.map(h => h.percentage)) : -1;
   globalHistory.push(sessionRecord);
   if (globalHistory.length > 30) globalHistory.shift();
-  safeStorageSet("flightcore_history", JSON.stringify(globalHistory));
+  if (!safeStorageSet("flightcore_history", JSON.stringify(globalHistory))) {
+    console.warn("Failed to persist session history - localStorage quota may be exceeded");
+  }
 
   // Refresh lifetime XP totals and the pilot rank badge (XP only ever promotes).
   updatePilotRankHUD();
@@ -2976,20 +2978,25 @@ function renderDebriefSkillFamilies(skillFamilyAccuracy) {
 }
 function loadHomeStats() {
   if (globalHistory.length > 0) {
-    const scores = globalHistory.map(h => h.score);
-    const percentages = globalHistory.map(h => h.percentage);
+    const scores = globalHistory.map(h => FlightCore.safeNumber(h.score, 0, { min: 0 }));
+    const percentages = globalHistory.map(h => FlightCore.safeNumber(h.percentage, 0, { min: 0, max: 100 }));
     const maxScore = Math.max(...scores);
-    const averageGrade = Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length);
+    const averageGrade = scores.length > 0 ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length) : 0;
     const totalRuns = globalHistory.length;
     
     // Max level achieved
     const maxLv = Math.max(...globalHistory.map(h => h.maxLevel || 1));
     const maxStreakAchieved = Math.max(...globalHistory.map(h => h.maxStreak || 0));
     
-    document.getElementById("stat-high-score").textContent = maxScore.toLocaleString();
-    document.getElementById("stat-avg-score").textContent = `${averageGrade}%`;
-    document.getElementById("stat-sessions").textContent = totalRuns;
-    document.getElementById("stat-max-streak").textContent = maxStreakAchieved;
+    const elHigh = document.getElementById("stat-high-score");
+    const elAvg = document.getElementById("stat-avg-score");
+    const elSessions = document.getElementById("stat-sessions");
+    const elStreak = document.getElementById("stat-max-streak");
+
+    if (elHigh) elHigh.textContent = maxScore.toLocaleString();
+    if (elAvg) elAvg.textContent = `${averageGrade}%`;
+    if (elSessions) elSessions.textContent = totalRuns;
+    if (elStreak) elStreak.textContent = maxStreakAchieved;
 
     // Update side panel stats
     const sideHighScore = document.getElementById("side-stat-high-score");
@@ -3002,10 +3009,15 @@ function loadHomeStats() {
     if (sideSessions) sideSessions.textContent = totalRuns;
     if (sideMaxStreak) sideMaxStreak.textContent = maxStreakAchieved;
   } else {
-    document.getElementById("stat-high-score").textContent = "0";
-    document.getElementById("stat-avg-score").textContent = "0.0%";
-    document.getElementById("stat-sessions").textContent = "0";
-    document.getElementById("stat-max-streak").textContent = "0";
+    const elHigh = document.getElementById("stat-high-score");
+    const elAvg = document.getElementById("stat-avg-score");
+    const elSessions = document.getElementById("stat-sessions");
+    const elStreak = document.getElementById("stat-max-streak");
+
+    if (elHigh) elHigh.textContent = "0";
+    if (elAvg) elAvg.textContent = "0.0%";
+    if (elSessions) elSessions.textContent = "0";
+    if (elStreak) elStreak.textContent = "0";
 
     const sideHighScore = document.getElementById("side-stat-high-score");
     const sideAvgScore = document.getElementById("side-stat-avg-score");
@@ -4116,7 +4128,7 @@ function renderRunHistory() {
   // Show recent entries first
   const chronologicalLog = [...globalHistory].reverse();
   chronologicalLog.forEach(h => {
-    const dateFormatted = new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const dateFormatted = h.date ? new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Unknown date";
     const ratingClass = FlightCore.sessionTier(h.percentage).className;
     
     const row = document.createElement("div");
@@ -4127,7 +4139,7 @@ function renderRunHistory() {
         <span class="log-entry-date">${escapeHTML(dateFormatted)}</span>
       </div>
       <div class="log-entry-score-details">
-        <span class="log-entry-score">${escapeHTML(h.score.toLocaleString())} pts</span>
+        <span class="log-entry-score">${escapeHTML((Number(h.score) || 0).toLocaleString())} pts</span>
         <span class="log-entry-badge ${escapeHTML(ratingClass)}">${escapeHTML(h.tier || FlightCore.sessionTier(h.percentage).label)}</span>
       </div>
     `;
