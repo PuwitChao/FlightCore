@@ -1,41 +1,33 @@
-# Walkthrough - Flight Core Typography, Contrast & UI De-Vibing
+﻿# Walkthrough: Public Beta Monetization Readiness & PR #18 Remediation
 
-All requested improvements for font consistency, font size legibility, WCAG AAA contrast ratios, and aerospace instrument de-vibing have been implemented and verified.
+## Summary
+In accordance with user decisions and acceptance criteria for **GitHub Issue #17**, **Issue #11**, and **Release Epic #8**, PR #18 has completed thorough review, remediation, and verification:
+1. **Resolved Finding A (Theme Access Contract Mismatch)**:
+   - Defined single source of truth `FlightCore.VALID_THEMES` containing all 7 themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
+   - Added UI buttons for Vintage Amber Vector and Stealth AMOLED in `index.html`.
+   - Updated `app.js` (`initThemeSystem` and `setTheme`) to accept, persist, and apply all 7 themes.
+2. **Resolved Finding B (Outdated README)**:
+   - Removed legacy `PRO-FLIGHT-PASS` key and Pro Flight Pass promotional text from `README.md`.
+   - Truthfully documented the free public beta model with unlocked themes and CSV logbook export.
+3. **Resolved Finding C (Legacy Naming & Dead Code Cleanup)**:
+   - Renamed `initProAndGamification()` to `initGamification()` in `app.js` and all call sites.
+   - Removed obsolete Pro modal markup comment from `index.html`.
+   - Retained `evaluateProAccess()` as a safe backward-compatibility stub returning `isPro: false`.
 
----
+## Automated Verification & Test Results
+- **Engine Tests (`tests.js`)**: **129/129 passed** (100% green).
+- **App Error Handling & DOM Tests (`tests_app_error_handling.js`)**: **10/10 passed** (100% green).
+  - Validates `setTheme` accepts and persists amber/stealth and falls back to dark.
+  - Validates `index.html` markup exposes buttons for all 7 themes.
+  - Validates `index.html` contains direct CSV export button and zero Pro overlays.
+  - Validates startup safe scrubbing of legacy `flightcore_pro_key` without data loss.
+- **Syntax Validation**: `node --check core.js`, `node --check app.js`, `node --check sw.js` all passed.
 
-## Key Changes Made
-
-### 1. Dual Typography System & Font Consistency
-- **UI & Control Typography (`--font-sans`)**: Integrated Google Font `Inter` (`wght@400;500;600;700`) for headers, body text, buttons, modals, and landing pages.
-- **Cockpit Telemetry & Data (`--font-mono`)**: Integrated Google Font `JetBrains Mono` (`wght@500;600;700`) for numeric readouts, digital gauges, altitude/airspeed figures, ATC callsigns, keypad displays, timer countdowns, and mathematical tokens across `index.html`, `styles.css`, `landing/index.html`, and `landing/styles.css`.
-
-### 2. Font Size Scale Overhaul (Legibility)
-- **Minimum Threshold Elevated**: Micro font sizes (9px - 10px / `0.55rem` - `0.62rem`) used for labels, status badges, instructions, and timestamps have been upgraded to **`0.72rem` - `0.78rem` (~11.5px - 12.5px)**.
-- **Body & Interactive Controls**: Body text, buttons, sortable cards, and input terminals were upgraded to **`0.88rem` - `0.95rem` (~14px - 15px)** for ease of reading.
-
-### 3. Contrast Ratio Audit (WCAG AAA Compliance)
-- Upgraded text color variables across all 7 themes (`default`/OLED dark, light, mono, sage, warm, amber, stealth):
-  - `--text-primary`: Crisp slate/white (`#F8FAFC` / `#FFFFFF` / `#0F172A`).
-  - `--text-secondary`: High-contrast slate (`#CBD5E1` on dark, `#334155` on light).
-  - `--text-muted`: Upgraded from low-contrast dim gray (`#64748B`) to `#94A3B8` on dark themes and `#475569` / `#57534E` on light themes to achieve 7:1+ contrast ratios on card backdrops.
-
-### 4. De-Vibing Visual Polish
-- Removed heavy drop-shadow glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`), pulse glows, and neon borders on badges, dots, reticles, and cards.
-- Replaced with clean, solid, high-precision aerospace instrument borders and subtle status affordances.
-
----
-
-## Verification & Test Results
-
-- **Automated Engine Test Suite**:
-  ```powershell
-  node tests.js
-  # Output: Flight Core engine tests: 97/97 passed
-  ```
-- **Syntax Validation**:
-  ```powershell
-  node --check app.js
-  node --check core.js
-  # Passed with zero syntax errors.
-  ```
+## OpenCode Delegation & Cost Savings Telemetry (PR Remediation Phase)
+- **Subtask 1 (`core.js` theme constant)**: 112,811 tokens | Cost: $0.004574 USD | Savings: $0.164643 USD
+- **Subtask 2 (`index.html` theme buttons)**: 77,583 tokens | Cost: $0.003358 USD | Savings: $0.113016 USD
+- **Subtask 3 (`app.js` theme & naming)**: 230,358 tokens | Cost: $0.009572 USD | Savings: $0.335965 USD
+- **Subtask 4 (`README.md` documentation)**: 52,475 tokens | Cost: $0.002740 USD | Savings: $0.075973 USD
+- **Subtask 5 (`tests_app_error_handling.js`)**: 158,377 tokens | Cost: $0.009665 USD | Savings: $0.227900 USD
+- **Remediation Phase Total Tokens**: 631,604 tokens | Cost: $0.029909 USD | Baseline: $0.947406 USD | **Net Savings: $0.917497 USD (96.8%)**
+- **Cumulative Sprint Total Savings**: **1,025,232 tokens delegated | $1.490177 USD total saved vs Gemini Flash**.

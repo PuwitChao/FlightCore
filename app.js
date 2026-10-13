@@ -3264,9 +3264,8 @@ function initCustomAccentControls() {
   }
 }
 function initThemeSystem() {
-  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
   let savedTheme = getSafeStorageValue("flightcore_theme", null);
-  if (!savedTheme || !VALID_THEMES.includes(savedTheme)) {
+  if (!savedTheme || !FlightCore.VALID_THEMES.includes(savedTheme)) {
     // Respect OS preference on first visit
     savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }
@@ -3355,8 +3354,7 @@ function initThemeSystem() {
 }
 
 function setTheme(themeVal) {
-  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
-  if (!VALID_THEMES.includes(themeVal)) themeVal = "dark";
+  if (!FlightCore.VALID_THEMES.includes(themeVal)) themeVal = "dark";
   document.body.setAttribute("data-theme", themeVal);
   safeStorageSet("flightcore_theme", themeVal);
   Telemetry.emit("settings_changed", { setting: "theme", value: themeVal });
@@ -4195,7 +4193,7 @@ function exportLogbookCSV() {
   URL.revokeObjectURL(url);
 }
 
-function initProAndGamification() {
+function initGamification() {
   updatePilotRankHUD();
 
   const btnAch = document.getElementById("btn-achievements-toggle");
@@ -4208,51 +4206,25 @@ function initProAndGamification() {
       overlayAch.style.display = "flex";
     });
   }
-  if (btnAchClose && overlayAch) {
+if (btnAchClose && overlayAch) {
     btnAchClose.addEventListener("click", () => {
       playSound("click");
       overlayAch.style.display = "none";
     });
   }
 
-  const btnPro = document.getElementById("btn-pro-toggle");
-  const overlayPro = document.getElementById("pro-pass-overlay");
-  const btnProClose = document.getElementById("btn-pro-close");
-  const btnProUnlock = document.getElementById("btn-pro-unlock");
-  const inputProKey = document.getElementById("pro-license-input");
+  // Safely scrub any legacy pro license key from localStorage on startup.
+  safeStorageRemove("flightcore_pro_key");
 
-  if (btnPro && overlayPro) {
-    btnPro.addEventListener("click", () => {
-      playSound("click");
-      overlayPro.style.display = "flex";
-    });
-  }
-  if (btnProClose && overlayPro) {
-    btnProClose.addEventListener("click", () => {
-      playSound("click");
-      overlayPro.style.display = "none";
-    });
-  }
-
-  if (btnProUnlock && inputProKey) {
-    btnProUnlock.addEventListener("click", () => {
-      const key = inputProKey.value;
-      const proState = FlightCore.evaluateProAccess(key);
-      if (proState.isPro) {
-        safeStorageSet("flightcore_pro_key", key.trim());
-        playSound("success");
-        alert("Pro Pass Activated! Unlocked Pro themes, CSV export, and audio profiles.");
-        if (overlayPro) overlayPro.style.display = "none";
-      } else {
-        playSound("click");
-        alert("Invalid license key. Try using: PRO-FLIGHT-PASS");
-      }
-    });
+  // Wire the Run History CSV export button directly to the export routine.
+  const csvButton = document.getElementById("btn-export-logbook-csv");
+  if (csvButton) {
+    csvButton.addEventListener("click", exportLogbookCSV);
   }
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initProAndGamification);
+document.addEventListener("DOMContentLoaded", initGamification);
 } else {
-  initProAndGamification();
+  initGamification();
 }

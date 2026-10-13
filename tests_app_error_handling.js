@@ -25,13 +25,18 @@ function makeContext(storage) {
   const listeners = {};
   const warnings = [];
   const errors = [];
-  const overlay = { dataset: {}, style: { display: "none" } };
+const overlay = { dataset: {}, style: { display: "none" } };
   const logEl = { textContent: "" };
+  const bodyAttrs = {};
   let reloads = 0;
 
   const document = {
     readyState: "loading",
-    body: { setAttribute() {}, classList: { toggle() {} } },
+    body: {
+      setAttribute(name, value) { bodyAttrs[name] = String(value); },
+      getAttribute(name) { return bodyAttrs[name] !== undefined ? bodyAttrs[name] : null; },
+      classList: { toggle() {} }
+    },
     addEventListener(name, handler) { listeners[`document:${name}`] = handler; },
     getElementById(id) {
       if (id === "error-boundary-overlay") return overlay;
@@ -85,7 +90,7 @@ function makeContext(storage) {
 
   vm.createContext(context);
   vm.runInContext(source, context, { filename: "app.js" });
-  return { context, overlay, logEl, warnings, errors, listeners, getReloads: () => reloads };
+  return { context, overlay, logEl, warnings, errors, listeners, getReloads: () => reloads, bodyAttrs };
 }
 
 function run(name, fn) {
@@ -139,6 +144,66 @@ run("global error boundary does not overwrite the first active failure", () => {
 run("app source has no unreachable radar gameplay renderer", () => {
   assert(!source.includes("renderRadarBoard("), "radar gameplay renderer should not be referenced without a generator");
   assert(!source.includes('module === "radar"'), "radar should not be included in gameplay module branches");
+});
+
+run("public beta monetization readiness: no pro modal or hardcoded pro key triggers", () => {
+  assert(!source.includes("pro-license-input"), "no pro license input in app source");
+  assert(!source.includes("btn-pro-unlock"), "no pro unlock button listener in app source");
+  assert(!source.includes("pro-pass-overlay"), "no pro pass overlay in app source");
+  assert(!source.includes("PRO-FLIGHT-PASS"), "no hardcoded PRO-FLIGHT-PASS key in app source");
+});
+
+run("startup scrubs legacy pro key safely without modifying history", () => {
+  const mockStorageData = {
+    "flightcore_pro_key": "PRO-FLIGHT-PASS",
+    "flightcore_history": JSON.stringify([{ score: 500, date: "2026-10-13" }])
+  };
+  const mockStorage = {
+    getItem(k) { return mockStorageData[k] || null; },
+    setItem(k, v) { mockStorageData[k] = String(v); },
+    removeItem(k) { delete mockStorageData[k]; },
+    clear() { Object.keys(mockStorageData).forEach(k => delete mockStorageData[k]); }
+  };
+  const app = makeContext(mockStorage);
+if (typeof app.context.initGamification === "function") {
+    app.context.initGamification();
+  }
+assertEqual(mockStorageData["flightcore_pro_key"], undefined, "legacy pro key should be scrubbed");
+  assert(mockStorageData["flightcore_history"] !== undefined, "history must remain intact");
+});
+
+run("setTheme applies amber/stealth to body, persists, and invalid themes fall back to dark", () => {
+  const mockStorageData = {};
+  const mockStorage = {
+    getItem(k) { return mockStorageData[k] || null; },
+    setItem(k, v) { mockStorageData[k] = String(v); },
+    removeItem(k) { delete mockStorageData[k]; },
+    clear() { Object.keys(mockStorageData).forEach(k => delete mockStorageData[k]); }
+  };
+  const app = makeContext(mockStorage);
+  assert(typeof app.context.setTheme === "function");
+  app.context.setTheme("amber");
+  assertEqual(app.bodyAttrs["data-theme"], "amber");
+  assertEqual(mockStorageData["flightcore_theme"], "amber");
+  app.context.setTheme("stealth");
+  assertEqual(app.bodyAttrs["data-theme"], "stealth");
+  assertEqual(mockStorageData["flightcore_theme"], "stealth");
+  app.context.setTheme("neon-nonsense");
+  assertEqual(app.bodyAttrs["data-theme"], "dark");
+  assertEqual(mockStorageData["flightcore_theme"], "dark");
+});
+
+run("index.html exposes buttons for all 7 themes", () => {
+  const html = fs.readFileSync("./index.html", "utf8");
+  ["dark", "light", "mono", "sage", "warm", "amber", "stealth"].forEach(theme => {
+    assert(html.includes(`data-theme-val="${theme}"`), `missing theme button for ${theme}`);
+  });
+});
+
+run("index.html ships CSV logbook export and no pro-gated overlay", () => {
+  const html = fs.readFileSync("./index.html", "utf8");
+  assert(html.includes('id="btn-export-logbook-csv"'), "missing logbook CSV export button");
+  assert(!html.includes("pro-pass-overlay"), "pro pass overlay should not exist in index.html");
 });
 
 const passed = results.filter(result => result.ok).length;

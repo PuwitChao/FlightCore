@@ -12,7 +12,7 @@ Flight Core is for entertainment only. It is not real aviation instruction, not 
 - Daily Flight Ops: Deterministic 5-round sortie seeded by UTC date with shareable Wordle-style score cards.
 - Tactile Web Audio Synthesizer: Zero-dependency audio feedback with mechanical clicks, dual-tone chimes, arpeggios, error buzzes, and mute toggle.
 - Pilot Ranks, XP & Achievements: Progression system scaled by lifetime XP from Student Pilot to Legend, with 6 unlockable achievement badges.
-- Pro Flight Pass: Optional static supporter key (`PRO-FLIGHT-PASS`) unlocking Vintage Amber Vector and Stealth AMOLED themes, plus CSV logbook export.
+- Public beta access: Everything is free with no registration, keys, or accounts. All themes (including Amber Vector and Stealth AMOLED), every released exercise, and CSV logbook export are unlocked for all players.
 - Practice and Mock Run shell: Practice gives longer study timing; Mock Run keeps standard pressure.
 - Dynamic difficulty: level increases with correct streaks.
 - Module rotation: avoids playing the same module three times in a row when possible.
