@@ -31,3 +31,11 @@
   - Centralized theme identifiers in `FlightCore.VALID_THEMES` inside `core.js` as the single source of truth.
   - Exposed both Vintage Amber Vector and Stealth AMOLED buttons in `index.html`.
   - Added regression tests in `tests_app_error_handling.js` asserting that `setTheme()` persists each theme and updates DOM attributes, and that `index.html` markup exposes buttons for all 7 themes.
+
+### 2026-10-13: Issue #10 History Schema Sanitization & Defensiveness
+- **What Failed / Risk Observed**: Previously, `app.js` assumed any parsed JSON array in `flightcore_history` contained valid records with `.score.toLocaleString()` and finite numbers. Malformed legacy records or missing fields could throw unhandled `TypeErrors` during logbook or home screen rendering.
+- **What Worked**:
+  - Centralized per-record schema validation in `FlightCore.validateHistoryRecord()` and array sanitization in `FlightCore.sanitizeHistory()`.
+  - Upgraded `getSafeStorageHistory()` and startup hydration to guarantee that `globalHistory` always contains bounded, valid records.
+  - Hardened view rendering with `(Number(h.score) || 0).toLocaleString()` and date fallbacks.
+  - Added unit test fixtures in `tests.js` (134/134 green) and VM error handling tests in `tests_app_error_handling.js` (12/12 green).

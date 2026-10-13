@@ -1,33 +1,28 @@
-﻿# Walkthrough: Public Beta Monetization Readiness & PR #18 Remediation
+﻿# Walkthrough: Issue #10 - Validate, Migrate and Safely Render Persisted FlightCore Sessions
 
 ## Summary
-In accordance with user decisions and acceptance criteria for **GitHub Issue #17**, **Issue #11**, and **Release Epic #8**, PR #18 has completed thorough review, remediation, and verification:
-1. **Resolved Finding A (Theme Access Contract Mismatch)**:
-   - Defined single source of truth `FlightCore.VALID_THEMES` containing all 7 themes (`dark`, `light`, `mono`, `sage`, `warm`, `amber`, `stealth`).
-   - Added UI buttons for Vintage Amber Vector and Stealth AMOLED in `index.html`.
-   - Updated `app.js` (`initThemeSystem` and `setTheme`) to accept, persist, and apply all 7 themes.
-2. **Resolved Finding B (Outdated README)**:
-   - Removed legacy `PRO-FLIGHT-PASS` key and Pro Flight Pass promotional text from `README.md`.
-   - Truthfully documented the free public beta model with unlocked themes and CSV logbook export.
-3. **Resolved Finding C (Legacy Naming & Dead Code Cleanup)**:
-   - Renamed `initProAndGamification()` to `initGamification()` in `app.js` and all call sites.
-   - Removed obsolete Pro modal markup comment from `index.html`.
-   - Retained `evaluateProAccess()` as a safe backward-compatibility stub returning `isPro: false`.
+In accordance with acceptance criteria for **GitHub Issue #10** and **Release Epic #8**, FlightCore session persistence, hydration, and rendering have been hardened against corrupted, legacy, or malformed records:
+1. **Schema Validation & Migration in `core.js`**:
+   - Implemented `FlightCore.validateHistoryRecord(rawRecord)`:
+     - Validates and sanitizes individual records, guaranteeing bounded integers (`score >= 0`, `percentage 0..100`, `maxLevel >= 1`, `maxStreak >= 0`, `xp >= 0`), valid ISO date strings, valid tier labels, and clamped competency/accuracy maps.
+     - Returns `null` for unrecoverable primitives or corrupt non-objects.
+   - Implemented `FlightCore.sanitizeHistory(historyList)`:
+     - Iterates through any history array (or non-array fallback), safely filtering out unrecoverable records and sanitizing valid entries into schema version 1.
+2. **Defensive Controller & View Layer in `app.js`**:
+   - `getSafeStorageHistory()` now passes parsed arrays through `FlightCore.sanitizeHistory()`.
+   - Boot initialization: `globalHistory` is guaranteed to be clean on startup via `FlightCore.sanitizeHistory(getSafeStorageHistory())`.
+   - `loadHomeStats()`: Bounds score and percentage calculations using `FlightCore.safeNumber` and provides safe defaults on empty or malformed inputs. Added defensive guards against missing DOM elements.
+   - `renderRunHistory()`: Safely formats `(Number(h.score) || 0).toLocaleString()` and wraps date parsing with a fallback string, preventing runtime `TypeError` crashes.
+   - `finishSession()`: Checks the return value of `safeStorageSet("flightcore_history", ...)`, logging a warning if persistence fails (e.g. quota exceeded).
+3. **Automated Verification & Quality Gates**:
+   - **Engine Tests (`tests.js`)**: **134/134 passed** (added 5 tests covering valid records, out-of-range clamping, bad types, unrecoverable values, and list sanitization).
+   - **App Error Handling Tests (`tests_app_error_handling.js`)**: **12/12 passed** (added tests verifying corrupt history array sanitization and error-free rendering of malformed records).
+   - **Syntax Validation**: All files passed syntax checks.
 
-## Automated Verification & Test Results
-- **Engine Tests (`tests.js`)**: **129/129 passed** (100% green).
-- **App Error Handling & DOM Tests (`tests_app_error_handling.js`)**: **10/10 passed** (100% green).
-  - Validates `setTheme` accepts and persists amber/stealth and falls back to dark.
-  - Validates `index.html` markup exposes buttons for all 7 themes.
-  - Validates `index.html` contains direct CSV export button and zero Pro overlays.
-  - Validates startup safe scrubbing of legacy `flightcore_pro_key` without data loss.
-- **Syntax Validation**: `node --check core.js`, `node --check app.js`, `node --check sw.js` all passed.
-
-## OpenCode Delegation & Cost Savings Telemetry (PR Remediation Phase)
-- **Subtask 1 (`core.js` theme constant)**: 112,811 tokens | Cost: $0.004574 USD | Savings: $0.164643 USD
-- **Subtask 2 (`index.html` theme buttons)**: 77,583 tokens | Cost: $0.003358 USD | Savings: $0.113016 USD
-- **Subtask 3 (`app.js` theme & naming)**: 230,358 tokens | Cost: $0.009572 USD | Savings: $0.335965 USD
-- **Subtask 4 (`README.md` documentation)**: 52,475 tokens | Cost: $0.002740 USD | Savings: $0.075973 USD
-- **Subtask 5 (`tests_app_error_handling.js`)**: 158,377 tokens | Cost: $0.009665 USD | Savings: $0.227900 USD
-- **Remediation Phase Total Tokens**: 631,604 tokens | Cost: $0.029909 USD | Baseline: $0.947406 USD | **Net Savings: $0.917497 USD (96.8%)**
-- **Cumulative Sprint Total Savings**: **1,025,232 tokens delegated | $1.490177 USD total saved vs Gemini Flash**.
+## OpenCode Delegation & Token Savings
+- **Core Engine Sanitizer Delegation (`task-409`)**: 518,716 tokens | Cost: $0.026534 USD | Baseline: $0.778074 USD | Net Savings: $0.751540 USD
+- **App Controller Integration Delegation (`task-448`)**: 619,139 tokens | Cost: $0.025251 USD | Baseline: $0.928708 USD | Net Savings: $0.903457 USD
+- **Issue #10 Total Tokens Delegated**: 1,137,855 tokens
+- **Issue #10 Total OpenCode Cost**: $0.051785 USD
+- **Issue #10 Gemini Flash Baseline**: $1.706782 USD
+- **Issue #10 Net Savings**: **$1.654997 USD (~97.0% savings)**.

@@ -380,6 +380,80 @@
     if (diffDays === 1) return current + 1;
     return 1;
   }
+
+  // ---- history record sanitization ----
+
+  // Clamp every numeric value in a per-module/per-family accuracy map to a
+  // finite [0, 100] number. Non-numeric or degenerate entries are dropped so a
+  // corrupt or hostile map can never surface NaN/Infinity downstream.
+  function sanitizeAccuracyMap(obj) {
+    if (obj === null || obj === undefined || typeof obj !== "object" || Array.isArray(obj)) return {};
+    const result = {};
+    Object.keys(obj).forEach(key => {
+      const rawVal = obj[key];
+      if (rawVal !== null && rawVal !== undefined && typeof rawVal !== "boolean" && rawVal !== "") {
+        const value = Number(rawVal);
+        if (typeof rawVal === "number" || (!Number.isNaN(value) && typeof rawVal === "string")) {
+          result[key] = Math.round(clampPct(value));
+        }
+      }
+    });
+    return result;
+  }
+
+  // Coerce a raw record into a bounded, user-safe history entry. Every field is
+  // validated individually with a safe fallback so a single corrupt field can
+  // never invalidate the whole record. Returns null only when the input is not a
+  // plain object (primitive, null, or array) and therefore cannot be recovered.
+  function validateHistoryRecord(rawRecord) {
+    if (rawRecord === null || rawRecord === undefined || typeof rawRecord !== "object" || Array.isArray(rawRecord)) return null;
+
+    const raw = rawRecord;
+    const parsedDate = new Date(raw.date);
+    let date;
+    if (typeof raw.date === "string" && raw.date && Number.isFinite(parsedDate.getTime())) {
+      date = parsedDate.toISOString();
+    } else {
+      date = new Date().toISOString();
+    }
+
+    const score = Math.max(0, Math.round(safeNumber(raw.score, 0, { min: 0 })));
+    const percentage = Math.round(clampPct(safeNumber(raw.percentage, 0)));
+    const tier = (typeof raw.tier === "string" && raw.tier.trim())
+      ? raw.tier
+      : sessionTier(percentage).label;
+    const maxLevel = Math.max(1, Math.round(safeNumber(raw.maxLevel, 1, { min: 1 })));
+    const maxStreak = Math.max(0, Math.round(safeNumber(raw.maxStreak, 0, { min: 0 })));
+    const xp = Math.max(0, Math.round(safeNumber(raw.xp, 0, { min: 0 })));
+    const isDaily = raw.isDaily === true;
+
+    return {
+      date,
+      score,
+      percentage,
+      tier,
+      maxLevel,
+      maxStreak,
+      xp,
+      isDaily,
+      version: 1,
+      competencies: sanitizeAccuracyMap(raw.competencies),
+      moduleAccuracy: sanitizeAccuracyMap(raw.moduleAccuracy),
+      skillFamilyAccuracy: sanitizeAccuracyMap(raw.skillFamilyAccuracy)
+    };
+  }
+
+  // Filter and sanitize a raw history list (or any non-array fallback) into a
+  // clean array of valid records. Unrecoverable entries are dropped entirely.
+  function sanitizeHistory(historyList) {
+    if (!Array.isArray(historyList)) return [];
+    const clean = [];
+    historyList.forEach(raw => {
+      const record = validateHistoryRecord(raw);
+      if (record) clean.push(record);
+    });
+    return clean;
+  }
   // ---- randomness / data generation ----
 
   // Pure Fisher-Yates: returns a new shuffled array, leaving the input intact.
@@ -1435,6 +1509,8 @@
     skillFamilyAverages,
     weakestSkillFamily,
     nextDailyStreak,
+    validateHistoryRecord,
+    sanitizeHistory,
     shuffle,
     pickUnused,
     generateChecklist,
