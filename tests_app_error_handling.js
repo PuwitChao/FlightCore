@@ -25,13 +25,18 @@ function makeContext(storage) {
   const listeners = {};
   const warnings = [];
   const errors = [];
-  const overlay = { dataset: {}, style: { display: "none" } };
+const overlay = { dataset: {}, style: { display: "none" } };
   const logEl = { textContent: "" };
+  const bodyAttrs = {};
   let reloads = 0;
 
   const document = {
     readyState: "loading",
-    body: { setAttribute() {}, classList: { toggle() {} } },
+    body: {
+      setAttribute(name, value) { bodyAttrs[name] = String(value); },
+      getAttribute(name) { return bodyAttrs[name] !== undefined ? bodyAttrs[name] : null; },
+      classList: { toggle() {} }
+    },
     addEventListener(name, handler) { listeners[`document:${name}`] = handler; },
     getElementById(id) {
       if (id === "error-boundary-overlay") return overlay;
@@ -85,7 +90,7 @@ function makeContext(storage) {
 
   vm.createContext(context);
   vm.runInContext(source, context, { filename: "app.js" });
-  return { context, overlay, logEl, warnings, errors, listeners, getReloads: () => reloads };
+  return { context, overlay, logEl, warnings, errors, listeners, getReloads: () => reloads, bodyAttrs };
 }
 
 function run(name, fn) {
@@ -160,11 +165,45 @@ run("startup scrubs legacy pro key safely without modifying history", () => {
     clear() { Object.keys(mockStorageData).forEach(k => delete mockStorageData[k]); }
   };
   const app = makeContext(mockStorage);
-  if (typeof app.context.initProAndGamification === "function") {
-    app.context.initProAndGamification();
+if (typeof app.context.initGamification === "function") {
+    app.context.initGamification();
   }
-  assertEqual(mockStorageData["flightcore_pro_key"], undefined, "legacy pro key should be scrubbed");
+assertEqual(mockStorageData["flightcore_pro_key"], undefined, "legacy pro key should be scrubbed");
   assert(mockStorageData["flightcore_history"] !== undefined, "history must remain intact");
+});
+
+run("setTheme applies amber/stealth to body, persists, and invalid themes fall back to dark", () => {
+  const mockStorageData = {};
+  const mockStorage = {
+    getItem(k) { return mockStorageData[k] || null; },
+    setItem(k, v) { mockStorageData[k] = String(v); },
+    removeItem(k) { delete mockStorageData[k]; },
+    clear() { Object.keys(mockStorageData).forEach(k => delete mockStorageData[k]); }
+  };
+  const app = makeContext(mockStorage);
+  assert(typeof app.context.setTheme === "function");
+  app.context.setTheme("amber");
+  assertEqual(app.bodyAttrs["data-theme"], "amber");
+  assertEqual(mockStorageData["flightcore_theme"], "amber");
+  app.context.setTheme("stealth");
+  assertEqual(app.bodyAttrs["data-theme"], "stealth");
+  assertEqual(mockStorageData["flightcore_theme"], "stealth");
+  app.context.setTheme("neon-nonsense");
+  assertEqual(app.bodyAttrs["data-theme"], "dark");
+  assertEqual(mockStorageData["flightcore_theme"], "dark");
+});
+
+run("index.html exposes buttons for all 7 themes", () => {
+  const html = fs.readFileSync("./index.html", "utf8");
+  ["dark", "light", "mono", "sage", "warm", "amber", "stealth"].forEach(theme => {
+    assert(html.includes(`data-theme-val="${theme}"`), `missing theme button for ${theme}`);
+  });
+});
+
+run("index.html ships CSV logbook export and no pro-gated overlay", () => {
+  const html = fs.readFileSync("./index.html", "utf8");
+  assert(html.includes('id="btn-export-logbook-csv"'), "missing logbook CSV export button");
+  assert(!html.includes("pro-pass-overlay"), "pro pass overlay should not exist in index.html");
 });
 
 const passed = results.filter(result => result.ok).length;

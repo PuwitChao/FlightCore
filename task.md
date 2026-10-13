@@ -1,17 +1,19 @@
-﻿# Task: Public Beta Monetization Readiness & Dormant Boundary
+﻿# Task: PR #18 Review, Remediation & Closeout
 
 - [x] Phase 1: Planning and Research <!-- id: 0 -->
-  - [x] Review GitHub Issues #17, #11, and Release Epic #8 <!-- id: 1 -->
-  - [x] Inspect codebase for `PRO-FLIGHT-PASS`, Pro modal, and entitlements <!-- id: 2 -->
-  - [x] Define public beta access contract & migration plan <!-- id: 3 -->
+  - [x] Fetch latest remote branches and review PR #18 diff against main <!-- id: 1 -->
+  - [x] Inspect existing implementation, tests, and documentation <!-- id: 2 -->
+  - [x] Audit Findings A (themes), B (README), and C (naming cleanup) <!-- id: 3 -->
 - [x] Phase 2: Execution via OpenCode Delegation <!-- id: 4 -->
-  - [x] Update `core.js` with dormant future entitlement contract (`getAccessStatus`) <!-- id: 5 -->
-  - [x] Clean up `index.html` removing Pro modal and adding Run History CSV export button <!-- id: 6 -->
-  - [x] Update `app.js` removing Pro modal handlers and scrubbing legacy license key <!-- id: 7 -->
-- [x] Phase 3: Verification & Quality Gates <!-- id: 8 -->
-  - [x] Update engine tests in `tests.js` <!-- id: 9 -->
-  - [x] Add app tests in `tests_app_error_handling.js` for key scrubbing and DOM non-exposure <!-- id: 10 -->
-  - [x] Run full test suite and syntax checks <!-- id: 11 -->
-- [x] Phase 4: Documentation & Walkthrough <!-- id: 12 -->
-  - [x] Write `walkthrough.md` and update `lessons_learned.md` <!-- id: 13 -->
-  - [x] Provide implementation evidence and closure recommendations for issues #17 & #11 <!-- id: 14 -->
+  - [x] Export `VALID_THEMES` on `FlightCore` in `core.js` <!-- id: 5 -->
+  - [x] Expose Amber Vector and Stealth AMOLED buttons in `index.html` <!-- id: 6 -->
+  - [x] Update `app.js` to accept all 7 themes and rename `initGamification()` <!-- id: 7 -->
+  - [x] Update `README.md` to reflect 100% free public beta access model <!-- id: 8 -->
+- [x] Phase 3: Verification & Quality Gates <!-- id: 9 -->
+  - [x] Extend test suite in `tests_app_error_handling.js` for theme validity, persistence, and UI markup <!-- id: 10 -->
+  - [x] Run full automated test suites (129 engine, 10 app tests) <!-- id: 11 -->
+  - [x] Run syntax validation checks on all JS files <!-- id: 12 -->
+- [x] Phase 4: Merge, Handoff & Issue Closeout <!-- id: 13 -->
+  - [x] Commit fixes and push branch `feat/beta-monetization-readiness` <!-- id: 14 -->
+  - [x] Merge PR #18 into `main` <!-- id: 15 -->
+  - [x] Update `HANDOFF.md` and recommend issue closeout for #17 & #11 <!-- id: 16 -->

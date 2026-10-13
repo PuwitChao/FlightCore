@@ -24,3 +24,10 @@
   - Removed all mock paywall overlays and unlock buttons from the DOM, making themes and CSV export natively accessible.
   - Added startup migration in `app.js` using `safeStorageRemove("flightcore_pro_key")` to safely scrub legacy keys without touching user session histories.
   - Automated regression testing verifying that no Pro key or modal selectors remain in the app source code and that legacy storage keys are purged on boot.
+
+### 2026-10-13: PR #18 Remediation & Single Source of Truth for Themes
+- **What Failed / Risk Observed**: `core.js` reported 7 unlocked themes in `getAccessStatus()`, but `app.js` hardcoded an older 5-theme array and `index.html` lacked buttons for Amber and Stealth, creating a contract mismatch between the access API and UI.
+- **What Worked**:
+  - Centralized theme identifiers in `FlightCore.VALID_THEMES` inside `core.js` as the single source of truth.
+  - Exposed both Vintage Amber Vector and Stealth AMOLED buttons in `index.html`.
+  - Added regression tests in `tests_app_error_handling.js` asserting that `setTheme()` persists each theme and updates DOM attributes, and that `index.html` markup exposes buttons for all 7 themes.

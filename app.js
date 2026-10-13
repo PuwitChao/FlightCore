@@ -3264,9 +3264,8 @@ function initCustomAccentControls() {
   }
 }
 function initThemeSystem() {
-  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
   let savedTheme = getSafeStorageValue("flightcore_theme", null);
-  if (!savedTheme || !VALID_THEMES.includes(savedTheme)) {
+  if (!savedTheme || !FlightCore.VALID_THEMES.includes(savedTheme)) {
     // Respect OS preference on first visit
     savedTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }
@@ -3355,8 +3354,7 @@ function initThemeSystem() {
 }
 
 function setTheme(themeVal) {
-  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm"];
-  if (!VALID_THEMES.includes(themeVal)) themeVal = "dark";
+  if (!FlightCore.VALID_THEMES.includes(themeVal)) themeVal = "dark";
   document.body.setAttribute("data-theme", themeVal);
   safeStorageSet("flightcore_theme", themeVal);
   Telemetry.emit("settings_changed", { setting: "theme", value: themeVal });
@@ -4195,7 +4193,7 @@ function exportLogbookCSV() {
   URL.revokeObjectURL(url);
 }
 
-function initProAndGamification() {
+function initGamification() {
   updatePilotRankHUD();
 
   const btnAch = document.getElementById("btn-achievements-toggle");
@@ -4226,7 +4224,7 @@ if (btnAchClose && overlayAch) {
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initProAndGamification);
+document.addEventListener("DOMContentLoaded", initGamification);
 } else {
-  initProAndGamification();
+  initGamification();
 }

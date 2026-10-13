@@ -862,12 +862,14 @@
 
   // ---- pro feature gating & licensing helper ----
 
+  const VALID_THEMES = ["dark", "light", "mono", "sage", "warm", "amber", "stealth"];
+
   function getAccessStatus() {
     return {
       mode: "public_beta",
       isPaid: false,
       isBeta: true,
-      unlockedThemes: ["dark", "light", "mono", "sage", "warm", "amber", "stealth"],
+      unlockedThemes: VALID_THEMES,
       csvExport: true
     };
   }
@@ -875,7 +877,7 @@
   function evaluateProAccess(licenseKey) {
     return {
       isPro: false,
-      unlockedThemes: ["dark", "light", "mono", "sage", "warm", "amber", "stealth"],
+      unlockedThemes: VALID_THEMES,
       customAudio: false,
       csvExport: true,
       prototypeAccess: false
@@ -1468,6 +1470,7 @@
     computeTotalXP,
     computePilotRank,
     evaluateAchievements,
+    VALID_THEMES,
     evaluateProAccess,
     getAccessStatus,
     analyzeTechnicalPerformance,
