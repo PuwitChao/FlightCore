@@ -1,41 +1,24 @@
-# Walkthrough - Flight Core Typography, Contrast & UI De-Vibing
+﻿# Walkthrough: Public Beta Monetization Readiness & Dormant Access Boundary
 
-All requested improvements for font consistency, font size legibility, WCAG AAA contrast ratios, and aerospace instrument de-vibing have been implemented and verified.
-
----
-
-## Key Changes Made
-
-### 1. Dual Typography System & Font Consistency
-- **UI & Control Typography (`--font-sans`)**: Integrated Google Font `Inter` (`wght@400;500;600;700`) for headers, body text, buttons, modals, and landing pages.
-- **Cockpit Telemetry & Data (`--font-mono`)**: Integrated Google Font `JetBrains Mono` (`wght@500;600;700`) for numeric readouts, digital gauges, altitude/airspeed figures, ATC callsigns, keypad displays, timer countdowns, and mathematical tokens across `index.html`, `styles.css`, `landing/index.html`, and `landing/styles.css`.
-
-### 2. Font Size Scale Overhaul (Legibility)
-- **Minimum Threshold Elevated**: Micro font sizes (9px - 10px / `0.55rem` - `0.62rem`) used for labels, status badges, instructions, and timestamps have been upgraded to **`0.72rem` - `0.78rem` (~11.5px - 12.5px)**.
-- **Body & Interactive Controls**: Body text, buttons, sortable cards, and input terminals were upgraded to **`0.88rem` - `0.95rem` (~14px - 15px)** for ease of reading.
-
-### 3. Contrast Ratio Audit (WCAG AAA Compliance)
-- Upgraded text color variables across all 7 themes (`default`/OLED dark, light, mono, sage, warm, amber, stealth):
-  - `--text-primary`: Crisp slate/white (`#F8FAFC` / `#FFFFFF` / `#0F172A`).
-  - `--text-secondary`: High-contrast slate (`#CBD5E1` on dark, `#334155` on light).
-  - `--text-muted`: Upgraded from low-contrast dim gray (`#64748B`) to `#94A3B8` on dark themes and `#475569` / `#57534E` on light themes to achieve 7:1+ contrast ratios on card backdrops.
-
-### 4. De-Vibing Visual Polish
-- Removed heavy drop-shadow glows (`box-shadow: 0 0 12px var(--accent-blue-glow)`), pulse glows, and neon borders on badges, dots, reticles, and cards.
-- Replaced with clean, solid, high-precision aerospace instrument borders and subtle status affordances.
-
----
+## Summary
+In accordance with user decisions and acceptance criteria for **GitHub Issue #17**, **Issue #11**, and **Release Epic #8**, FlightCore has transitioned to a completely free public beta model:
+1. **Public Beta is 100% Free**: All features, released exercises, themes, and CSV telemetry exports are fully accessible without registration, keys, or payments.
+2. **Eliminated Insecure Client-Side Licensing**: Removed all references, inputs, alerts, and evaluators for the fixed public key `PRO-FLIGHT-PASS`.
+3. **Cleaned Up User Interface**: Removed the `#pro-pass-overlay` modal and the `#btn-pro-toggle` button from the top HUD header.
+4. **Scrubbed Legacy License Keys**: On initialization, any stale `flightcore_pro_key` stored in `localStorage` is removed safely while preserving all existing user run histories and preferences.
+5. **Direct Feature Access**: The Run History tab now has a direct `CSV` button wired to `exportLogbookCSV()`, allowing players to export telemetry without any paywall friction.
+6. **Dormant Future Boundary**: Introduced `FlightCore.getAccessStatus()`, establishing a clear status contract (`mode: "public_beta"`, `isPaid: false`, `isBeta: true`) for post-beta commercialization architectures.
 
 ## Verification & Test Results
+- **Engine Tests (`tests.js`)**: **129/129 passed** (including new assertions verifying `getAccessStatus()` and verifying `evaluateProAccess` grants no paid state for any key).
+- **App Error-Handling & DOM Tests (`tests_app_error_handling.js`)**: **7/7 passed** (including non-exposure of Pro modal/keys and safe startup key scrubbing).
+- **Syntax Validation**: `node --check core.js` and `node --check app.js` passed with zero errors.
 
-- **Automated Engine Test Suite**:
-  ```powershell
-  node tests.js
-  # Output: Flight Core engine tests: 97/97 passed
-  ```
-- **Syntax Validation**:
-  ```powershell
-  node --check app.js
-  node --check core.js
-  # Passed with zero syntax errors.
-  ```
+## OpenCode Delegation & Token Savings
+- **Subtask 1 (`core.js`)**: 110,141 tokens | Actual OpenRouter cost: $0.004764 USD | Flash Baseline: $0.165212 USD | Net Savings: $0.160447 USD
+- **Subtask 2 (`index.html`)**: 82,407 tokens | Actual OpenRouter cost: $0.005092 USD | Flash Baseline: $0.123610 USD | Net Savings: $0.118519 USD
+- **Subtask 3 (`app.js`)**: 201,080 tokens | Actual OpenRouter cost: $0.007906 USD | Flash Baseline: $0.301620 USD | Net Savings: $0.293714 USD
+- **Total OpenCode Run Tokens**: 393,628 tokens
+- **Total OpenCode Cost**: $0.017762 USD
+- **Total Gemini Flash Baseline**: $0.590442 USD
+- **Total Net Cost Savings**: **$0.572680 USD** (~97.0% cost reduction)

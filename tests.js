@@ -532,16 +532,26 @@
     assert(badges.some(b => b.id === "all_families" && b.unlocked));
   });
 
-  test("evaluateProAccess: validates pro license keys", () => {
-    const free = FC.evaluateProAccess("FREE");
-    assertEqual(free.isPro, false);
-    assertEqual(free.unlockedThemes.length, 5);
+  test("getAccessStatus: verifies public beta mode and full unlocked capabilities", () => {
+    const status = FC.getAccessStatus();
+    assertEqual(status.mode, "public_beta");
+    assertEqual(status.isPaid, false);
+    assertEqual(status.isBeta, true);
+    assertEqual(status.unlockedThemes.length, 7);
+    assert(status.unlockedThemes.includes("amber"));
+    assert(status.unlockedThemes.includes("stealth"));
+    assertEqual(status.csvExport, true);
+  });
 
-    const pro = FC.evaluateProAccess("PRO-FLIGHT-PASS");
-    assertEqual(pro.isPro, true);
-    assert(pro.unlockedThemes.includes("amber"));
-    assertEqual(pro.customAudio, true);
-    assertEqual(pro.csvExport, true);
+  test("evaluateProAccess: PRO-FLIGHT-PASS grants no paid entitlement in beta", () => {
+    const proKeyAttempt = FC.evaluateProAccess("PRO-FLIGHT-PASS");
+    assertEqual(proKeyAttempt.isPro, false);
+    assertEqual(proKeyAttempt.unlockedThemes.length, 7);
+    assertEqual(proKeyAttempt.csvExport, true);
+
+    const randomKeyAttempt = FC.evaluateProAccess("RANDOM-KEY");
+    assertEqual(randomKeyAttempt.isPro, false);
+    assertEqual(randomKeyAttempt.unlockedThemes.length, 7);
   });
 
   test("analyzeTechnicalPerformance: handles empty round arrays without NaN", () => {

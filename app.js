@@ -4208,46 +4208,20 @@ function initProAndGamification() {
       overlayAch.style.display = "flex";
     });
   }
-  if (btnAchClose && overlayAch) {
+if (btnAchClose && overlayAch) {
     btnAchClose.addEventListener("click", () => {
       playSound("click");
       overlayAch.style.display = "none";
     });
   }
 
-  const btnPro = document.getElementById("btn-pro-toggle");
-  const overlayPro = document.getElementById("pro-pass-overlay");
-  const btnProClose = document.getElementById("btn-pro-close");
-  const btnProUnlock = document.getElementById("btn-pro-unlock");
-  const inputProKey = document.getElementById("pro-license-input");
+  // Safely scrub any legacy pro license key from localStorage on startup.
+  safeStorageRemove("flightcore_pro_key");
 
-  if (btnPro && overlayPro) {
-    btnPro.addEventListener("click", () => {
-      playSound("click");
-      overlayPro.style.display = "flex";
-    });
-  }
-  if (btnProClose && overlayPro) {
-    btnProClose.addEventListener("click", () => {
-      playSound("click");
-      overlayPro.style.display = "none";
-    });
-  }
-
-  if (btnProUnlock && inputProKey) {
-    btnProUnlock.addEventListener("click", () => {
-      const key = inputProKey.value;
-      const proState = FlightCore.evaluateProAccess(key);
-      if (proState.isPro) {
-        safeStorageSet("flightcore_pro_key", key.trim());
-        playSound("success");
-        alert("Pro Pass Activated! Unlocked Pro themes, CSV export, and audio profiles.");
-        if (overlayPro) overlayPro.style.display = "none";
-      } else {
-        playSound("click");
-        alert("Invalid license key. Try using: PRO-FLIGHT-PASS");
-      }
-    });
+  // Wire the Run History CSV export button directly to the export routine.
+  const csvButton = document.getElementById("btn-export-logbook-csv");
+  if (csvButton) {
+    csvButton.addEventListener("click", exportLogbookCSV);
   }
 }
 

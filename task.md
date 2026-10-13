@@ -1,53 +1,17 @@
-﻿# Task Checklist: Daily Flight Ops, Web Audio Synthesizer & Gamification Depth
+﻿# Task: Public Beta Monetization Readiness & Dormant Boundary
 
-- [x] **Phase 1: Pure Engine Primitives & Unit Tests**
-  - [x] **Subtask 1.1**: Implement deterministic Daily Ops PRNG & module sequence generator in `core.js`
-    - *Dependencies*: None
-    - *Skill*: `opencode_delegate` / `engineering_code`
-    - *Validation*: `node --check core.js`
-  - [x] **Subtask 1.2**: Implement Wordle-style Daily Ops shareable score card formatter in `core.js`
-    - *Dependencies*: Subtask 1.1
-    - *Skill*: `opencode_delegate`
-    - *Validation*: `node --check core.js`
-  - [x] **Subtask 1.3**: Implement Persistent XP & Cockpit Rank progression logic in `core.js`
-    - *Dependencies*: None
-    - *Skill*: `opencode_delegate` / `engineering_code`
-    - *Validation*: `node --check core.js`
-  - [x] **Subtask 1.4**: Add automated test cases for PRNG determinism, share card format, and XP calculation in `tests.js`
-    - *Dependencies*: Subtasks 1.1, 1.2, 1.3
-    - *Skill*: `opencode_delegate` / `test_generator`
-    - *Validation*: `node tests.js` (128/128 passed)
-
-- [x] **Phase 2: Tactile Web Audio Synthesizer**
-  - [x] **Subtask 2.1**: Implement zero-dependency Web Audio synthesizer in `app.js` with mute setting
-    - *Dependencies*: None
-    - *Skill*: `opencode_delegate`
-    - *Validation*: `node --check app.js`
-
-- [x] **Phase 3: Daily Ops & Gamification UI Integration**
-  - [x] **Subtask 3.1**: Add Daily Flight Ops launch button, date badge, and challenge flow in `index.html` and `app.js`
-    - *Dependencies*: Phase 1
-    - *Skill*: `opencode_delegate` / `ui_review`
-    - *Validation*: `node --check app.js`
-  - [x] **Subtask 3.2**: Add Debrief Share Card button and clipboard copy toast in `app.js` and `index.html`
-    - *Dependencies*: Subtask 1.2, 3.1
-    - *Skill*: `opencode_delegate`
-    - *Validation*: `node --check app.js`
-  - [x] **Subtask 3.3**: Add Pilot Rank and XP display components to header and sidebar in `index.html` and `styles.css`
-    - *Dependencies*: Subtask 1.3
-    - *Skill*: `opencode_delegate` / `ui_review`
-    - *Validation*: `node --check app.js`
-  - [x] **Subtask 3.4**: Add audio mute toggle switch in settings modal
-    - *Dependencies*: Subtask 2.1
-    - *Skill*: `opencode_delegate`
-    - *Validation*: `node --check app.js`
-
-- [x] **Phase 4: Full Verification, Error Resilience & Handoff**
-  - [x] **Subtask 4.1**: Run regression test suites and app error handling VM tests
-    - *Dependencies*: Phases 1, 2, 3
-    - *Skill*: `verify`
-    - *Validation*: `node tests.js && node tests_app_error_handling.js` (128/128 and 5/5 passed)
-  - [x] **Subtask 4.2**: Update project documentation and log session
-    - *Dependencies*: Subtask 4.1
-    - *Skill*: `documentation` / `handoff`
-    - *Validation*: `git status`
+- [x] Phase 1: Planning and Research <!-- id: 0 -->
+  - [x] Review GitHub Issues #17, #11, and Release Epic #8 <!-- id: 1 -->
+  - [x] Inspect codebase for `PRO-FLIGHT-PASS`, Pro modal, and entitlements <!-- id: 2 -->
+  - [x] Define public beta access contract & migration plan <!-- id: 3 -->
+- [x] Phase 2: Execution via OpenCode Delegation <!-- id: 4 -->
+  - [x] Update `core.js` with dormant future entitlement contract (`getAccessStatus`) <!-- id: 5 -->
+  - [x] Clean up `index.html` removing Pro modal and adding Run History CSV export button <!-- id: 6 -->
+  - [x] Update `app.js` removing Pro modal handlers and scrubbing legacy license key <!-- id: 7 -->
+- [x] Phase 3: Verification & Quality Gates <!-- id: 8 -->
+  - [x] Update engine tests in `tests.js` <!-- id: 9 -->
+  - [x] Add app tests in `tests_app_error_handling.js` for key scrubbing and DOM non-exposure <!-- id: 10 -->
+  - [x] Run full test suite and syntax checks <!-- id: 11 -->
+- [x] Phase 4: Documentation & Walkthrough <!-- id: 12 -->
+  - [x] Write `walkthrough.md` and update `lessons_learned.md` <!-- id: 13 -->
+  - [x] Provide implementation evidence and closure recommendations for issues #17 & #11 <!-- id: 14 -->

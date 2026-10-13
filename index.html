@@ -35,11 +35,6 @@
               <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
             </svg>
           </button>
-          <button class="theme-toggle-btn" id="btn-pro-toggle" title="Flight Pass / Pro Access">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-          </button>
           <button class="theme-toggle-btn" id="btn-sound-toggle" title="Toggle Sound" aria-label="Toggle sound">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sound-icon" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" /></svg>
           </button>
@@ -390,7 +385,10 @@
           <div class="terminal-card" style="margin-bottom: 0;">
             <div class="terminal-card-header">
               <span>Challenge Run Entries</span>
-              <span class="type-tag" id="log-entries-count">0 Runs</span>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span class="type-tag" id="log-entries-count">0 Runs</span>
+                <button id="btn-export-logbook-csv" style="font-size: 0.58rem; font-weight: 700; color: var(--accent-blue); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-sans);">CSV</button>
+              </div>
             </div>
             <div class="logbook-scroll-area" id="logbook-scroll-list" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
               <div style="font-size: 0.65rem; color: var(--text-muted); text-align: center; padding: 12px;">NO RUN HISTORY YET</div>
@@ -1041,46 +1039,7 @@
     </div>
   </div>
 
-  <!-- Pro Flight Pass Modal Overlay -->
-  <div class="theme-selector-overlay" id="pro-pass-overlay" style="display: none; z-index: 1260;">
-    <div class="theme-selector-card" style="max-width: 400px;">
-      <div class="theme-selector-header">
-        <div style="display: flex; align-items: center;">
-          <span style="font-size: 1rem; font-weight: 800; color: var(--text-primary);">Flight Core Pro Pass</span>
-          <span class="pro-badge">PRO</span>
-        </div>
-        <button class="theme-option-btn" id="btn-pro-close" style="width: auto; padding: 4px 10px;">Close</button>
-      </div>
-      <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 14px;">
-        Support Flight Core development and unlock professional telemetry tools, exclusive cockpit themes, and advanced features. Core game modules remain 100% free forever.
-      </p>
-      <div class="pro-feature-card">
-        <div>
-          <strong style="font-size: 0.78rem; color: var(--text-primary);">Pro Cockpit HUD Themes</strong>
-          <div style="font-size: 0.68rem; color: var(--text-muted);">Amber Vector & Stealth AMOLED</div>
-        </div>
-        <span class="type-tag">Theme</span>
-      </div>
-      <div class="pro-feature-card">
-        <div>
-          <strong style="font-size: 0.78rem; color: var(--text-primary);">Logbook Telemetry Export</strong>
-          <div style="font-size: 0.68rem; color: var(--text-muted);">Export full CSV run telemetry & accuracy trends</div>
-        </div>
-        <span class="type-tag">CSV</span>
-      </div>
-      <div class="pro-feature-card">
-        <div>
-          <strong style="font-size: 0.78rem; color: var(--text-primary);">Custom Audio Synthesizers</strong>
-          <div style="font-size: 0.68rem; color: var(--text-muted);">Mechanical click vs Modern Electronic Synth</div>
-        </div>
-        <span class="type-tag">Audio</span>
-      </div>
-      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-        <input type="text" id="pro-license-input" placeholder="Enter Pro License Key (e.g. PRO-FLIGHT-PASS)" style="padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-primary); font-size: 0.75rem; text-align: center;" />
-        <button class="btn btn-primary btn-block" id="btn-pro-unlock" style="min-height: 44px;">UNLOCK PRO FEATURES</button>
-      </div>
-    </div>
-  </div>
+<!-- Pro Flight Pass Modal Overlay -->
 
   <script src="config.example.js"></script>
   <script src="config.js"></script>

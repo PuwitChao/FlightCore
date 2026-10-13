@@ -141,6 +141,32 @@ run("app source has no unreachable radar gameplay renderer", () => {
   assert(!source.includes('module === "radar"'), "radar should not be included in gameplay module branches");
 });
 
+run("public beta monetization readiness: no pro modal or hardcoded pro key triggers", () => {
+  assert(!source.includes("pro-license-input"), "no pro license input in app source");
+  assert(!source.includes("btn-pro-unlock"), "no pro unlock button listener in app source");
+  assert(!source.includes("pro-pass-overlay"), "no pro pass overlay in app source");
+  assert(!source.includes("PRO-FLIGHT-PASS"), "no hardcoded PRO-FLIGHT-PASS key in app source");
+});
+
+run("startup scrubs legacy pro key safely without modifying history", () => {
+  const mockStorageData = {
+    "flightcore_pro_key": "PRO-FLIGHT-PASS",
+    "flightcore_history": JSON.stringify([{ score: 500, date: "2026-10-13" }])
+  };
+  const mockStorage = {
+    getItem(k) { return mockStorageData[k] || null; },
+    setItem(k, v) { mockStorageData[k] = String(v); },
+    removeItem(k) { delete mockStorageData[k]; },
+    clear() { Object.keys(mockStorageData).forEach(k => delete mockStorageData[k]); }
+  };
+  const app = makeContext(mockStorage);
+  if (typeof app.context.initProAndGamification === "function") {
+    app.context.initProAndGamification();
+  }
+  assertEqual(mockStorageData["flightcore_pro_key"], undefined, "legacy pro key should be scrubbed");
+  assert(mockStorageData["flightcore_history"] !== undefined, "history must remain intact");
+});
+
 const passed = results.filter(result => result.ok).length;
 const failed = results.length - passed;
 results.forEach(result => {

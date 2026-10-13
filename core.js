@@ -862,14 +862,23 @@
 
   // ---- pro feature gating & licensing helper ----
 
-  function evaluateProAccess(licenseKey) {
-    const isPro = String(licenseKey || "").trim().toUpperCase() === "PRO-FLIGHT-PASS" || String(licenseKey || "").trim() === "FLIGHT-CORE-PRO";
+  function getAccessStatus() {
     return {
-      isPro,
-      unlockedThemes: isPro ? ["dark", "light", "mono", "sage", "warm", "amber", "stealth"] : ["dark", "light", "mono", "sage", "warm"],
-      customAudio: isPro,
-      csvExport: isPro,
-      prototypeAccess: isPro
+      mode: "public_beta",
+      isPaid: false,
+      isBeta: true,
+      unlockedThemes: ["dark", "light", "mono", "sage", "warm", "amber", "stealth"],
+      csvExport: true
+    };
+  }
+
+  function evaluateProAccess(licenseKey) {
+    return {
+      isPro: false,
+      unlockedThemes: ["dark", "light", "mono", "sage", "warm", "amber", "stealth"],
+      customAudio: false,
+      csvExport: true,
+      prototypeAccess: false
     };
   }
 
@@ -1460,6 +1469,7 @@
     computePilotRank,
     evaluateAchievements,
     evaluateProAccess,
+    getAccessStatus,
     analyzeTechnicalPerformance,
     generateRadarSVG,
     generateSkillRadarSVG,
